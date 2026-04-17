@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>币安永续山寨币监控 - 优化版</title>
+  <title>币安永续山寨币监控 - 最终版 v2.0</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -12,7 +12,19 @@
       font-family: Arial, sans-serif;
       padding: 20px;
     }
-    .container { max-width: 1500px; margin: 0 auto; }
+    .container { max-width: 1600px; margin: 0 auto; }
+    .version-tag {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: rgba(16,196,245,.2);
+      border: 1px solid rgba(16,196,245,.4);
+      color: #10c4f5;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      z-index: 999;
+    }
     h1 {
       text-align: center;
       color: #10c4f5;
@@ -33,11 +45,13 @@
       cursor: pointer;
       border-bottom: 2px solid transparent;
       font-size: 14px;
+      transition: all 0.2s;
     }
     .tab-btn.active {
       color: #10c4f5;
       border-bottom-color: #10c4f5;
     }
+    .tab-btn:hover { color: #10c4f5; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
     .toolbar {
@@ -60,8 +74,9 @@
       padding: 10px 16px;
       cursor: pointer;
       font-size: 13px;
+      transition: all 0.2s;
     }
-    button:hover { opacity: .9; }
+    button:hover { opacity: .85; transform: scale(1.02); }
     .stats {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -73,7 +88,9 @@
       border: 1px solid rgba(16,196,245,.18);
       border-radius: 14px;
       padding: 16px;
+      transition: all 0.2s;
     }
+    .card:hover { border-color: rgba(16,196,245,.4); }
     .label {
       color: #8ca3ba;
       font-size: 12px;
@@ -84,16 +101,18 @@
       font-weight: bold;
       font-size: 24px;
     }
-    .table-wrap, .detail-box {
+    .table-wrap {
       background: rgba(10, 22, 40, .9);
       border: 1px solid rgba(16,196,245,.18);
       border-radius: 16px;
       overflow: auto;
+      max-height: 700px;
     }
     .status {
       text-align: center;
       color: #9db0c4;
       padding: 30px;
+      font-size: 14px;
     }
     table {
       width: 100%;
@@ -101,7 +120,7 @@
       font-size: 12px;
     }
     th, td {
-      padding: 10px 12px;
+      padding: 11px 12px;
       border-bottom: 1px solid rgba(255,255,255,.06);
       text-align: left;
       white-space: nowrap;
@@ -112,24 +131,22 @@
       background: #0d1a2d;
       color: #c5d4e5;
       font-size: 12px;
+      font-weight: 600;
     }
-    tr:hover { background: rgba(255,255,255,.04); }
+    tbody tr {
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    tbody tr:hover { background: rgba(16,196,245,.08); }
     .symbol {
       color: #10c4f5;
       font-weight: bold;
-      cursor: pointer;
     }
     .green { color: #22c55e; }
     .red { color: #ef4444; }
     .gray { color: #94a3b8; }
 
-    /* 风险标签颜色 */
-    .risk-极高 { background: rgba(239, 68, 68, .2); color: #fca5a5; }
-    .risk-较高 { background: rgba(245, 158, 11, .2); color: #fcd34d; }
-    .risk-平衡 { background: rgba(34, 197, 94, .2); color: #86efac; }
-    .risk-可介入 { background: rgba(34, 197, 94, .2); color: #86efac; }
-    .risk-非常好 { background: rgba(34, 197, 94, .2); color: #86efac; }
-
+    /* 风险标签 */
     .tag {
       display: inline-block;
       padding: 4px 10px;
@@ -138,7 +155,14 @@
       margin-right: 6px;
       margin-bottom: 5px;
       border: 1px solid;
+      white-space: nowrap;
     }
+
+    .risk-风险极高 { background: rgba(239, 68, 68, .2); color: #fca5a5; border-color: #ef4444; }
+    .risk-较高风险 { background: rgba(245, 158, 11, .2); color: #fcd34d; border-color: #f59e0b; }
+    .risk-平衡 { background: rgba(107, 114, 128, .2); color: #d1d5db; border-color: #6b7280; }
+    .risk-可介入 { background: rgba(34, 197, 94, .2); color: #86efac; border-color: #22c55e; }
+    .risk-非常好 { background: rgba(34, 197, 94, .2); color: #22c55e; border-color: #22c55e; }
 
     /* 阶段标签 */
     .stage-震荡吸筹 { background: rgba(245, 158, 11, .2); color: #fcd34d; border-color: #f59e0b; }
@@ -154,6 +178,9 @@
     .stage-二波浪确认 { background: rgba(139, 92, 246, .2); color: #c4b5fd; border-color: #8b5cf6; }
 
     .detail-box {
+      background: rgba(10, 22, 40, .9);
+      border: 1px solid rgba(16,196,245,.18);
+      border-radius: 16px;
       padding: 20px;
     }
     .detail-title {
@@ -206,39 +233,37 @@
       border: 1px solid rgba(16,196,245,.2);
       font-size: 12px;
       cursor: pointer;
+      transition: all 0.2s;
     }
-    .link-btn:hover { background: rgba(16,196,245,.2); }
+    .link-btn:hover { background: rgba(16,196,245,.25); }
 
-    .tags-container {
-      margin-top: 16px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    @media (max-width: 1000px) {
+    @media (max-width: 1200px) {
       .stats { grid-template-columns: repeat(2, 1fr); }
       .detail-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 640px) {
       .stats { grid-template-columns: 1fr; }
       table { font-size: 11px; }
+      th, td { padding: 8px 10px; }
     }
   </style>
 </head>
 <body>
+  <div class="version-tag">v2.0 Final</div>
+
   <div class="container">
-    <h1>⚡ 币安永续山寨币监控 - 优化版</h1>
+    <h1>⚡ 币安永续山寨币监控</h1>
 
     <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('list', this)">币种列表</button>
-      <button class="tab-btn" onclick="switchTab('detail', this)">币种详情</button>
+      <button class="tab-btn active" onclick="switchTab('list', this)">📊 币种列表</button>
+      <button class="tab-btn" onclick="switchTab('detail', this)">📈 币种详情</button>
     </div>
 
+    <!-- 列表页 -->
     <div id="list" class="tab-content active">
       <div class="toolbar">
         <div class="time-info" id="last-update">最后更新：-</div>
-        <button onclick="loadData()">手动刷新</button>
+        <button onclick="loadData()">🔄 手动刷新</button>
       </div>
 
       <div class="stats">
@@ -282,6 +307,7 @@
       </div>
     </div>
 
+    <!-- 详情页 -->
     <div id="detail" class="tab-content">
       <div class="detail-box">
         <div id="detail-empty" class="status">请先在列表页点击一个币种</div>
@@ -293,6 +319,7 @@
   <script>
     let allRows = [];
     let selectedRow = null;
+    let oiMap = {}; // 缓存 OI 数据
 
     function switchTab(tab, el) {
       document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
@@ -324,9 +351,33 @@
     }
 
     async function getJSON(url) {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('请求失败');
-      return await res.json();
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return await res.json();
+      } catch (e) {
+        console.error('Fetch error:', url, e);
+        return null;
+      }
+    }
+
+    // 批量获取 OI 数据
+    async function fetchOpenInterest(symbols) {
+      const map = {};
+      try {
+        for (const symbol of symbols) {
+          const url = `https://fapi.binance.com/fapi/v1/openInterest?symbol=${symbol}`;
+          const data = await getJSON(url);
+          if (data && data.openInterest) {
+            map[symbol] = parseFloat(data.openInterest);
+          }
+          // 稍微延迟，避免请求过快被限制
+          await new Promise(r => setTimeout(r, 50));
+        }
+      } catch (e) {
+        console.error('OI fetch error:', e);
+      }
+      return map;
     }
 
     // 核心：计算阶段（细分版）
@@ -336,62 +387,58 @@
       const fund = row.funding || 0;
       const price = row.priceChange || 0;
 
-      // 见顶：Funding极高，OI极高，成交量巨大，价格已涨幅大
+      // 见顶：极端高位
       if (fund > 0.08 && oi > 20 && vol > 30 && price > 15) {
         return '见顶';
       }
 
-      // 砸盘出货：价格急跌，OI快速下降，Funding转负或变小，成交量大
+      // 砸盘出货：急速下跌
       if (price < -10 && oi > 8 && vol > 15 && fund < 0.02) {
         return '砸盘出货';
       }
 
-      // 二波浪 - 确认（OI持续高，Funding仍正，但price停滞或微跌）
+      // 二波浪 - 确认
       if (oi > 15 && fund > 0.03 && price > -5 && price < 3) {
         return '二波浪确认';
       }
 
-      // 二波浪 - 反弹（从低点反弹，OI开始增长，Funding转正）
+      // 二波浪 - 反弹
       if (oi > 8 && oi <= 15 && fund > 0.01 && fund < 0.05 && price > 0 && price <= 10) {
         return '二波浪反弹';
       }
 
-      // 二波浪 - 小幅（低位震荡，OI略升，Funding接近0）
+      // 二波浪 - 小幅
       if (oi > 3 && oi <= 8 && Math.abs(fund) < 0.015 && price > -5 && price < 5) {
         return '二波浪小幅';
       }
 
-      // 突破：OI快速增长，Funding转正且持续升高，价格快速上升
+      // 突破：强势上升
       if (oi > 10 && oi <= 18 && fund > 0.04 && fund < 0.08 && price > 8 && price < 18) {
         return '突破';
       }
 
-      // 回弹扫损：价格反弹，OI增加，Funding持续正值但不极端，回升较快
+      // 回弹扫损：反弹向上
       if (price > 3 && price < 12 && oi > 5 && oi <= 12 && fund > 0.015 && fund < 0.045) {
         return '回弹扫损';
       }
 
-      // 回调扫损：价格小幅回调，OI略降但未崩，Funding从正变小或转负，成交量中等
+      // 回调扫损：小幅回调
       if (price > -8 && price < 0 && oi > 5 && oi < 15 && fund > -0.02 && fund < 0.015 && vol > 8) {
         return '回调扫损';
       }
 
-      // 缓升：OI稳定，Funding小正，价格缓慢上升，成交量温和
+      // 缓升：温和上升
       if (oi > 6 && oi < 12 && fund > 0 && fund <= 0.015 && price > 0 && price <= 5 && vol < 18) {
         return '缓升';
       }
 
-      // 缓跌：OI略降，Funding小负或接近0，价格缓慢下跌，成交量平稳
+      // 缓跌：温和下跌
       if (oi > 3 && oi < 10 && fund > -0.02 && fund < 0.01 && price > -5 && price < 0 && vol < 16) {
         return '缓跌';
       }
 
-      // 震荡吸筹：OI低位，Funding接近0，价格震荡，成交量中等
-      if (oi > 2 && oi <= 6 && Math.abs(fund) <= 0.01 && Math.abs(price) <= 5 && vol > 6) {
-        return '震荡吸筹';
-      }
-
-      return '震荡吸筹'; // 默认
+      // 默认：震荡吸筹
+      return '震荡吸筹';
     }
 
     // 核心：计算风险等级
@@ -403,58 +450,34 @@
       const price = row.priceChange || 0;
 
       // 风险极高
-      if (stage === '见顶' || stage === '砸盘出货') {
-        return '风险极高';
-      }
-      if (fund > 0.07 && oi > 18) {
-        return '风险极高';
-      }
+      if (stage === '见顶' || stage === '砸盘出货') return '风险极高';
+      if (fund > 0.07 && oi > 18) return '风险极高';
 
       // 较高风险
-      if (stage === '二波浪确认' || stage === '二波浪反弹') {
-        return '较高风险';
-      }
-      if (fund > 0.04 && oi > 12) {
-        return '较高风险';
-      }
+      if (stage === '二波浪确认' || stage === '二波浪反弹') return '较高风险';
+      if (fund > 0.04 && oi > 12) return '较高风险';
+      if (stage === '缓跌' && price < -3) return '较高风险';
 
       // 平衡
-      if (stage === '回调扫损' || stage === '回弹扫损') {
-        return '平衡';
-      }
-      if (Math.abs(fund) < 0.02 && oi > 5 && oi < 12 && price > -3 && price < 5) {
-        return '平衡';
-      }
+      if (stage === '回调扫损' || stage === '回弹扫损') return '平衡';
+      if (Math.abs(fund) < 0.02 && oi > 5 && oi < 12 && price > -3 && price < 5) return '平衡';
 
       // 可介入
-      if (stage === '缓升' || stage === '二波浪小幅') {
-        return '可介入';
-      }
-      if (oi > 4 && oi <= 8 && fund > -0.01 && fund <= 0.02 && vol > 6) {
-        return '可介入';
-      }
+      if (stage === '缓升' || stage === '二波浪小幅') return '可介入';
+      if (oi > 4 && oi <= 8 && fund > -0.01 && fund <= 0.02 && vol > 6) return '可介入';
 
       // 非常好
-      if (stage === '震荡吸筹' && vol > 10 && oi > 3 && oi <= 6) {
-        return '非常好';
-      }
-      if (oi > 2 && oi <= 5 && Math.abs(fund) <= 0.008 && price > -3 && price < 3) {
-        return '非常好';
-      }
-
-      // 缓跌情况
-      if (stage === '缓跌' && price < -3) {
-        return '较高风险';
-      }
+      if (stage === '震荡吸筹' && vol > 10 && oi > 3 && oi <= 6) return '非常好';
+      if (oi > 2 && oi <= 5 && Math.abs(fund) <= 0.008 && price > -3 && price < 3) return '非常好';
 
       return '平衡';
     }
 
-    // 计算多空拥挤度
+    // 多空拥挤度
     function calcLongShortStatus(fund) {
-      if (fund > 0.04) return '挤压多头';
-      if (fund < -0.04) return '挤压空头';
-      return '平衡';
+      if (fund > 0.04) return '⬆️ 挤压多头';
+      if (fund < -0.04) return '⬇️ 挤压空头';
+      return '⚖️ 平衡';
     }
 
     function showDetail(row) {
@@ -462,23 +485,15 @@
       document.getElementById('detail-empty').style.display = 'none';
 
       const coin = row.symbol.replace('USDT', '');
-      
-      // 构建详细标签
-      const riskEmoji = {
-        '风险极高': '🔴',
-        '较高风险': '🟠',
-        '平衡': '🟡',
-        '可介入': '🟢',
-        '非常好': '💚'
-      };
+      const riskEmoji = { '风险极高': '🔴', '较高风险': '🟠', '平衡': '🟡', '可介入': '🟢', '非常好': '💚' };
 
       const html = `
         <div class="detail-title">${row.symbol}</div>
         <div style="margin-bottom: 16px;">
           <span class="tag stage-${row.stage}">${row.stage}</span>
           <span class="tag risk-${row.riskLevel}">${riskEmoji[row.riskLevel] || ''} ${row.riskLevel}</span>
-          <span class="tag" style="background: ${row.longShortStatus === '挤压多头' ? 'rgba(239, 68, 68, .2)' : row.longShortStatus === '挤压空头' ? 'rgba(34, 197, 94, .2)' : 'rgba(34, 197, 94, .15)'}; color: ${row.longShortStatus === '挤压多头' ? '#fca5a5' : row.longShortStatus === '挤压空头' ? '#86efac' : '#86efac'}; border: none;">
-            ${row.longShortStatus === '挤压多头' ? '⬆️ 挤压多头' : row.longShortStatus === '挤压空头' ? '⬇️ 挤压空头' : '⚖️ 多空平衡'}
+          <span class="tag" style="background: ${row.longShortStatus.includes('多') ? 'rgba(239, 68, 68, .2)' : row.longShortStatus.includes('空') ? 'rgba(34, 197, 94, .2)' : 'rgba(107, 114, 128, .2)'}; color: ${row.longShortStatus.includes('多') ? '#fca5a5' : row.longShortStatus.includes('空') ? '#86efac' : '#d1d5db'}; border: none;">
+            ${row.longShortStatus}
           </span>
         </div>
 
@@ -575,10 +590,16 @@
           getJSON('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1')
         ]);
 
+        if (!exchangeInfo || !ticker24h || !premiumIndex) throw new Error('基础数据获取失败');
+
         const symbols = exchangeInfo.symbols
           .filter(s => s.contractType === 'PERPETUAL' && s.quoteAsset === 'USDT' && s.status === 'TRADING')
           .map(s => s.symbol)
           .slice(0, 120);
+
+        // 获取 OI 数据
+        status.innerText = '加载 OI 数据中...';
+        oiMap = await fetchOpenInterest(symbols);
 
         const tickerMap = Object.fromEntries(ticker24h.map(x => [x.symbol, x]));
         const premiumMap = Object.fromEntries(premiumIndex.map(x => [x.symbol, x]));
@@ -601,7 +622,9 @@
           const quoteVol = parseFloat(t.quoteVolume || 0);
           const funding = parseFloat(p.lastFundingRate || 0) * 100;
           const priceChange = parseFloat(t.priceChangePercent || 0);
-          const oi = parseFloat(p.openInterest || 0);
+
+          // OI 从我们的 map 里取
+          const oi = oiMap[symbol] || 0;
           const oiValue = oi * price;
           const mcap = mcapMap[symbol] || null;
 
@@ -617,20 +640,19 @@
             oi, oiValue, volMcap, oiMcap
           };
 
-          // 关键计算
+          // 核心计算
           row.stage = calcStage(row);
           row.riskLevel = calcRiskLevel(row);
           row.longShortStatus = calcLongShortStatus(funding);
 
-          // 综合评分（基于风险等级调整）
+          // 综合评分
           let score = 50;
           if (row.riskLevel === '非常好') score = 90;
-          if (row.riskLevel === '可介入') score = 75;
-          if (row.riskLevel === '平衡') score = 60;
-          if (row.riskLevel === '较高风险') score = 35;
-          if (row.riskLevel === '风险极高') score = 15;
+          else if (row.riskLevel === '可介入') score = 75;
+          else if (row.riskLevel === '平衡') score = 60;
+          else if (row.riskLevel === '较高风险') score = 35;
+          else if (row.riskLevel === '风险极高') score = 15;
 
-          // 微调
           if (row.volMcap) score += Math.min(row.volMcap / 10, 8);
           score = Math.max(0, Math.min(100, score));
           row.score = score;
@@ -641,6 +663,7 @@
         rows.sort((a, b) => b.score - a.score);
         allRows = rows;
 
+        // 统计
         document.getElementById('stat-total').innerText = rows.length;
         document.getElementById('stat-good').innerText = 
           rows.filter(x => x.riskLevel === '非常好' || x.riskLevel === '可介入').length;
@@ -649,6 +672,7 @@
         const avgFunding = rows.length ? rows.reduce((s, x) => s + x.funding, 0) / rows.length : 0;
         document.getElementById('stat-funding').innerText = avgFunding.toFixed(4) + '%';
 
+        // 渲染表格
         rows.slice(0, 100).forEach(row => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
@@ -661,7 +685,7 @@
             <td class="${colorClass(row.priceChange)}">${row.priceChange.toFixed(1)}%</td>
             <td><span class="tag stage-${row.stage}">${row.stage}</span></td>
             <td><span class="tag risk-${row.riskLevel}">${row.riskLevel}</span></td>
-            <td>${row.longShortStatus === '挤压多头' ? '⬆️多' : row.longShortStatus === '挤压空头' ? '⬇️空' : '⚖️平'}</td>
+            <td style="font-size: 12px; color: #94a3b8;">${row.longShortStatus}</td>
           `;
           tr.addEventListener('click', () => showDetail(row));
           tbody.appendChild(tr);
@@ -674,13 +698,14 @@
       } catch (e) {
         console.error(e);
         status.style.display = 'block';
-        status.innerText = '加载失败：' + e.message;
+        status.innerText = '❌ 加载失败：' + e.message;
         table.style.display = 'none';
       }
     }
 
+    // 页面加载和自动刷新
     loadData();
-    setInterval(loadData, 60000);
+    setInterval(loadData, 60000); // 每 60 秒刷新一次
   </script>
 </body>
 </html>
