@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>币安永续山寨币监控</title>
+  <title>币安永续山寨币监控 - 优化版</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -59,6 +59,7 @@
       border-radius: 8px;
       padding: 10px 16px;
       cursor: pointer;
+      font-size: 13px;
     }
     button:hover { opacity: .9; }
     .stats {
@@ -97,10 +98,10 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 13px;
+      font-size: 12px;
     }
     th, td {
-      padding: 12px 14px;
+      padding: 10px 12px;
       border-bottom: 1px solid rgba(255,255,255,.06);
       text-align: left;
       white-space: nowrap;
@@ -110,6 +111,7 @@
       top: 0;
       background: #0d1a2d;
       color: #c5d4e5;
+      font-size: 12px;
     }
     tr:hover { background: rgba(255,255,255,.04); }
     .symbol {
@@ -120,21 +122,37 @@
     .green { color: #22c55e; }
     .red { color: #ef4444; }
     .gray { color: #94a3b8; }
+
+    /* 风险标签颜色 */
+    .risk-极高 { background: rgba(239, 68, 68, .2); color: #fca5a5; }
+    .risk-较高 { background: rgba(245, 158, 11, .2); color: #fcd34d; }
+    .risk-平衡 { background: rgba(34, 197, 94, .2); color: #86efac; }
+    .risk-可介入 { background: rgba(34, 197, 94, .2); color: #86efac; }
+    .risk-非常好 { background: rgba(34, 197, 94, .2); color: #86efac; }
+
     .tag {
       display: inline-block;
-      padding: 3px 8px;
+      padding: 4px 10px;
       border-radius: 999px;
-      background: rgba(16,196,245,.12);
-      color: #10c4f5;
       font-size: 11px;
-      margin-right: 5px;
-      margin-bottom: 4px;
+      margin-right: 6px;
+      margin-bottom: 5px;
+      border: 1px solid;
     }
-    .stage-吸筹 { color: #f59e0b; }
-    .stage-拉升 { color: #22c55e; }
-    .stage-见顶 { color: #ef4444; }
-    .stage-下跌 { color: #8b5cf6; }
-    .stage-震荡 { color: #94a3b8; }
+
+    /* 阶段标签 */
+    .stage-震荡吸筹 { background: rgba(245, 158, 11, .2); color: #fcd34d; border-color: #f59e0b; }
+    .stage-突破 { background: rgba(34, 197, 94, .2); color: #86efac; border-color: #22c55e; }
+    .stage-回调扫损 { background: rgba(139, 92, 246, .2); color: #c4b5fd; border-color: #8b5cf6; }
+    .stage-见顶 { background: rgba(239, 68, 68, .2); color: #fca5a5; border-color: #ef4444; }
+    .stage-缓升 { background: rgba(34, 197, 94, .15); color: #86efac; border-color: #22c55e; }
+    .stage-缓跌 { background: rgba(156, 163, 175, .2); color: #d1d5db; border-color: #9ca3af; }
+    .stage-回弹扫损 { background: rgba(139, 92, 246, .2); color: #c4b5fd; border-color: #8b5cf6; }
+    .stage-砸盘出货 { background: rgba(239, 68, 68, .2); color: #fca5a5; border-color: #ef4444; }
+    .stage-二波浪小幅 { background: rgba(59, 130, 246, .2); color: #93c5fd; border-color: #3b82f6; }
+    .stage-二波浪反弹 { background: rgba(99, 102, 241, .2); color: #a5b4fc; border-color: #6366f1; }
+    .stage-二波浪确认 { background: rgba(139, 92, 246, .2); color: #c4b5fd; border-color: #8b5cf6; }
+
     .detail-box {
       padding: 20px;
     }
@@ -166,8 +184,12 @@
       gap: 8px;
       padding: 7px 0;
       border-bottom: 1px solid rgba(255,255,255,.05);
+      font-size: 13px;
     }
     .row:last-child { border-bottom: none; }
+    .row-label { color: #8ca3ba; }
+    .row-value { color: #e5eefb; font-weight: bold; }
+
     .link-group {
       display: flex;
       flex-wrap: wrap;
@@ -182,20 +204,31 @@
       background: rgba(16,196,245,.12);
       color: #10c4f5;
       border: 1px solid rgba(16,196,245,.2);
-      font-size: 13px;
+      font-size: 12px;
+      cursor: pointer;
     }
+    .link-btn:hover { background: rgba(16,196,245,.2); }
+
+    .tags-container {
+      margin-top: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
     @media (max-width: 1000px) {
       .stats { grid-template-columns: repeat(2, 1fr); }
       .detail-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 640px) {
       .stats { grid-template-columns: 1fr; }
+      table { font-size: 11px; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>⚡ 币安永续山寨币监控 - 完整版</h1>
+    <h1>⚡ 币安永续山寨币监控 - 优化版</h1>
 
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('list', this)">币种列表</button>
@@ -214,12 +247,12 @@
           <div class="value" id="stat-total">-</div>
         </div>
         <div class="card">
-          <div class="label">高换手(Vol/Mcap>20%)</div>
-          <div class="value" id="stat-vol">-</div>
+          <div class="label">非常好/可介入</div>
+          <div class="value" id="stat-good">-</div>
         </div>
         <div class="card">
-          <div class="label">多头拥挤(Funding>0.04%)</div>
-          <div class="value" id="stat-long">-</div>
+          <div class="label">高风险币种</div>
+          <div class="value" id="stat-risk">-</div>
         </div>
         <div class="card">
           <div class="label">平均 Funding</div>
@@ -238,10 +271,10 @@
               <th>Vol/Mcap</th>
               <th>OI/Mcap</th>
               <th>Funding</th>
-              <th>24h涨跌</th>
-              <th>评分</th>
+              <th>24h%</th>
               <th>阶段</th>
-              <th>标签</th>
+              <th>风险评级</th>
+              <th>多空</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
@@ -292,54 +325,136 @@
 
     async function getJSON(url) {
       const res = await fetch(url);
-      if (!res.ok) throw new Error('请求失败: ' + url);
+      if (!res.ok) throw new Error('请求失败');
       return await res.json();
     }
 
+    // 核心：计算阶段（细分版）
     function calcStage(row) {
-      const oiMcap = row.oiMcap ?? 0;
-      const volMcap = row.volMcap ?? 0;
-      const funding = row.funding ?? 0;
-      const priceChange = row.priceChange ?? 0;
+      const oi = row.oiMcap || 0;
+      const vol = row.volMcap || 0;
+      const fund = row.funding || 0;
+      const price = row.priceChange || 0;
 
-      if (oiMcap > 5 && oiMcap < 15 && Math.abs(funding) < 0.02 && volMcap > 8) return '吸筹';
-      if (oiMcap > 10 && funding > 0.01 && priceChange > 4) return '拉升';
-      if (funding > 0.06 && oiMcap > 18 && volMcap > 20) return '见顶';
-      if (funding < -0.02 && priceChange < -4) return '下跌';
-      return '震荡';
+      // 见顶：Funding极高，OI极高，成交量巨大，价格已涨幅大
+      if (fund > 0.08 && oi > 20 && vol > 30 && price > 15) {
+        return '见顶';
+      }
+
+      // 砸盘出货：价格急跌，OI快速下降，Funding转负或变小，成交量大
+      if (price < -10 && oi > 8 && vol > 15 && fund < 0.02) {
+        return '砸盘出货';
+      }
+
+      // 二波浪 - 确认（OI持续高，Funding仍正，但price停滞或微跌）
+      if (oi > 15 && fund > 0.03 && price > -5 && price < 3) {
+        return '二波浪确认';
+      }
+
+      // 二波浪 - 反弹（从低点反弹，OI开始增长，Funding转正）
+      if (oi > 8 && oi <= 15 && fund > 0.01 && fund < 0.05 && price > 0 && price <= 10) {
+        return '二波浪反弹';
+      }
+
+      // 二波浪 - 小幅（低位震荡，OI略升，Funding接近0）
+      if (oi > 3 && oi <= 8 && Math.abs(fund) < 0.015 && price > -5 && price < 5) {
+        return '二波浪小幅';
+      }
+
+      // 突破：OI快速增长，Funding转正且持续升高，价格快速上升
+      if (oi > 10 && oi <= 18 && fund > 0.04 && fund < 0.08 && price > 8 && price < 18) {
+        return '突破';
+      }
+
+      // 回弹扫损：价格反弹，OI增加，Funding持续正值但不极端，回升较快
+      if (price > 3 && price < 12 && oi > 5 && oi <= 12 && fund > 0.015 && fund < 0.045) {
+        return '回弹扫损';
+      }
+
+      // 回调扫损：价格小幅回调，OI略降但未崩，Funding从正变小或转负，成交量中等
+      if (price > -8 && price < 0 && oi > 5 && oi < 15 && fund > -0.02 && fund < 0.015 && vol > 8) {
+        return '回调扫损';
+      }
+
+      // 缓升：OI稳定，Funding小正，价格缓慢上升，成交量温和
+      if (oi > 6 && oi < 12 && fund > 0 && fund <= 0.015 && price > 0 && price <= 5 && vol < 18) {
+        return '缓升';
+      }
+
+      // 缓跌：OI略降，Funding小负或接近0，价格缓慢下跌，成交量平稳
+      if (oi > 3 && oi < 10 && fund > -0.02 && fund < 0.01 && price > -5 && price < 0 && vol < 16) {
+        return '缓跌';
+      }
+
+      // 震荡吸筹：OI低位，Funding接近0，价格震荡，成交量中等
+      if (oi > 2 && oi <= 6 && Math.abs(fund) <= 0.01 && Math.abs(price) <= 5 && vol > 6) {
+        return '震荡吸筹';
+      }
+
+      return '震荡吸筹'; // 默认
     }
 
-    function calcWhaleScore(row) {
-      let s = 0;
-      if ((row.oiMcap || 0) > 10) s += 30;
-      if ((row.volMcap || 0) > 20) s += 25;
-      if ((row.funding || 0) > 0.03) s += 20;
-      if ((row.priceChange || 0) > 5) s += 15;
-      return Math.min(100, s);
+    // 核心：计算风险等级
+    function calcRiskLevel(row) {
+      const stage = row.stage;
+      const oi = row.oiMcap || 0;
+      const vol = row.volMcap || 0;
+      const fund = row.funding || 0;
+      const price = row.priceChange || 0;
+
+      // 风险极高
+      if (stage === '见顶' || stage === '砸盘出货') {
+        return '风险极高';
+      }
+      if (fund > 0.07 && oi > 18) {
+        return '风险极高';
+      }
+
+      // 较高风险
+      if (stage === '二波浪确认' || stage === '二波浪反弹') {
+        return '较高风险';
+      }
+      if (fund > 0.04 && oi > 12) {
+        return '较高风险';
+      }
+
+      // 平衡
+      if (stage === '回调扫损' || stage === '回弹扫损') {
+        return '平衡';
+      }
+      if (Math.abs(fund) < 0.02 && oi > 5 && oi < 12 && price > -3 && price < 5) {
+        return '平衡';
+      }
+
+      // 可介入
+      if (stage === '缓升' || stage === '二波浪小幅') {
+        return '可介入';
+      }
+      if (oi > 4 && oi <= 8 && fund > -0.01 && fund <= 0.02 && vol > 6) {
+        return '可介入';
+      }
+
+      // 非常好
+      if (stage === '震荡吸筹' && vol > 10 && oi > 3 && oi <= 6) {
+        return '非常好';
+      }
+      if (oi > 2 && oi <= 5 && Math.abs(fund) <= 0.008 && price > -3 && price < 3) {
+        return '非常好';
+      }
+
+      // 缓跌情况
+      if (stage === '缓跌' && price < -3) {
+        return '较高风险';
+      }
+
+      return '平衡';
     }
 
-    function calcBuyScore(row) {
-      let score = 50;
-      if (row.volMcap) score += Math.min(row.volMcap / 3, 15);
-      if (row.oiMcap) score += Math.min(row.oiMcap / 2.5, 20);
-      if (Math.abs(row.funding) < 0.03) score += 8;
-      if (row.priceChange > 0 && row.priceChange < 12) score += 8;
-      if (row.stage === '吸筹') score += 8;
-      if (row.stage === '拉升') score += 5;
-      if (row.stage === '见顶') score -= 18;
-      if (row.stage === '下跌') score -= 10;
-      return Math.max(0, Math.min(100, score));
-    }
-
-    function buildTags(row) {
-      const tags = [];
-      if ((row.volMcap || 0) > 20) tags.push('放量');
-      if ((row.oiMcap || 0) > 10) tags.push('杠杆集中');
-      if ((row.funding || 0) > 0.04) tags.push('多头拥挤');
-      if ((row.funding || 0) < -0.04) tags.push('空头拥挤');
-      if (row.stage === '吸筹') tags.push('疑似吸筹');
-      if (row.stage === '见顶') tags.push('高位风险');
-      return tags;
+    // 计算多空拥挤度
+    function calcLongShortStatus(fund) {
+      if (fund > 0.04) return '挤压多头';
+      if (fund < -0.04) return '挤压空头';
+      return '平衡';
     }
 
     function showDetail(row) {
@@ -347,51 +462,95 @@
       document.getElementById('detail-empty').style.display = 'none';
 
       const coin = row.symbol.replace('USDT', '');
+      
+      // 构建详细标签
+      const riskEmoji = {
+        '风险极高': '🔴',
+        '较高风险': '🟠',
+        '平衡': '🟡',
+        '可介入': '🟢',
+        '非常好': '💚'
+      };
+
       const html = `
         <div class="detail-title">${row.symbol}</div>
+        <div style="margin-bottom: 16px;">
+          <span class="tag stage-${row.stage}">${row.stage}</span>
+          <span class="tag risk-${row.riskLevel}">${riskEmoji[row.riskLevel] || ''} ${row.riskLevel}</span>
+          <span class="tag" style="background: ${row.longShortStatus === '挤压多头' ? 'rgba(239, 68, 68, .2)' : row.longShortStatus === '挤压空头' ? 'rgba(34, 197, 94, .2)' : 'rgba(34, 197, 94, .15)'}; color: ${row.longShortStatus === '挤压多头' ? '#fca5a5' : row.longShortStatus === '挤压空头' ? '#86efac' : '#86efac'}; border: none;">
+            ${row.longShortStatus === '挤压多头' ? '⬆️ 挤压多头' : row.longShortStatus === '挤压空头' ? '⬇️ 挤压空头' : '⚖️ 多空平衡'}
+          </span>
+        </div>
+
         <div class="link-group">
           <a class="link-btn" target="_blank" href="https://www.binance.com/zh-CN/futures/${row.symbol}">币安交易</a>
-          <a class="link-btn" target="_blank" href="https://www.coinglass.com/zh/futures/${coin}">CoinGlass合约页</a>
+          <a class="link-btn" target="_blank" href="https://www.coinglass.com/zh/futures/${coin}">CoinGlass合约</a>
           <a class="link-btn" target="_blank" href="https://www.coinglass.com/zh/liq/${coin}">清算数据</a>
           <a class="link-btn" target="_blank" href="https://www.coinglass.com/zh/unlock/${coin}">解锁数据</a>
           <a class="link-btn" target="_blank" href="https://www.coinglass.com/zh/position/${coin}">持仓/浮盈</a>
-          <a class="link-btn" target="_blank" href="https://dexscreener.com/search?q=${coin}">DEX Screener</a>
+          <a class="link-btn" target="_blank" href="https://dexscreener.com/search?q=${coin}">DEX</a>
         </div>
 
         <div class="detail-grid">
           <div class="detail-card">
             <h3>基础数据</h3>
-            <div class="row"><span>价格</span><span>$${fmtNum(row.price, 6)}</span></div>
-            <div class="row"><span>市值</span><span>$${fmtNum(row.mcap, 2)}</span></div>
-            <div class="row"><span>24h涨跌</span><span class="${colorClass(row.priceChange)}">${row.priceChange.toFixed(2)}%</span></div>
-            <div class="row"><span>24h成交额</span><span>$${fmtNum(row.quoteVol, 2)}</span></div>
+            <div class="row">
+              <span class="row-label">价格</span>
+              <span class="row-value">$${fmtNum(row.price, 6)}</span>
+            </div>
+            <div class="row">
+              <span class="row-label">市值</span>
+              <span class="row-value">$${fmtNum(row.mcap, 2)}</span>
+            </div>
+            <div class="row">
+              <span class="row-label">24h涨跌</span>
+              <span class="row-value ${colorClass(row.priceChange)}">${row.priceChange.toFixed(2)}%</span>
+            </div>
+            <div class="row">
+              <span class="row-label">24h成交额</span>
+              <span class="row-value">$${fmtNum(row.quoteVol, 2)}</span>
+            </div>
           </div>
 
           <div class="detail-card">
             <h3>合约数据</h3>
-            <div class="row"><span>OI</span><span>${fmtNum(row.oi, 2)}</span></div>
-            <div class="row"><span>OI价值</span><span>$${fmtNum(row.oiValue, 2)}</span></div>
-            <div class="row"><span>OI/Mcap</span><span class="${colorClass(row.oiMcap)}">${row.oiMcap ? row.oiMcap.toFixed(2) + '%' : '-'}</span></div>
-            <div class="row"><span>Vol/Mcap</span><span class="${colorClass(row.volMcap)}">${row.volMcap ? row.volMcap.toFixed(2) + '%' : '-'}</span></div>
-            <div class="row"><span>Funding</span><span class="${colorClass(row.funding)}">${row.funding.toFixed(4)}%</span></div>
+            <div class="row">
+              <span class="row-label">OI</span>
+              <span class="row-value">${fmtNum(row.oi, 2)}</span>
+            </div>
+            <div class="row">
+              <span class="row-label">OI/Mcap</span>
+              <span class="row-value ${colorClass(row.oiMcap)}">${row.oiMcap ? row.oiMcap.toFixed(2) + '%' : '-'}</span>
+            </div>
+            <div class="row">
+              <span class="row-label">Vol/Mcap</span>
+              <span class="row-value ${colorClass(row.volMcap)}">${row.volMcap ? row.volMcap.toFixed(2) + '%' : '-'}</span>
+            </div>
+            <div class="row">
+              <span class="row-label">Funding</span>
+              <span class="row-value ${colorClass(row.funding)}">${row.funding.toFixed(4)}%</span>
+            </div>
           </div>
 
           <div class="detail-card">
             <h3>综合分析</h3>
-            <div class="row"><span>阶段</span><span class="stage-${row.stage}">${row.stage}</span></div>
-            <div class="row"><span>买入评分</span><span>${row.score.toFixed(1)}/100</span></div>
-            <div class="row"><span>庄家活跃估算</span><span>${row.whaleScore}/100</span></div>
-            <div class="row"><span>风险</span><span>${
-              row.stage === '见顶' ? '高' :
-              row.stage === '拉升' ? '中高' :
-              row.stage === '吸筹' ? '较低' :
-              row.stage === '下跌' ? '高' : '中'
-            }</span></div>
+            <div class="row">
+              <span class="row-label">阶段</span>
+              <span class="row-value">${row.stage}</span>
+            </div>
+            <div class="row">
+              <span class="row-label">风险等级</span>
+              <span class="row-value">${riskEmoji[row.riskLevel]} ${row.riskLevel}</span>
+            </div>
+            <div class="row">
+              <span class="row-label">多空态势</span>
+              <span class="row-value">${row.longShortStatus}</span>
+            </div>
+            <div class="row">
+              <span class="row-label">综合评分</span>
+              <span class="row-value" style="color: #10c4f5;">${row.score.toFixed(1)}/100</span>
+            </div>
           </div>
-        </div>
-
-        <div style="margin-top:16px;">
-          ${row.tags.map(t => `<span class="tag">${t}</span>`).join('')}
         </div>
       `;
       document.getElementById('detail-content').innerHTML = html;
@@ -448,7 +607,7 @@
 
           let volMcap = null;
           let oiMcap = null;
-          if (mcap) {
+          if (mcap && mcap > 0) {
             volMcap = quoteVol / mcap * 100;
             oiMcap = oiValue / mcap * 100;
           }
@@ -458,10 +617,23 @@
             oi, oiValue, volMcap, oiMcap
           };
 
+          // 关键计算
           row.stage = calcStage(row);
-          row.whaleScore = calcWhaleScore(row);
-          row.score = calcBuyScore(row);
-          row.tags = buildTags(row);
+          row.riskLevel = calcRiskLevel(row);
+          row.longShortStatus = calcLongShortStatus(funding);
+
+          // 综合评分（基于风险等级调整）
+          let score = 50;
+          if (row.riskLevel === '非常好') score = 90;
+          if (row.riskLevel === '可介入') score = 75;
+          if (row.riskLevel === '平衡') score = 60;
+          if (row.riskLevel === '较高风险') score = 35;
+          if (row.riskLevel === '风险极高') score = 15;
+
+          // 微调
+          if (row.volMcap) score += Math.min(row.volMcap / 10, 8);
+          score = Math.max(0, Math.min(100, score));
+          row.score = score;
 
           rows.push(row);
         }
@@ -470,8 +642,10 @@
         allRows = rows;
 
         document.getElementById('stat-total').innerText = rows.length;
-        document.getElementById('stat-vol').innerText = rows.filter(x => (x.volMcap || 0) > 20).length;
-        document.getElementById('stat-long').innerText = rows.filter(x => x.funding > 0.04).length;
+        document.getElementById('stat-good').innerText = 
+          rows.filter(x => x.riskLevel === '非常好' || x.riskLevel === '可介入').length;
+        document.getElementById('stat-risk').innerText = 
+          rows.filter(x => x.riskLevel === '风险极高' || x.riskLevel === '较高风险').length;
         const avgFunding = rows.length ? rows.reduce((s, x) => s + x.funding, 0) / rows.length : 0;
         document.getElementById('stat-funding').innerText = avgFunding.toFixed(4) + '%';
 
@@ -481,13 +655,13 @@
             <td class="symbol">${row.symbol}</td>
             <td>$${fmtNum(row.price, 6)}</td>
             <td>$${fmtNum(row.mcap, 2)}</td>
-            <td class="${colorClass(row.volMcap)}">${row.volMcap ? row.volMcap.toFixed(2) + '%' : '-'}</td>
-            <td class="${colorClass(row.oiMcap)}">${row.oiMcap ? row.oiMcap.toFixed(2) + '%' : '-'}</td>
-            <td class="${colorClass(row.funding)}">${row.funding.toFixed(4)}%</td>
-            <td class="${colorClass(row.priceChange)}">${row.priceChange.toFixed(2)}%</td>
-            <td style="color:#10c4f5;font-weight:bold;">${row.score.toFixed(1)}</td>
+            <td class="${colorClass(row.volMcap)}">${row.volMcap ? row.volMcap.toFixed(1) + '%' : '-'}</td>
+            <td class="${colorClass(row.oiMcap)}">${row.oiMcap ? row.oiMcap.toFixed(1) + '%' : '-'}</td>
+            <td class="${colorClass(row.funding)}">${row.funding.toFixed(3)}%</td>
+            <td class="${colorClass(row.priceChange)}">${row.priceChange.toFixed(1)}%</td>
             <td><span class="tag stage-${row.stage}">${row.stage}</span></td>
-            <td>${row.tags.map(t => `<span class="tag">${t}</span>`).join('')}</td>
+            <td><span class="tag risk-${row.riskLevel}">${row.riskLevel}</span></td>
+            <td>${row.longShortStatus === '挤压多头' ? '⬆️多' : row.longShortStatus === '挤压空头' ? '⬇️空' : '⚖️平'}</td>
           `;
           tr.addEventListener('click', () => showDetail(row));
           tbody.appendChild(tr);
