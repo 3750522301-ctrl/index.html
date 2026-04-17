@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>币安永续山寨币监控 - v3.5 优化版</title>
+  <title>币安永续精选监控 - v4.1 强化版</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -28,8 +28,14 @@
     h1 {
       text-align: center;
       color: #10c4f5;
-      margin-bottom: 20px;
+      margin-bottom: 8px;
       font-size: 36px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #8ca3ba;
+      font-size: 12px;
+      margin-bottom: 20px;
     }
     .tabs {
       display: flex;
@@ -81,9 +87,31 @@
       opacity: 0.5;
       cursor: not-allowed;
     }
+    .filter-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .filter-btn {
+      background: rgba(16,196,245,.12);
+      color: #10c4f5;
+      border: 1px solid rgba(16,196,245,.3);
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+    .filter-btn.active {
+      background: #11b7e6;
+      border-color: #11b7e6;
+      color: white;
+    }
     .stats {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 14px;
       margin-bottom: 18px;
     }
@@ -161,23 +189,9 @@
       white-space: nowrap;
     }
 
-    .risk-风险极高 { background: rgba(239, 68, 68, .2); color: #fca5a5; border-color: #ef4444; }
-    .risk-较高风险 { background: rgba(245, 158, 11, .2); color: #fcd34d; border-color: #f59e0b; }
-    .risk-平衡 { background: rgba(107, 114, 128, .2); color: #d1d5db; border-color: #6b7280; }
-    .risk-可介入 { background: rgba(34, 197, 94, .2); color: #86efac; border-color: #22c55e; }
-    .risk-非常好 { background: rgba(34, 197, 94, .2); color: #22c55e; border-color: #22c55e; }
-
-    .stage-震荡吸筹 { background: rgba(245, 158, 11, .2); color: #fcd34d; border-color: #f59e0b; }
-    .stage-突破 { background: rgba(34, 197, 94, .2); color: #86efac; border-color: #22c55e; }
-    .stage-回调扫损 { background: rgba(139, 92, 246, .2); color: #c4b5fd; border-color: #8b5cf6; }
-    .stage-见顶 { background: rgba(239, 68, 68, .2); color: #fca5a5; border-color: #ef4444; }
-    .stage-缓升 { background: rgba(34, 197, 94, .15); color: #86efac; border-color: #22c55e; }
-    .stage-缓跌 { background: rgba(156, 163, 175, .2); color: #d1d5db; border-color: #9ca3af; }
-    .stage-回弹扫损 { background: rgba(139, 92, 246, .2); color: #c4b5fd; border-color: #8b5cf6; }
-    .stage-砸盘出货 { background: rgba(239, 68, 68, .2); color: #fca5a5; border-color: #ef4444; }
-    .stage-二波浪小幅 { background: rgba(59, 130, 246, .2); color: #93c5fd; border-color: #3b82f6; }
-    .stage-二波浪反弹 { background: rgba(99, 102, 241, .2); color: #a5b4fc; border-color: #6366f1; }
-    .stage-二波浪确认 { background: rgba(139, 92, 246, .2); color: #c4b5fd; border-color: #8b5cf6; }
+    .level-极其好 { background: rgba(34, 197, 94, .3); color: #22c55e; border-color: #22c55e; font-weight: bold; }
+    .level-非常好 { background: rgba(34, 197, 94, .2); color: #86efac; border-color: #22c55e; }
+    .level-较好 { background: rgba(59, 130, 246, .2); color: #93c5fd; border-color: #3b82f6; }
 
     .detail-box {
       background: rgba(10, 22, 40, .9);
@@ -189,6 +203,9 @@
       font-size: 28px;
       color: #10c4f5;
       margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
     .detail-grid {
       display: grid;
@@ -220,15 +237,15 @@
     .row-value { color: #e5eefb; font-weight: bold; }
 
     .link-group {
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
       gap: 10px;
       margin-top: 14px;
     }
     .link-btn {
       display: inline-block;
       text-decoration: none;
-      padding: 8px 12px;
+      padding: 10px 12px;
       border-radius: 8px;
       background: rgba(16,196,245,.12);
       color: #10c4f5;
@@ -236,28 +253,64 @@
       font-size: 12px;
       cursor: pointer;
       transition: all 0.2s;
+      text-align: center;
     }
     .link-btn:hover { background: rgba(16,196,245,.25); }
 
+    .analysis-box {
+      background: rgba(34,197,94,.1);
+      border: 1px solid rgba(34,197,94,.3);
+      border-radius: 10px;
+      padding: 14px;
+      margin-top: 16px;
+      color: #86efac;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .analysis-box h3 {
+      color: #22c55e;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    .analysis-item {
+      margin-bottom: 8px;
+    }
+
+    .warning-box {
+      background: rgba(245,158,11,.1);
+      border: 1px solid rgba(245,158,11,.3);
+      border-radius: 10px;
+      padding: 12px;
+      margin-top: 10px;
+      color: #fcd34d;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
     @media (max-width: 1200px) {
-      .stats { grid-template-columns: repeat(2, 1fr); }
+      .stats { grid-template-columns: repeat(3, 1fr); }
       .detail-grid { grid-template-columns: 1fr; }
+      .link-group { grid-template-columns: repeat(2, 1fr); }
     }
     @media (max-width: 640px) {
       .stats { grid-template-columns: 1fr; }
       table { font-size: 11px; }
       th, td { padding: 8px 10px; }
+      .link-group { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <div class="version-tag">v3.5 优化版</div>
+  <div class="version-tag">v4.1 强化版</div>
 
   <div class="container">
-    <h1>⚡ 币安永续山寨币监控</h1>
+    <h1>⚡ 币安永续精选监控</h1>
+    <p class="subtitle">强化分析能力 | 综合评估好币 | 快捷查询通道</p>
 
     <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('list', this)">📊 币种列表</button>
+      <button class="tab-btn active" onclick="switchTab('list', this)">📊 精选币种</button>
       <button class="tab-btn" onclick="switchTab('detail', this)">📈 币种详情</button>
     </div>
 
@@ -268,22 +321,34 @@
         <button id="refresh-btn" onclick="loadData()">🔄 手动刷新</button>
       </div>
 
+      <div class="filter-group">
+        <span style="color: #8ca3ba; font-size: 12px;">筛选等级：</span>
+        <button class="filter-btn active" onclick="filterLevel('all')">全部</button>
+        <button class="filter-btn" onclick="filterLevel('极其好')">💚 极其好</button>
+        <button class="filter-btn" onclick="filterLevel('非常好')">💛 非常好</button>
+        <button class="filter-btn" onclick="filterLevel('较好')">🔵 较好</button>
+      </div>
+
       <div class="stats">
         <div class="card">
-          <div class="label">监控币种数</div>
+          <div class="label">精选币种总数</div>
           <div class="value" id="stat-total">-</div>
         </div>
         <div class="card">
-          <div class="label">非常好/可介入</div>
+          <div class="label">💚 极其好</div>
+          <div class="value" id="stat-best">-</div>
+        </div>
+        <div class="card">
+          <div class="label">💛 非常好</div>
+          <div class="value" id="stat-vgood">-</div>
+        </div>
+        <div class="card">
+          <div class="label">🔵 较好</div>
           <div class="value" id="stat-good">-</div>
         </div>
         <div class="card">
-          <div class="label">高风险币种</div>
-          <div class="value" id="stat-risk">-</div>
-        </div>
-        <div class="card">
-          <div class="label">平均 Funding</div>
-          <div class="value" id="stat-funding">-</div>
+          <div class="label">平均评分</div>
+          <div class="value" id="stat-avg">-</div>
         </div>
       </div>
 
@@ -299,9 +364,8 @@
               <th>OI/Mcap</th>
               <th>Funding</th>
               <th>24h%</th>
-              <th>阶段</th>
-              <th>风险评级</th>
-              <th>方向</th>
+              <th>评级</th>
+              <th>评分</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
@@ -320,9 +384,11 @@
 
   <script>
     let allRows = [];
+    let filteredRows = [];
     let selectedRow = null;
     let oiMap = {};
     let isLoading = false;
+    let currentFilter = 'all';
 
     function switchTab(tab, el) {
       document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
@@ -336,6 +402,13 @@
       document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active'));
       document.getElementById('detail').classList.add('active');
       document.querySelectorAll('.tab-btn')[1].classList.add('active');
+    }
+
+    function filterLevel(level) {
+      currentFilter = level;
+      document.querySelectorAll('.filter-btn').forEach(x => x.classList.remove('active'));
+      event.target.classList.add('active');
+      renderTable();
     }
 
     function colorClass(v) {
@@ -362,11 +435,10 @@
       }
     }
 
-    // 优化：只请求前 50 个币的 OI，用并发加速
     async function fetchOpenInterest(symbols) {
       const map = {};
-      const topSymbols = symbols.slice(0, 50); // 只请求前 50 个
-      const chunk = 20; // 每次并发 20 个
+      const topSymbols = symbols.slice(0, 100);
+      const chunk = 25;
       
       for (let i = 0; i < topSymbols.length; i += chunk) {
         const batch = topSymbols.slice(i, i + chunk);
@@ -383,55 +455,51 @@
       return map;
     }
 
-    // 阶段判断（精准版，依赖 OI）
-    function calcStage(row) {
+    // 强化的综合评分算法
+    function calcQualityLevel(row) {
       const oi = row.oiMcap || 0;
       const vol = row.volMcap || 0;
       const fund = row.funding || 0;
       const price = row.priceChange || 0;
+      const mcap = row.mcap || 0;
 
-      if (fund > 0.08 && oi > 20 && vol > 30 && price > 15) return '见顶';
-      if (price < -10 && oi > 8 && vol > 15 && fund < 0.02) return '砸盘出货';
-      if (oi > 15 && fund > 0.03 && price > -5 && price < 3) return '二波浪确认';
-      if (oi > 8 && oi <= 15 && fund > 0.01 && fund < 0.05 && price > 0 && price <= 10) return '二波浪反弹';
-      if (oi > 3 && oi <= 8 && Math.abs(fund) < 0.015 && price > -5 && price < 5) return '二波浪小幅';
-      if (oi > 10 && oi <= 18 && fund > 0.04 && fund < 0.08 && price > 8 && price < 18) return '突破';
-      if (price > 3 && price < 12 && oi > 5 && oi <= 12 && fund > 0.015 && fund < 0.045) return '回弹扫损';
-      if (price > -8 && price < 0 && oi > 5 && oi < 15 && fund > -0.02 && fund < 0.015 && vol > 8) return '回调扫损';
-      if (oi > 6 && oi < 12 && fund > 0 && fund <= 0.015 && price > 0 && price <= 5 && vol < 18) return '缓升';
-      if (oi > 3 && oi < 10 && fund > -0.02 && fund < 0.01 && price > -5 && price < 0 && vol < 16) return '缓跌';
-      return '震荡吸筹';
-    }
+      let score = 0;
 
-    // 风险判断（精准版，依赖 OI）
-    function calcRiskLevel(row) {
-      const stage = row.stage;
-      const oi = row.oiMcap || 0;
-      const vol = row.volMcap || 0;
-      const fund = row.funding || 0;
-      const price = row.priceChange || 0;
+      // OI/Mcap 评分（0-25分）
+      if (oi >= 3 && oi <= 8) score += 25;
+      else if (oi >= 2 && oi <= 12) score += 20;
+      else if (oi >= 1 && oi <= 15) score += 15;
+      else score += 5;
 
-      if (stage === '见顶' || stage === '砸盘出货') return '风险极高';
-      if (fund > 0.07 && oi > 18) return '风险极高';
-      if (stage === '二波浪确认' || stage === '二波浪反弹') return '较高风险';
-      if (fund > 0.04 && oi > 12) return '较高风险';
-      if (stage === '缓跌' && price < -3) return '较高风险';
-      if (stage === '回调扫损' || stage === '回弹扫损') return '平衡';
-      if (Math.abs(fund) < 0.02 && oi > 5 && oi < 12 && price > -3 && price < 5) return '平衡';
-      if (stage === '缓升' || stage === '二波浪小幅') return '可介入';
-      if (oi > 4 && oi <= 8 && fund > -0.01 && fund <= 0.02 && vol > 6) return '可介入';
-      if (stage === '震荡吸筹' && vol > 10 && oi > 3 && oi <= 6) return '非常好';
-      if (oi > 2 && oi <= 5 && Math.abs(fund) <= 0.008 && price > -3 && price < 3) return '非常好';
-      return '平衡';
-    }
+      // Vol/Mcap 评分（0-25分）
+      if (vol >= 8 && vol <= 20) score += 25;
+      else if (vol >= 5 && vol <= 25) score += 20;
+      else if (vol >= 3 && vol <= 30) score += 15;
+      else score += 5;
 
-    function getRiskRemark(level) {
-      if (level === '非常好') return '偏多';
-      if (level === '可介入') return '偏多';
-      if (level === '平衡') return '中性';
-      if (level === '较高风险') return '偏空';
-      if (level === '风险极高') return '偏空';
-      return '中性';
+      // Funding 评分（0-25分）
+      if (fund >= -0.01 && fund <= 0.02) score += 25;
+      else if (fund >= -0.015 && fund <= 0.03) score += 20;
+      else if (fund >= -0.02 && fund <= 0.04) score += 15;
+      else if (Math.abs(fund) <= 0.05) score += 10;
+      else score += 3;
+
+      // 价格动量评分（0-25分）
+      if (price >= -2 && price <= 5) score += 25;
+      else if (price >= -5 && price <= 8) score += 20;
+      else if (price >= -8 && price <= 15) score += 15;
+      else if (price >= -15 && price <= 30) score += 10;
+      else score += 3;
+
+      // 市值稳定性加分（0-5分）
+      if (mcap > 1e8) score += 3;
+      if (mcap > 5e8) score += 2;
+
+      // 综合判定
+      if (score >= 95) return { level: '极其好', score };
+      else if (score >= 80) return { level: '非常好', score };
+      else if (score >= 65) return { level: '较好', score };
+      else return { level: '一般', score };
     }
 
     function showDetail(row) {
@@ -439,33 +507,75 @@
       document.getElementById('detail-empty').style.display = 'none';
 
       const coin = row.symbol.replace('USDT', '');
-      const riskEmoji = { '风险极高': '🔴', '较高风险': '🟠', '平衡': '🟡', '可介入': '🟢', '非常好': '💚' };
-      const remark = getRiskRemark(row.riskLevel);
-      const remarkEmoji = { '偏多': '📈', '偏空': '📉', '中性': '➡️' };
+      const levelEmoji = { '极其好': '💚', '非常好': '💛', '较好': '🔵', '一般': '⚪' };
+
+      // 生成分析理由
+      let analysis = [];
+      let warnings = [];
+
+      if (row.oiMcap >= 3 && row.oiMcap <= 8) {
+        analysis.push('✅ OI热度适中（3-8%），风险可控');
+      } else if (row.oiMcap > 15) {
+        warnings.push('⚠️ OI过热（>15%），容易暴涨暴跌');
+      }
+
+      if (row.volMcap >= 8 && row.volMcap <= 20) {
+        analysis.push('✅ 成交活跃（8-20%），有真实买卖');
+      } else if (row.volMcap > 25) {
+        warnings.push('⚠️ 成交过度活跃，可能是顶部特征');
+      }
+
+      if (row.funding >= -0.01 && row.funding <= 0.02) {
+        analysis.push('✅ 多空平衡（Funding接近0），底部风险低');
+      } else if (row.funding > 0.05) {
+        warnings.push('⚠️ Funding过高（>0.05%），多头挤压严重');
+      }
+
+      if (row.priceChange >= -2 && row.priceChange <= 5) {
+        analysis.push('✅ 温和上涨或小回调，缓升特征');
+      } else if (row.priceChange < -15) {
+        analysis.push('💡 大幅下跌，可能是底部机会');
+      } else if (row.priceChange > 30) {
+        warnings.push('⚠️ 涨幅过大（>30%），需警惕回调');
+      }
+
+      if (row.mcap > 1e8) {
+        analysis.push('✅ 市值充足（>1亿），流动性好');
+      }
 
       const html = `
-        <div class="detail-title">${row.symbol}</div>
-        <div style="margin-bottom: 16px;">
-          <span class="tag stage-${row.stage}">${row.stage}</span>
-          <span class="tag risk-${row.riskLevel}">${riskEmoji[row.riskLevel] || ''} ${row.riskLevel}</span>
-          <span class="tag" style="background: rgba(34, 197, 94, .2); color: #86efac; border: 1px solid #22c55e;">
-            ${remarkEmoji[remark]} ${remark}
-          </span>
+        <div class="detail-title">
+          ${row.symbol}
+          <span class="tag level-${row.level}">${levelEmoji[row.level]} ${row.level}</span>
+          <span style="color: #10c4f5; font-size: 16px; margin-left: auto; font-weight: bold;">${row.detailScore.toFixed(1)}/100</span>
         </div>
 
         <div class="link-group">
-          <a class="link-btn" target="_blank" href="https://www.binance.com/zh-CN/futures/${row.symbol}">币安交易</a>
-          <a class="link-btn" target="_blank" href="https://www.coinglass.com/zh/futures/${coin}">CoinGlass合约</a>
-          <a class="link-btn" target="_blank" href="https://www.coinglass.com/zh/liq/${coin}">清算数据</a>
-          <a class="link-btn" target="_blank" href="https://www.coinglass.com/zh/position/${coin}">持仓数据</a>
-          <a class="link-btn" target="_blank" href="https://dexscreener.com/search?q=${coin}">DEX</a>
+          <a class="link-btn" target="_blank" href="https://www.binance.com/zh-CN/futures/${row.symbol}">
+            📊 币安交易
+          </a>
+          <a class="link-btn" target="_blank" href="https://www.coinglass.com/zh/futures/${coin}">
+            📈 CoinGlass合约
+          </a>
+          <a class="link-btn" target="_blank" href="https://www.coinglass.com/zh/liq/${coin}">
+            💥 清算热力图
+          </a>
+          <a class="link-btn" target="_blank" href="https://www.coinglass.com/zh/unlock/${coin}">
+            🔓 解锁数据
+          </a>
+          <a class="link-btn" target="_blank" href="https://www.coinglass.com/zh/position/${coin}">
+            👥 持仓数据
+          </a>
+          <a class="link-btn" target="_blank" href="https://dexscreener.com/search?q=${coin}">
+            🌊 DEX数据
+          </a>
         </div>
 
         <div class="detail-grid">
           <div class="detail-card">
-            <h3>基础数据</h3>
+            <h3>📊 基础数据</h3>
             <div class="row">
-              <span class="row-label">价格</span>
+              <span class="row-label">现价</span>
               <span class="row-value">$${fmtNum(row.price, 6)}</span>
             </div>
             <div class="row">
@@ -480,12 +590,16 @@
               <span class="row-label">24h成交</span>
               <span class="row-value">$${fmtNum(row.quoteVol, 2)}</span>
             </div>
+            <div class="row">
+              <span class="row-label">OI价值</span>
+              <span class="row-value">$${fmtNum(row.oiValue, 2)}</span>
+            </div>
           </div>
 
           <div class="detail-card">
-            <h3>合约数据</h3>
+            <h3>📈 合约数据</h3>
             <div class="row">
-              <span class="row-label">OI</span>
+              <span class="row-label">OI持仓</span>
               <span class="row-value">${fmtNum(row.oi, 2)}</span>
             </div>
             <div class="row">
@@ -497,34 +611,117 @@
               <span class="row-value ${colorClass(row.volMcap)}">${row.volMcap ? row.volMcap.toFixed(2) + '%' : '-'}</span>
             </div>
             <div class="row">
-              <span class="row-label">Funding</span>
+              <span class="row-label">Funding Rate</span>
               <span class="row-value ${colorClass(row.funding)}">${row.funding.toFixed(4)}%</span>
+            </div>
+            <div class="row">
+              <span class="row-label">Funding 评估</span>
+              <span class="row-value">${
+                row.funding >= -0.01 && row.funding <= 0.02 ? '✅ 平衡' :
+                row.funding > 0.05 ? '⚠️ 多头挤压' :
+                row.funding < -0.05 ? '⚠️ 空头挤压' :
+                '⚖️ 一般'
+              }</span>
             </div>
           </div>
 
           <div class="detail-card">
-            <h3>综合分析</h3>
+            <h3>🎯 质量评估</h3>
             <div class="row">
-              <span class="row-label">当前阶段</span>
-              <span class="row-value">${row.stage}</span>
+              <span class="row-label">综合评级</span>
+              <span class="row-value">${levelEmoji[row.level]} ${row.level}</span>
             </div>
             <div class="row">
-              <span class="row-label">风险等级</span>
-              <span class="row-value">${riskEmoji[row.riskLevel]} ${row.riskLevel}</span>
+              <span class="row-label">OI热度</span>
+              <span class="row-value">${
+                row.oiMcap >= 3 && row.oiMcap <= 8 ? '✅ 适中' :
+                row.oiMcap > 15 ? '🔥 过热' :
+                row.oiMcap < 2 ? '❄️ 冷清' :
+                '⚖️ 一般'
+              }</span>
             </div>
             <div class="row">
-              <span class="row-label">操作方向</span>
-              <span class="row-value">${remarkEmoji[remark]} ${remark}</span>
+              <span class="row-label">成交热度</span>
+              <span class="row-value">${
+                row.volMcap >= 8 && row.volMcap <= 20 ? '✅ 活跃' :
+                row.volMcap > 25 ? '🔥 很热' :
+                row.volMcap < 5 ? '🥶 清淡' :
+                '⚖️ 一般'
+              }</span>
             </div>
             <div class="row">
-              <span class="row-label">综合评分</span>
-              <span class="row-value" style="color: #10c4f5;">${row.score.toFixed(1)}/100</span>
+              <span class="row-label">价格动量</span>
+              <span class="row-value">${
+                row.priceChange >= 0 && row.priceChange <= 5 ? '📈 缓升' :
+                row.priceChange > 10 ? '🚀 快速上升' :
+                row.priceChange < -10 ? '📉 快速下跌' :
+                '⚖️ 盘整'
+              }</span>
+            </div>
+            <div class="row">
+              <span class="row-label">市值规模</span>
+              <span class="row-value">${
+                row.mcap > 5e8 ? '大盘' :
+                row.mcap > 1e8 ? '中盘' :
+                '小盘'
+              }</span>
             </div>
           </div>
         </div>
+
+        ${analysis.length > 0 ? `
+          <div class="analysis-box">
+            <h3>📋 为什么选择这个币：</h3>
+            ${analysis.map(a => `<div class="analysis-item">${a}</div>`).join('')}
+          </div>
+        ` : ''}
+
+        ${warnings.length > 0 ? `
+          <div class="warning-box">
+            <strong>⚠️ 需要关注的风险：</strong><br>
+            ${warnings.map(w => `<div style="margin-top: 4px;">${w}</div>`).join('')}
+          </div>
+        ` : ''}
       `;
       document.getElementById('detail-content').innerHTML = html;
       activateDetailTab();
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('tbody');
+      tbody.innerHTML = '';
+
+      let displayRows = allRows;
+      if (currentFilter !== 'all') {
+        displayRows = allRows.filter(r => r.level === currentFilter);
+      }
+
+      if (displayRows.length === 0) {
+        document.getElementById('table').style.display = 'none';
+        document.getElementById('status').style.display = 'block';
+        document.getElementById('status').innerText = `暂无 ${currentFilter} 级别的币种`;
+        return;
+      }
+
+      displayRows.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="symbol">${row.symbol}</td>
+          <td>$${fmtNum(row.price, 6)}</td>
+          <td>$${fmtNum(row.mcap, 2)}</td>
+          <td class="${colorClass(row.volMcap)}">${row.volMcap ? row.volMcap.toFixed(1) + '%' : '-'}</td>
+          <td class="${colorClass(row.oiMcap)}">${row.oiMcap ? row.oiMcap.toFixed(1) + '%' : '-'}</td>
+          <td class="${colorClass(row.funding)}">${row.funding.toFixed(3)}%</td>
+          <td class="${colorClass(row.priceChange)}">${row.priceChange.toFixed(1)}%</td>
+          <td><span class="tag level-${row.level}">${row.level}</span></td>
+          <td style="color: #10c4f5; font-weight: bold;">${row.detailScore.toFixed(1)}</td>
+        `;
+        tr.addEventListener('click', () => showDetail(row));
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('table').style.display = 'table';
+      document.getElementById('status').style.display = 'none';
     }
 
     async function loadData() {
@@ -537,7 +734,6 @@
 
       const status = document.getElementById('status');
       const table = document.getElementById('table');
-      const tbody = document.getElementById('tbody');
 
       status.style.display = 'block';
       status.innerText = '加载中...';
@@ -556,9 +752,9 @@
         const symbols = exchangeInfo.symbols
           .filter(s => s.contractType === 'PERPETUAL' && s.quoteAsset === 'USDT' && s.status === 'TRADING')
           .map(s => s.symbol)
-          .slice(0, 150);
+          .slice(0, 200);
 
-        status.innerText = '加载 OI 数据（前 50 个币）...';
+        status.innerText = '加载合约数据...';
         oiMap = await fetchOpenInterest(symbols);
 
         const tickerMap = Object.fromEntries(ticker24h.map(x => [x.symbol, x]));
@@ -568,7 +764,7 @@
           mcapMap[(x.symbol || '').toUpperCase() + 'USDT'] = x.market_cap;
         });
 
-        const rows = [];
+        const candidates = [];
 
         for (const symbol of symbols) {
           const t = tickerMap[symbol];
@@ -586,7 +782,7 @@
           const mcap = mcapMap[symbol] || null;
 
           let volMcap = null;
-          let oiMcap = null;
+           let oiMcap = null;
           if (mcap && mcap > 0) {
             volMcap = quoteVol / mcap * 100;
             oiMcap = oiValue / mcap * 100;
@@ -597,60 +793,33 @@
             oi, oiValue, volMcap, oiMcap
           };
 
-          row.stage = calcStage(row);
-          row.riskLevel = calcRiskLevel(row);
-          
-          if (funding > 0.04) row.longShortStatus = '⬆️ 挤压多头';
-          else if (funding < -0.04) row.longShortStatus = '⬇️ 挤压空头';
-          else row.longShortStatus = '⚖️ 平衡';
+          // 计算质量等级
+          const quality = calcQualityLevel(row);
+          row.level = quality.level;
+          row.detailScore = quality.score;
 
-          let score = 50;
-          if (row.riskLevel === '非常好') score = 90;
-          else if (row.riskLevel === '可介入') score = 75;
-          else if (row.riskLevel === '平衡') score = 60;
-          else if (row.riskLevel === '较高风险') score = 35;
-          else if (row.riskLevel === '风险极高') score = 15;
-
-          if (row.volMcap) score += Math.min(row.volMcap / 10, 8);
-          score = Math.max(0, Math.min(100, score));
-          row.score = score;
-
-          rows.push(row);
+          // 只保留质量好的币（过滤掉 "一般" 级别）
+          if (row.level !== '一般') {
+            candidates.push(row);
+          }
         }
 
-        rows.sort((a, b) => b.score - a.score);
-        allRows = rows;
+        // 按评分排序
+        candidates.sort((a, b) => b.detailScore - a.detailScore);
+        allRows = candidates;
 
-        document.getElementById('stat-total').innerText = rows.length;
+        // 更新统计数据
+        document.getElementById('stat-total').innerText = candidates.length;
+        document.getElementById('stat-best').innerText = 
+          candidates.filter(x => x.level === '极其好').length;
+        document.getElementById('stat-vgood').innerText = 
+          candidates.filter(x => x.level === '非常好').length;
         document.getElementById('stat-good').innerText = 
-          rows.filter(x => x.riskLevel === '非常好' || x.riskLevel === '可介入').length;
-        document.getElementById('stat-risk').innerText = 
-          rows.filter(x => x.riskLevel === '风险极高' || x.riskLevel === '较高风险').length;
-        const avgFunding = rows.length ? rows.reduce((s, x) => s + x.funding, 0) / rows.length : 0;
-        document.getElementById('stat-funding').innerText = avgFunding.toFixed(4) + '%';
+          candidates.filter(x => x.level === '较好').length;
+        const avgScore = candidates.length ? candidates.reduce((s, x) => s + x.detailScore, 0) / candidates.length : 0;
+        document.getElementById('stat-avg').innerText = avgScore.toFixed(1);
 
-        tbody.innerHTML = '';
-        rows.slice(0, 100).forEach(row => {
-          const tr = document.createElement('tr');
-          const remark = getRiskRemark(row.riskLevel);
-          tr.innerHTML = `
-            <td class="symbol">${row.symbol}</td>
-            <td>$${fmtNum(row.price, 6)}</td>
-            <td>$${fmtNum(row.mcap, 2)}</td>
-            <td class="${colorClass(row.volMcap)}">${row.volMcap ? row.volMcap.toFixed(1) + '%' : '-'}</td>
-            <td class="${colorClass(row.oiMcap)}">${row.oiMcap ? row.oiMcap.toFixed(1) + '%' : '-'}</td>
-            <td class="${colorClass(row.funding)}">${row.funding.toFixed(3)}%</td>
-            <td class="${colorClass(row.priceChange)}">${row.priceChange.toFixed(1)}%</td>
-            <td><span class="tag stage-${row.stage}">${row.stage}</span></td>
-            <td><span class="tag risk-${row.riskLevel}">${row.riskLevel}</span></td>
-            <td style="font-size: 12px;">${remark}</td>
-          `;
-          tr.addEventListener('click', () => showDetail(row));
-          tbody.appendChild(tr);
-        });
-
-        status.style.display = 'none';
-        table.style.display = 'table';
+        renderTable();
         document.getElementById('last-update').innerText = '最后更新：' + new Date().toLocaleString();
 
       } catch (e) {
