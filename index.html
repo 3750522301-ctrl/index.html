@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>币安永续山寨币监控 - 最终版 v2.0</title>
+  <title>币安永续山寨币监控 - 最终版 v2.1</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -76,7 +76,11 @@
       font-size: 13px;
       transition: all 0.2s;
     }
-    button:hover { opacity: .85; transform: scale(1.02); }
+    button:hover { opacity: .85; }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
     .stats {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -134,7 +138,7 @@
       font-weight: 600;
     }
     tbody tr {
-      transition: all 0.2s;
+      transition: none;
       cursor: pointer;
     }
     tbody tr:hover { background: rgba(16,196,245,.08); }
@@ -146,7 +150,6 @@
     .red { color: #ef4444; }
     .gray { color: #94a3b8; }
 
-    /* 风险标签 */
     .tag {
       display: inline-block;
       padding: 4px 10px;
@@ -164,7 +167,6 @@
     .risk-可介入 { background: rgba(34, 197, 94, .2); color: #86efac; border-color: #22c55e; }
     .risk-非常好 { background: rgba(34, 197, 94, .2); color: #22c55e; border-color: #22c55e; }
 
-    /* 阶段标签 */
     .stage-震荡吸筹 { background: rgba(245, 158, 11, .2); color: #fcd34d; border-color: #f59e0b; }
     .stage-突破 { background: rgba(34, 197, 94, .2); color: #86efac; border-color: #22c55e; }
     .stage-回调扫损 { background: rgba(139, 92, 246, .2); color: #c4b5fd; border-color: #8b5cf6; }
@@ -237,6 +239,11 @@
     }
     .link-btn:hover { background: rgba(16,196,245,.25); }
 
+    .refresh-timer {
+      color: #8ca3ba;
+      font-size: 12px;
+    }
+
     @media (max-width: 1200px) {
       .stats { grid-template-columns: repeat(2, 1fr); }
       .detail-grid { grid-template-columns: 1fr; }
@@ -249,7 +256,7 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">v2.0 Final</div>
+  <div class="version-tag">v2.1 Optimized</div>
 
   <div class="container">
     <h1>⚡ 币安永续山寨币监控</h1>
@@ -262,8 +269,11 @@
     <!-- 列表页 -->
     <div id="list" class="tab-content active">
       <div class="toolbar">
-        <div class="time-info" id="last-update">最后更新：-</div>
-        <button onclick="loadData()">🔄 手动刷新</button>
+        <div>
+          <div class="time-info" id="last-update">最后更新：-</div>
+          <div class="refresh-timer" id="refresh-timer"></div>
+        </div>
+        <button id="refresh-btn" onclick="loadData()">🔄 手动刷新</button>
       </div>
 
       <div class="stats">
@@ -319,7 +329,10 @@
   <script>
     let allRows = [];
     let selectedRow = null;
-    let oiMap = {}; // 缓存 OI 数据
+    let oiMap = {};
+    let isLoading = false;
+    let nextRefreshTime = 0;
+    const REFRESH_INTERVAL = 300000; // 5分钟刷新一次（改成了5分钟）
 
     function switchTab(tab, el) {
       document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
@@ -337,9 +350,7 @@
 
     function colorClass(v) {
       if (v === null || v === undefined || isNaN(v)) return 'gray';
-      if (v > 0) return 'green';
-      if (v < 0) return 'red';
-      return 'gray';
+      return v > 0 ? 'green' : v < 0 ? 'red' : 'gray';
     }
 
     function fmtNum(n, d = 2) {
@@ -361,87 +372,46 @@
       }
     }
 
-    // 批量获取 OI 数据
+    // 优化：批量 OI 获取用 Promise.all，加快速度
     async function fetchOpenInterest(symbols) {
       const map = {};
-      try {
-        for (const symbol of symbols) {
+      const chunk = 30; // 每次并发 30 个请求
+      
+      for (let i = 0; i < symbols.length; i += chunk) {
+        const batch = symbols.slice(i, i + chunk);
+        const promises = batch.map(async symbol => {
           const url = `https://fapi.binance.com/fapi/v1/openInterest?symbol=${symbol}`;
           const data = await getJSON(url);
           if (data && data.openInterest) {
             map[symbol] = parseFloat(data.openInterest);
           }
-          // 稍微延迟，避免请求过快被限制
-          await new Promise(r => setTimeout(r, 50));
-        }
-      } catch (e) {
-        console.error('OI fetch error:', e);
+        });
+        await Promise.all(promises);
+        // 每批之间稍微延迟，避免限流
+        await new Promise(r => setTimeout(r, 200));
       }
       return map;
     }
 
-    // 核心：计算阶段（细分版）
     function calcStage(row) {
       const oi = row.oiMcap || 0;
       const vol = row.volMcap || 0;
       const fund = row.funding || 0;
       const price = row.priceChange || 0;
 
-      // 见顶：极端高位
-      if (fund > 0.08 && oi > 20 && vol > 30 && price > 15) {
-        return '见顶';
-      }
-
-      // 砸盘出货：急速下跌
-      if (price < -10 && oi > 8 && vol > 15 && fund < 0.02) {
-        return '砸盘出货';
-      }
-
-      // 二波浪 - 确认
-      if (oi > 15 && fund > 0.03 && price > -5 && price < 3) {
-        return '二波浪确认';
-      }
-
-      // 二波浪 - 反弹
-      if (oi > 8 && oi <= 15 && fund > 0.01 && fund < 0.05 && price > 0 && price <= 10) {
-        return '二波浪反弹';
-      }
-
-      // 二波浪 - 小幅
-      if (oi > 3 && oi <= 8 && Math.abs(fund) < 0.015 && price > -5 && price < 5) {
-        return '二波浪小幅';
-      }
-
-      // 突破：强势上升
-      if (oi > 10 && oi <= 18 && fund > 0.04 && fund < 0.08 && price > 8 && price < 18) {
-        return '突破';
-      }
-
-      // 回弹扫损：反弹向上
-      if (price > 3 && price < 12 && oi > 5 && oi <= 12 && fund > 0.015 && fund < 0.045) {
-        return '回弹扫损';
-      }
-
-      // 回调扫损：小幅回调
-      if (price > -8 && price < 0 && oi > 5 && oi < 15 && fund > -0.02 && fund < 0.015 && vol > 8) {
-        return '回调扫损';
-      }
-
-      // 缓升：温和上升
-      if (oi > 6 && oi < 12 && fund > 0 && fund <= 0.015 && price > 0 && price <= 5 && vol < 18) {
-        return '缓升';
-      }
-
-      // 缓跌：温和下跌
-      if (oi > 3 && oi < 10 && fund > -0.02 && fund < 0.01 && price > -5 && price < 0 && vol < 16) {
-        return '缓跌';
-      }
-
-      // 默认：震荡吸筹
+      if (fund > 0.08 && oi > 20 && vol > 30 && price > 15) return '见顶';
+      if (price < -10 && oi > 8 && vol > 15 && fund < 0.02) return '砸盘出货';
+      if (oi > 15 && fund > 0.03 && price > -5 && price < 3) return '二波浪确认';
+      if (oi > 8 && oi <= 15 && fund > 0.01 && fund < 0.05 && price > 0 && price <= 10) return '二波浪反弹';
+      if (oi > 3 && oi <= 8 && Math.abs(fund) < 0.015 && price > -5 && price < 5) return '二波浪小幅';
+      if (oi > 10 && oi <= 18 && fund > 0.04 && fund < 0.08 && price > 8 && price < 18) return '突破';
+      if (price > 3 && price < 12 && oi > 5 && oi <= 12 && fund > 0.015 && fund < 0.045) return '回弹扫损';
+      if (price > -8 && price < 0 && oi > 5 && oi < 15 && fund > -0.02 && fund < 0.015 && vol > 8) return '回调扫损';
+      if (oi > 6 && oi < 12 && fund > 0 && fund <= 0.015 && price > 0 && price <= 5 && vol < 18) return '缓升';
+      if (oi > 3 && oi < 10 && fund > -0.02 && fund < 0.01 && price > -5 && price < 0 && vol < 16) return '缓跌';
       return '震荡吸筹';
     }
 
-    // 核心：计算风险等级
     function calcRiskLevel(row) {
       const stage = row.stage;
       const oi = row.oiMcap || 0;
@@ -449,31 +419,20 @@
       const fund = row.funding || 0;
       const price = row.priceChange || 0;
 
-      // 风险极高
       if (stage === '见顶' || stage === '砸盘出货') return '风险极高';
       if (fund > 0.07 && oi > 18) return '风险极高';
-
-      // 较高风险
       if (stage === '二波浪确认' || stage === '二波浪反弹') return '较高风险';
       if (fund > 0.04 && oi > 12) return '较高风险';
       if (stage === '缓跌' && price < -3) return '较高风险';
-
-      // 平衡
       if (stage === '回调扫损' || stage === '回弹扫损') return '平衡';
       if (Math.abs(fund) < 0.02 && oi > 5 && oi < 12 && price > -3 && price < 5) return '平衡';
-
-      // 可介入
       if (stage === '缓升' || stage === '二波浪小幅') return '可介入';
       if (oi > 4 && oi <= 8 && fund > -0.01 && fund <= 0.02 && vol > 6) return '可介入';
-
-      // 非常好
       if (stage === '震荡吸筹' && vol > 10 && oi > 3 && oi <= 6) return '非常好';
       if (oi > 2 && oi <= 5 && Math.abs(fund) <= 0.008 && price > -3 && price < 3) return '非常好';
-
       return '平衡';
     }
 
-    // 多空拥挤度
     function calcLongShortStatus(fund) {
       if (fund > 0.04) return '⬆️ 挤压多头';
       if (fund < -0.04) return '⬇️ 挤压空头';
@@ -483,7 +442,6 @@
     function showDetail(row) {
       selectedRow = row;
       document.getElementById('detail-empty').style.display = 'none';
-
       const coin = row.symbol.replace('USDT', '');
       const riskEmoji = { '风险极高': '🔴', '较高风险': '🟠', '平衡': '🟡', '可介入': '🟢', '非常好': '💚' };
 
@@ -573,6 +531,16 @@
     }
 
     async function loadData() {
+      if (isLoading) {
+        console.log('Loading already in progress');
+        return;
+      }
+
+      isLoading = true;
+      const btn = document.getElementById('refresh-btn');
+      btn.disabled = true;
+      btn.innerText = '⏳ 加载中...';
+
       const status = document.getElementById('status');
       const table = document.getElementById('table');
       const tbody = document.getElementById('tbody');
@@ -580,9 +548,9 @@
       status.style.display = 'block';
       status.innerText = '加载中...';
       table.style.display = 'none';
-      tbody.innerHTML = '';
 
       try {
+        // 并发获取所有数据
         const [exchangeInfo, ticker24h, premiumIndex, gecko] = await Promise.all([
           getJSON('https://fapi.binance.com/fapi/v1/exchangeInfo'),
           getJSON('https://fapi.binance.com/fapi/v1/ticker/24hr'),
@@ -595,15 +563,13 @@
         const symbols = exchangeInfo.symbols
           .filter(s => s.contractType === 'PERPETUAL' && s.quoteAsset === 'USDT' && s.status === 'TRADING')
           .map(s => s.symbol)
-          .slice(0, 120);
+          .slice(0, 100); // 减到 100 个，加快速度
 
-        // 获取 OI 数据
-        status.innerText = '加载 OI 数据中...';
+        status.innerText = '加载合约数据...';
         oiMap = await fetchOpenInterest(symbols);
 
         const tickerMap = Object.fromEntries(ticker24h.map(x => [x.symbol, x]));
         const premiumMap = Object.fromEntries(premiumIndex.map(x => [x.symbol, x]));
-
         const mcapMap = {};
         gecko.forEach(x => {
           mcapMap[(x.symbol || '').toUpperCase() + 'USDT'] = x.market_cap;
@@ -622,8 +588,6 @@
           const quoteVol = parseFloat(t.quoteVolume || 0);
           const funding = parseFloat(p.lastFundingRate || 0) * 100;
           const priceChange = parseFloat(t.priceChangePercent || 0);
-
-          // OI 从我们的 map 里取
           const oi = oiMap[symbol] || 0;
           const oiValue = oi * price;
           const mcap = mcapMap[symbol] || null;
@@ -640,12 +604,10 @@
             oi, oiValue, volMcap, oiMcap
           };
 
-          // 核心计算
           row.stage = calcStage(row);
           row.riskLevel = calcRiskLevel(row);
           row.longShortStatus = calcLongShortStatus(funding);
 
-          // 综合评分
           let score = 50;
           if (row.riskLevel === '非常好') score = 90;
           else if (row.riskLevel === '可介入') score = 75;
@@ -663,7 +625,6 @@
         rows.sort((a, b) => b.score - a.score);
         allRows = rows;
 
-        // 统计
         document.getElementById('stat-total').innerText = rows.length;
         document.getElementById('stat-good').innerText = 
           rows.filter(x => x.riskLevel === '非常好' || x.riskLevel === '可介入').length;
@@ -672,7 +633,7 @@
         const avgFunding = rows.length ? rows.reduce((s, x) => s + x.funding, 0) / rows.length : 0;
         document.getElementById('stat-funding').innerText = avgFunding.toFixed(4) + '%';
 
-        // 渲染表格
+        tbody.innerHTML = '';
         rows.slice(0, 100).forEach(row => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
@@ -693,19 +654,30 @@
 
         status.style.display = 'none';
         table.style.display = 'table';
-        document.getElementById('last-update').innerText = '最后更新：' + new Date().toLocaleString();
+        
+        const now = new Date();
+        document.getElementById('last-update').innerText = '最后更新：' + now.toLocaleString();
+        nextRefreshTime = now.getTime() + REFRESH_INTERVAL;
 
       } catch (e) {
         console.error(e);
         status.style.display = 'block';
         status.innerText = '❌ 加载失败：' + e.message;
         table.style.display = 'none';
+      } finally {
+        isLoading = false;
+        btn.disabled = false;
+        btn.innerText = '🔄 手动刷新';
       }
     }
 
-    // 页面加载和自动刷新
-    loadData();
-    setInterval(loadData, 60000); // 每 60 秒刷新一次
-  </script>
-</body>
-</html>
+    // 倒计时显示
+    function updateRefreshTimer() {
+      if (nextRefreshTime === 0) return;
+      const now = new Date().getTime();
+      const remaining = Math.max(0, Math.floor((nextRefreshTime - now) / 1000));
+      const timerEl = document.getElementById('refresh-timer');
+      if (remaining > 0) {
+        timerEl.innerText = `下次自动刷新：${remaining}秒后`;
+      } else {
+        timerEl.innerText
