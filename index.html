@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>币安永续精选监控 v6 - 自动刷新版</title>
+  <title>币安永续精选监控 v7 - 共振系统</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -94,21 +94,6 @@
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
-    }
-    button {
-      background: #11b7e6;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 10px 16px;
-      cursor: pointer;
-      font-size: 13px;
-      transition: all 0.2s;
-    }
-    button:hover { opacity: .85; }
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
     }
     .section {
       margin-bottom: 30px;
@@ -208,9 +193,6 @@
     .risk-等待回调 { background: rgba(245, 158, 11, .2); color: #fcd34d; border-color: #f59e0b; }
     .risk-现在可入 { background: rgba(34, 197, 94, .2); color: #86efac; border-color: #22c55e; }
 
-    .trend-up { color: #22c55e; font-weight: bold; }
-    .trend-down { color: #ef4444; font-weight: bold; }
-
     .detail-box {
       background: rgba(10, 22, 40, .9);
       border: 1px solid rgba(16,196,245,.18);
@@ -224,6 +206,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      flex-wrap: wrap;
     }
     .detail-grid {
       display: grid;
@@ -275,66 +258,93 @@
     }
     .link-btn:hover { background: rgba(16,196,245,.25); }
 
-    .checklist-box {
+    .signals-box {
       background: rgba(34,197,94,.1);
       border: 1px solid rgba(34,197,94,.3);
       border-radius: 10px;
       padding: 14px;
       margin-top: 16px;
-      color: #86efac;
-      font-size: 12px;
-      line-height: 1.6;
     }
 
-    .checklist-box h3 {
+    .signals-box h3 {
       color: #22c55e;
       margin-bottom: 10px;
       font-size: 14px;
     }
 
-    .checklist-box ul {
-      list-style: none;
-      padding-left: 0;
+    .signals-box .signal-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
     }
 
-    .checklist-box li {
-      margin-bottom: 6px;
-      padding-left: 20px;
-      position: relative;
-    }
-
-    .checklist-box li:before {
-      content: '✓';
-      position: absolute;
-      left: 0;
-      color: #22c55e;
-    }
-
-    .reason-box {
-      background: rgba(168,85,247,.1);
-      border: 1px solid rgba(168,85,247,.3);
-      border-radius: 10px;
-      padding: 12px;
-      margin-top: 10px;
-      color: #d8b4fe;
+    .signal-tag {
+      background: rgba(34,197,94,.2);
+      color: #86efac;
+      padding: 6px 12px;
+      border-radius: 20px;
       font-size: 12px;
-      line-height: 1.5;
+      border: 1px solid rgba(34,197,94,.4);
     }
 
-    .reason-box h3 {
-      color: #a855f7;
-      margin-bottom: 8px;
-    }
-
-    .notice-box {
+    .breakdown-box {
       background: rgba(59, 130, 246, .1);
       border: 1px solid rgba(59, 130, 246, .3);
       border-radius: 10px;
       padding: 14px;
-      margin-top: 16px;
+      margin-top: 14px;
+    }
+
+    .breakdown-box h3 {
       color: #93c5fd;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    .breakdown-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      font-size: 12px;
+    }
+
+    .breakdown-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px;
+      background: rgba(59, 130, 246, .05);
+      border-radius: 6px;
+      color: #93c5fd;
+    }
+
+    .breakdown-item .label { color: #7dd3fc; }
+    .breakdown-item .value { color: #93c5fd; font-weight: bold; }
+
+    .notice-box {
+      background: rgba(168,85,247,.1);
+      border: 1px solid rgba(168,85,247,.3);
+      border-radius: 10px;
+      padding: 14px;
+      margin-top: 16px;
+      color: #d8b4fe;
       font-size: 12px;
       line-height: 1.6;
+    }
+
+    .notice-box h3 {
+      color: #a855f7;
+      margin-bottom: 8px;
+    }
+
+    .resonance-score {
+      display: inline-block;
+      background: linear-gradient(135deg, rgba(168, 85, 247, .4), rgba(16, 196, 245, .4));
+      color: #e5eefb;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 16px;
+      border: 1px solid rgba(168, 85, 247, .5);
     }
 
     @media (max-width: 1200px) {
@@ -351,11 +361,11 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">v6 自动刷新版</div>
+  <div class="version-tag">v7 共振系统</div>
 
   <div class="container">
     <h1>⚡ 币安永续精选监控</h1>
-    <p class="subtitle">自动每分钟刷新 | 趋势 + 价格走势 | 妖币 + 建议买入</p>
+    <p class="subtitle">自动每分钟刷新 | 共振系统 | 妖币 + 建议买入</p>
 
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('list', this)">📊 精选币种</button>
@@ -399,11 +409,11 @@
                 <th>合约</th>
                 <th>价格</th>
                 <th>市值</th>
-                <th>OI/Mcap</th>
-                <th>OI趋势</th>
-                <th>Funding</th>
-                <th>Fund趋势</th>
                 <th>24h%</th>
+                <th>OI/Mcap</th>
+                <th>Vol/Mcap</th>
+                <th>Funding</th>
+                <th>共振分</th>
                 <th>入场建议</th>
               </tr>
             </thead>
@@ -421,11 +431,11 @@
             <div class="value" id="stat-buy">0</div>
           </div>
           <div class="card">
-            <div class="label">平均评分</div>
+            <div class="label">平均共振分</div>
             <div class="value" id="stat-avg-score">-</div>
           </div>
           <div class="card">
-            <div class="label">最高评分</div>
+            <div class="label">最高共振分</div>
             <div class="value" id="stat-max-score">-</div>
           </div>
         </div>
@@ -437,13 +447,12 @@
                 <th>合约</th>
                 <th>价格</th>
                 <th>市值</th>
-                <th>Vol/Mcap</th>
-                <th>OI/Mcap</th>
-                <th>OI趋势</th>
-                <th>Funding</th>
-                <th>Fund趋势</th>
                 <th>24h%</th>
-                <th>质量评分</th>
+                <th>OI/Mcap</th>
+                <th>Vol/Mcap</th>
+                <th>Funding</th>
+                <th>共振分</th>
+                <th>信号数</th>
               </tr>
             </thead>
             <tbody id="buy-tbody"></tbody>
@@ -466,7 +475,7 @@
     let selectedRow = null;
     let oiMap = {};
     let isLoading = false;
-    let previousData = {}; // 存储上一次的数据，用于计算趋势
+    let previousData = {};
     let autoRefreshInterval = null;
 
     function switchTab(tab, el) {
@@ -494,24 +503,6 @@
       if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(2) + 'M';
       if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(2) + 'K';
       return Number(n).toFixed(d);
-    }
-
-    function getTrendEmoji(current, previous) {
-      if (!previous || previous === 0) return '—';
-      if (current > previous * 1.05) return '📈'; // 上升 5% 以上
-      if (current < previous * 0.95) return '📉'; // 下降 5% 以上
-      return '➡️'; // 基本平稳
-    }
-
-    function getTrendClass(current, previous, isPositive = true) {
-      if (!previous) return '';
-      const isUp = current > previous;
-      // 如果是正向指标（比如 OI），上升是好的；如果是反向指标（比如 Funding），下降是好的
-      if (isPositive) {
-        return isUp ? 'trend-up' : 'trend-down';
-      } else {
-        return isUp ? 'trend-down' : 'trend-up';
-      }
     }
 
     async function getJSON(url) {
@@ -545,86 +536,161 @@
       return map;
     }
 
-    // 妖币检测 - 加入趋势判断
-    function detectYaoCoin(row) {
-      const oi = row.oiMcap || 0;
-      const vol = row.volMcap || 0;
-      const fund = row.funding || 0;
-      const price = row.priceChange || 0;
-      const mcap = row.mcap || 0;
+    // 共振评分系统 - 核心逻辑
+    function calculateResonanceScore(row, previous) {
+      let score = 0;
+      let signals = [];
 
-      // 妖币的严格条件
-      const isLowMcap = mcap && mcap < 5e7;
-      const isLowOI = oi >= 1 && oi <= 5;
-      const isActiveVol = vol >= 5 && vol <= 15;
-      const isBalancedFund = fund >= -0.03 && fund <= 0.01;
-      const isBeaten = price < -10;
+      // ========== 价格信号 ==========
+      let priceSignal = 0;
+      
+      if (row.priceChange < -10 && row.priceChange > -50) {
+        priceSignal += 20;
+        signals.push('价格在底部');
+      }
+      
+      if (previous && row.price > previous.price) {
+        priceSignal += 20;
+        signals.push('价格反弹中');
+      }
+      
+      score += priceSignal;
 
-      const yaoScore = [isLowMcap, isLowOI, isActiveVol, isBalancedFund, isBeaten].filter(x => x).length;
+      // ========== OI 信号 ==========
+      let oiSignal = 0;
+      
+      if (row.oiMcap && row.oiMcap > 1 && row.oiMcap < 15) {
+        oiSignal += 15;
+        signals.push('OI活跃');
+      }
+      
+      if (previous && row.oiMcap > previous.oiMcap * 0.95) {
+        oiSignal += 15;
+        signals.push('OI维持');
+      }
+      
+      score += oiSignal;
 
-      if (yaoScore >= 5) {
-        // 加入价格走势判断
+      // ========== Funding 信号 ==========
+      let fundingSignal = 0;
+      
+      if (row.funding > -0.03 && row.funding < 0.05) {
+        fundingSignal += 15;
+        signals.push('Funding平衡');
+      }
+      
+      if (previous && row.funding > previous.funding) {
+        fundingSignal += 10;
+        signals.push('Funding上升');
+      }
+      
+      score += fundingSignal;
+
+      // ========== 成交信号 ==========
+      let volumeSignal = 0;
+      
+      if (row.volMcap && row.volMcap > 5 && row.volMcap < 30) {
+        volumeSignal += 15;
+        signals.push('成交活跃');
+      }
+      
+      score += volumeSignal;
+
+      // ========== 市值信号 ==========
+      let mcapSignal = 0;
+      
+      if (row.mcap && row.mcap > 0 && row.mcap < 1e9) {
+        mcapSignal += 10;
+        signals.push('市值合理');
+      }
+      
+      score += mcapSignal;
+
+      // ========== 共振加分（关键！） ==========
+      const resonanceBonus = signals.length * 5;
+      score += resonanceBonus;
+
+      return {
+        totalScore: Math.min(100, score),
+        signals: signals,
+        breakdown: {
+          priceSignal,
+          oiSignal,
+          fundingSignal,
+          volumeSignal,
+          mcapSignal,
+          resonanceBonus
+        }
+      };
+    }
+
+    // 妖币检测 - 新逻辑
+    function detectYaoCoinV2(row, previous) {
+      const resonance = calculateResonanceScore(row, previous);
+      
+      const conditions = {
+        priceAtBottom: row.priceChange < -10 && row.priceChange > -50,
+        oiActive: row.oiMcap && row.oiMcap > 1 && row.oiMcap < 15,
+        fundingBalanced: row.funding > -0.03 && row.funding < 0.05,
+        volumeActive: row.volMcap && row.volMcap > 5 && row.volMcap < 30,
+        mcapSmallButValid: row.mcap && row.mcap > 1e6 && row.mcap < 1e9,
+        priceRebounding: previous && row.price > previous.price,
+        oiHolding: previous && row.oiMcap > previous.oiMcap * 0.95,
+      };
+
+      const conditionsMet = Object.values(conditions).filter(x => x).length;
+
+      if (conditionsMet >= 5 && resonance.totalScore >= 60) {
         let riskLevel = '';
         
-        if (price < -20) {
-          riskLevel = '🔴 高风险观察'; // 跌太多，等反弹
-        } else if (price < -10 && price >= -15) {
-          // 检查是否有反弹迹象（需要历史数据）
-          const prev = previousData[row.symbol];
-          if (prev && row.price > prev.price) {
-            riskLevel = '🟢 现在可入'; // 在反弹
-          } else {
-            riskLevel = '🟡 等待回调'; // 继续观察
-          }
+        if (row.priceChange < -30) {
+          riskLevel = '🔴 高风险观察';
+        } else if (row.priceChange < -15) {
+          riskLevel = conditions.priceRebounding ? '🟢 现在可入' : '🟡 等待回调';
         } else {
           riskLevel = '🟢 现在可入';
         }
 
-        return { isYao: true, riskLevel, yaoScore };
+        return {
+          isYao: true,
+          riskLevel,
+          yaoScore: resonance.totalScore,
+          signals: resonance.signals,
+          breakdown: resonance.breakdown
+        };
       }
 
       return { isYao: false };
     }
 
-    // 建议买入检测 - 放宽标准，加入趋势
-    function detectBuyCoin(row) {
-      const oi = row.oiMcap || 0;
-      const vol = row.volMcap || 0;
-      const fund = row.funding || 0;
-      const price = row.priceChange || 0;
-      const mcap = row.mcap || 0;
+    // 建议买入检测 - 新逻辑
+    function detectBuyCoinV2(row, previous) {
+      const resonance = calculateResonanceScore(row, previous);
 
-      // 放宽标准：满足 4/5 条件就行
-      const okOI = oi >= 2.5 && oi <= 10; // 2.5-10%
-      const okVol = vol >= 6 && vol <= 25; // 6-25%
-      const okFund = fund >= -0.015 && fund <= 0.025; // 稍宽松
-      const okPrice = price >= -3 && price <= 8; // -3~8%
-      const goodMcap = mcap && mcap > 5e7; // > 5000万
+      const conditions = {
+        priceStable: row.priceChange > -3 && row.priceChange < 8,
+        oiModerate: row.oiMcap && row.oiMcap > 2.5 && row.oiMcap < 10,
+        fundingWarm: row.funding > -0.02 && row.funding < 0.03,
+        volumeModerate: row.volMcap && row.volMcap > 6 && row.volMcap < 25,
+        mcapGood: row.mcap && row.mcap > 5e7,
+        oiHolding: previous && row.oiMcap > previous.oiMcap * 0.95,
+        fundingWarmth: row.funding > 0.001 && row.funding < 0.02,
+      };
 
-      const conditions = [okOI, okVol, okFund, okPrice, goodMcap];
-      const score = conditions.filter(x => x).length;
+      const conditionsMet = Object.values(conditions).filter(x => x).length;
 
-      if (score >= 4) {
-        // 加入趋势加分
-        let buyScore = 50 + score * 10;
+      if (conditionsMet >= 5 && resonance.totalScore >= 70) {
+        let buyScore = resonance.totalScore;
         
-        // 如果 OI 在上升，加分
-        const prev = previousData[row.symbol];
-        if (prev && row.oiMcap > prev.oiMcap) {
-          buyScore += 5;
-        }
+        if (conditionsMet >= 6) buyScore += 5;
+        if (conditionsMet >= 7) buyScore += 5;
 
-        // 如果 Funding 在下降（空头有利），加分
-        if (prev && row.funding < prev.funding) {
-          buyScore += 5;
-        }
-
-        // 如果价格在反弹，加分
-        if (prev && row.price > prev.price) {
-          buyScore += 3;
-        }
-
-        return { isBuy: true, buyScore: Math.min(100, buyScore) };
+        return {
+          isBuy: true,
+          buyScore: Math.min(100, buyScore),
+          signals: resonance.signals,
+          breakdown: resonance.breakdown
+        };
       }
 
       return { isBuy: false };
@@ -638,25 +704,44 @@
       const typeEmoji = row.level === '妖币' ? '💎' : '🚀';
       const levelName = row.level === '妖币' ? `有妖币潜力 (${row.riskLevel})` : '建议买入';
 
-      // 生成审查清单
-      let checklist = [];
-      if (row.level === '妖币') {
-        if (row.oiMcap < 3) checklist.push('OI热度极低，需要查看清算热力图是否有支撑');
-        if (row.priceChange < -15) checklist.push('价格暴跌，需要看清算分布和底部支撑');
-        if (row.mcap < 5e7) checklist.push('市值极小，需要查看持仓分布，警惕大户砸盘');
-      } else {
-        if (row.oiMcap < 3) checklist.push('OI热度较低，需要确认有无足够流动性');
-        if (row.volMcap > 20) checklist.push('成交热度较高，需要注意是否顶部过热');
-        if (row.fund > 0.02) checklist.push('Funding 偏高，多头有压力，需要谨慎');
-      }
+      const signalsHTML = row.signals && row.signals.length > 0 ? `
+        <div class="signals-box">
+          <h3>✅ 共振信号 (${row.signals.length} 个)</h3>
+          <div class="signal-list">
+            ${row.signals.map(s => `<span class="signal-tag">${s}</span>`).join('')}
+          </div>
+        </div>
+      ` : '';
 
-      const checklistHTML = checklist.length > 0 ? `
-        <div class="checklist-box">
-          <h3>🔍 你需要手动审查：</h3>
-          <ul>
-            ${checklist.map(c => `<li>${c}</li>`).join('')}
-          </ul>
-          <p style="margin-top: 10px;">打开 CoinGlass 看数据，5分钟快速验证</p>
+      const breakdownHTML = row.breakdown ? `
+        <div class="breakdown-box">
+          <h3>📊 评分细节</h3>
+          <div class="breakdown-grid">
+            <div class="breakdown-item">
+              <span class="label">价格信号</span>
+              <span class="value">${row.breakdown.priceSignal}</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="label">OI 信号</span>
+              <span class="value">${row.breakdown.oiSignal}</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="label">Funding 信号</span>
+              <span class="value">${row.breakdown.fundingSignal}</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="label">成交信号</span>
+              <span class="value">${row.breakdown.volumeSignal}</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="label">市值信号</span>
+              <span class="value">${row.breakdown.mcapSignal}</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="label">共振加分</span>
+              <span class="value">${row.breakdown.resonanceBonus}</span>
+            </div>
+          </div>
         </div>
       ` : '';
 
@@ -664,7 +749,8 @@
         <div class="detail-title">
           ${row.symbol}
           <span class="tag level-${row.level}">${typeEmoji} ${levelName}</span>
-          ${row.level === '妖币' ? `<span class="tag risk-${row.riskLevel.replace('🔴 ', '').replace('🟡 ', '').replace('🟢 ', '')}">${row.riskLevel}</span>` : `<span style="color: #10c4f5; font-weight: bold; margin-left: auto;">${row.buyScore.toFixed(1)}/100</span>`}
+          ${row.level === '妖币' ? `<span class="tag risk-${row.riskLevel.replace('🔴 ', '').replace('🟡 ', '').replace('🟢 ', '')}">${row.riskLevel}</span>` : ''}
+          <span class="resonance-score">共振分: ${(row.yaoScore || row.buyScore).toFixed(1)}/100</span>
         </div>
 
         <div class="link-group">
@@ -730,47 +816,56 @@
           </div>
 
           <div class="detail-card">
-            <h3>🎯 趋势判断</h3>
+            <h3>🎯 共振等级</h3>
             <div class="row">
-              <span class="row-label">OI趋势</span>
-              <span class="row-value">${row.oiTrend || '—'}</span>
+              <span class="row-label">信号数量</span>
+              <span class="row-value">${row.signals ? row.signals.length : 0} 个</span>
             </div>
             <div class="row">
-              <span class="row-label">Funding趋势</span>
-              <span class="row-value">${row.fundingTrend || '—'}</span>
-            </div>
-            <div class="row">
-              <span class="row-label">价格方向</span>
-              <span class="row-value ${colorClass(row.priceChange)}">${row.priceChange > 0 ? '📈 上升' : '📉 下降'}</span>
-            </div>
-            <div class="row">
-              <span class="row-label">热度评估</span>
+              <span class="row-label">共振强度</span>
               <span class="row-value">${
-                row.oiMcap < 2 ? '❄️ 极低' :
-                row.oiMcap >= 3 && row.oiMcap <= 10 ? '✅ 适中' :
-                row.oiMcap > 15 ? '🔥 过热' :
-                '⚖️ 一般'
+                (row.yaoScore || row.buyScore) >= 80 ? '🔥 强' :
+                (row.yaoScore || row.buyScore) >= 70 ? '✅ 中强' :
+                (row.yaoScore || row.buyScore) >= 60 ? '⚖️ 中' :
+                '❄️ 弱'
+              }</span>
+            </div>
+            <div class="row">
+              <span class="row-label">评分</span>
+              <span class="row-value">${(row.yaoScore || row.buyScore).toFixed(1)}/100</span>
+            </div>
+            <div class="row">
+              <span class="row-label">推荐度</span>
+              <span class="row-value">${
+                (row.yaoScore || row.buyScore) >= 85 ? '⭐⭐⭐⭐⭐' :
+                                (row.yaoScore || row.buyScore) >= 75 ? '⭐⭐⭐⭐' :
+                (row.yaoScore || row.buyScore) >= 65 ? '⭐⭐⭐' :
+                '⭐⭐'
               }</span>
             </div>
           </div>
         </div>
 
-        ${checklistHTML}
+        ${signalsHTML}
+
+        ${breakdownHTML}
 
         <div class="notice-box">
           <strong>📌 操作建议：</strong><br>
           <div style="margin-top: 8px;">
             ${row.level === '妖币' ? `
-              ${row.riskLevel.includes('高风险') ? '• 下跌超20%，风险高。等待反弹信号或更低价格。' : ''}
-              ${row.riskLevel.includes('等待') ? '• 下跌10-15%。继续观察，等待反弹或支撑确认。' : ''}
-              ${row.riskLevel.includes('现在可入') ? '• 风险回报比较平衡，可以小额试单分批建仓。' : ''}
+              ${row.riskLevel.includes('高风险') ? '• 下跌 > 30%，极端风险。等待反弹信号或更低价格。' : ''}
+              ${row.riskLevel.includes('等待') ? '• 下跌 15-30%。继续观察，等待反弹或支撑确认。' : ''}
+              ${row.riskLevel.includes('现在可入') ? '• 多个信号共振，风险-回报平衡。可小额试单。' : ''}
               <br><br>
-              • 务必查看 CoinGlass 数据<br>
-              • 做好止损准备（妖币高风险）
+              • 必须查看 CoinGlass 清算和持仓数据<br>
+              • 做好 -5~-10% 的止损准备<br>
+              • 妖币高波动，控制仓位
             ` : `
-              • 技术面对标，相对安全的建仓机会<br>
-              • 查看清算和持仓数据确认安全性<br>
-              • 建议分批建仓，设置 -3~-5% 止损
+              • 共振评分 ${(row.buyScore).toFixed(1)}/100，多个指标指向买入<br>
+              • 相对安全的建仓机会<br>
+              • 建议分批建仓，设置 -3~-5% 止损<br>
+              • 可在 ${(row.buyScore >= 80 ? '0.5-1%' : '0.3-0.5%')} 仓位试单
             `}
           </div>
         </div>
@@ -789,16 +884,16 @@
       } else {
         allRows.yao.forEach(row => {
           const tr = document.createElement('tr');
-                    const riskClass = row.riskLevel.replace('🔴 ', '').replace('🟡 ', '').replace('🟢 ', '');
+          const riskClass = row.riskLevel.replace('🔴 ', '').replace('🟡 ', '').replace('🟢 ', '');
           tr.innerHTML = `
             <td class="symbol">${row.symbol}</td>
             <td>$${fmtNum(row.price, 6)}</td>
             <td>$${fmtNum(row.mcap, 2)}</td>
-            <td class="${colorClass(row.oiMcap)}">${row.oiMcap ? row.oiMcap.toFixed(1) + '%' : '-'}</td>
-            <td class="${getTrendClass(row.oiMcap, previousData[row.symbol]?.oiMcap, true)}">${row.oiTrend}</td>
-            <td class="${colorClass(row.funding)}">${row.funding.toFixed(3)}%</td>
-            <td class="${getTrendClass(row.funding, previousData[row.symbol]?.funding, false)}">${row.fundingTrend}</td>
             <td class="${colorClass(row.priceChange)}">${row.priceChange.toFixed(1)}%</td>
+            <td class="${colorClass(row.oiMcap)}">${row.oiMcap ? row.oiMcap.toFixed(1) + '%' : '-'}</td>
+            <td class="${colorClass(row.volMcap)}">${row.volMcap ? row.volMcap.toFixed(1) + '%' : '-'}</td>
+            <td class="${colorClass(row.funding)}">${row.funding.toFixed(3)}%</td>
+            <td style="color: #a855f7; font-weight: bold;">${row.yaoScore.toFixed(1)}</td>
             <td><span class="tag risk-${riskClass}">${row.riskLevel}</span></td>
           `;
           tr.addEventListener('click', () => showDetail(row));
@@ -828,13 +923,12 @@
             <td class="symbol">${row.symbol}</td>
             <td>$${fmtNum(row.price, 6)}</td>
             <td>$${fmtNum(row.mcap, 2)}</td>
-            <td class="${colorClass(row.volMcap)}">${row.volMcap ? row.volMcap.toFixed(1) + '%' : '-'}</td>
-            <td class="${colorClass(row.oiMcap)}">${row.oiMcap ? row.oiMcap.toFixed(1) + '%' : '-'}</td>
-            <td class="${getTrendClass(row.oiMcap, previousData[row.symbol]?.oiMcap, true)}">${row.oiTrend}</td>
-            <td class="${colorClass(row.funding)}">${row.funding.toFixed(3)}%</td>
-            <td class="${getTrendClass(row.funding, previousData[row.symbol]?.funding, false)}">${row.fundingTrend}</td>
             <td class="${colorClass(row.priceChange)}">${row.priceChange.toFixed(1)}%</td>
-            <td style="color: #10c4f5; font-weight: bold;">${row.buyScore.toFixed(1)}</td>
+            <td class="${colorClass(row.oiMcap)}">${row.oiMcap ? row.oiMcap.toFixed(1) + '%' : '-'}</td>
+            <td class="${colorClass(row.volMcap)}">${row.volMcap ? row.volMcap.toFixed(1) + '%' : '-'}</td>
+            <td class="${colorClass(row.funding)}">${row.funding.toFixed(3)}%</td>
+            <td style="color: #22c55e; font-weight: bold;">${row.buyScore.toFixed(1)}</td>
+            <td style="color: #10c4f5; font-weight: bold;">${row.signals ? row.signals.length : 0}</td>
           `;
           tr.addEventListener('click', () => showDetail(row));
           buyTbody.appendChild(tr);
@@ -906,26 +1000,28 @@
 
           const row = {
             symbol, price, mcap, quoteVol, funding, priceChange,
-            oi, oiValue, volMcap, oiMcap,
-            oiTrend: getTrendEmoji(oiMcap, previousData[symbol]?.oiMcap),
-            fundingTrend: getTrendEmoji(funding, previousData[symbol]?.funding)
+            oi, oiValue, volMcap, oiMcap
           };
 
           // 检测妖币
-          const yaoCheck = detectYaoCoin(row);
+          const yaoCheck = detectYaoCoinV2(row, previousData[symbol]);
           if (yaoCheck.isYao) {
             row.level = '妖币';
             row.riskLevel = yaoCheck.riskLevel;
             row.yaoScore = yaoCheck.yaoScore;
+            row.signals = yaoCheck.signals;
+            row.breakdown = yaoCheck.breakdown;
             allRows.yao.push(row);
             continue;
           }
 
           // 检测建议买入
-          const buyCheck = detectBuyCoin(row);
+          const buyCheck = detectBuyCoinV2(row, previousData[symbol]);
           if (buyCheck.isBuy) {
             row.level = '建议';
             row.buyScore = buyCheck.buyScore;
+            row.signals = buyCheck.signals;
+            row.breakdown = buyCheck.breakdown;
             allRows.buy.push(row);
           }
         }
@@ -950,7 +1046,6 @@
 
       } catch (e) {
         console.error(e);
-        console.error('❌ 加载失败：' + e.message);
       } finally {
         isLoading = false;
         document.getElementById('refresh-dot').classList.remove('loading');
@@ -961,7 +1056,6 @@
     function startAutoRefresh() {
       let countdown = 60;
       
-      // 立即加载一次
       loadData();
 
       autoRefreshInterval = setInterval(() => {
@@ -975,10 +1069,8 @@
       }, 1000);
     }
 
-    // 页面加载时启动自动刷新
     startAutoRefresh();
 
-    // 页面卸载时清除定时器
     window.addEventListener('beforeunload', () => {
       if (autoRefreshInterval) {
         clearInterval(autoRefreshInterval);
