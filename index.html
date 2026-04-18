@@ -23,6 +23,9 @@
       --text-secondary: #8ca3ba;
       --border: rgba(16, 196, 245, 0.25);
       --border-light: rgba(16, 196, 245, 0.12);
+      --long: #22c55e;
+      --short: #ef4444;
+      --neutral: #8ca3ba;
     }
 
     body {
@@ -289,12 +292,6 @@
       border-left: 3px solid var(--primary);
     }
 
-    .section-title.empty {
-      color: var(--warning);
-      background: rgba(245, 158, 11, 0.1);
-      border-left: 3px solid var(--warning);
-    }
-
     /* ===== 硬币卡片网格 ===== */
     .coin-grid {
       display: grid;
@@ -436,6 +433,28 @@
       50% { opacity: 0.7; }
     }
 
+    /* ===== 做多做空标签 ===== */
+    .tag-long {
+      background: rgba(34, 197, 94, 0.5);
+      color: #4ade80;
+      border-color: rgba(34, 197, 94, 0.8);
+      font-weight: 900;
+    }
+
+    .tag-short {
+      background: rgba(239, 68, 68, 0.5);
+      color: #fca5a5;
+      border-color: rgba(239, 68, 68, 0.8);
+      font-weight: 900;
+    }
+
+    .tag-neutral {
+      background: rgba(140, 163, 186, 0.3);
+      color: #cbd5e1;
+      border-color: rgba(140, 163, 186, 0.6);
+      font-weight: 700;
+    }
+
     /* ===== Wyckoff阶段标签 ===== */
     .wyckoff-phases {
       background: rgba(16, 196, 245, 0.08);
@@ -555,6 +574,43 @@
       background: rgba(168, 85, 247, 0.12);
       border-left-color: rgba(168, 85, 247, 0.5);
       color: #d8b4fe;
+    }
+
+    /* ===== 操作指南 ===== */
+    .operation-guide {
+      background: linear-gradient(135deg, rgba(16, 196, 245, 0.12), rgba(168, 85, 247, 0.08));
+      border: 1px solid rgba(16, 196, 245, 0.25);
+      border-radius: 6px;
+      padding: 8px;
+      margin-bottom: 8px;
+      font-size: 10px;
+      line-height: 1.6;
+    }
+
+    .operation-guide-title {
+      color: var(--primary);
+      font-weight: bold;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .operation-guide-content {
+      color: var(--text-secondary);
+    }
+
+    .operation-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 3px;
+      padding: 2px 0;
+    }
+
+    .operation-row strong {
+      color: var(--text-primary);
+      min-width: 60px;
     }
 
     /* ===== 动态阶段分析 ===== */
@@ -892,7 +948,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">建议优秀</span>
-          <span class="stat-value" id="stat-buy-prime">0</span>
+          <span-value" id="stat-buy-prime">0</span>
         </div>
       </div>
     </div>
@@ -1012,6 +1068,105 @@
       event.target.classList.add('active');
     }
 
+    // ======================== 做多做空判断 ========================
+    
+    class TrendAnalyzer {
+      constructor(row, prev, market) {
+        this.row = row;
+        this.prev = prev;
+        this.market = market;
+        this.trend = 'NEUTRAL';
+        this.strength = 0;
+        this.reason = '';
+      }
+
+      analyzeTrend() {
+        const p = this.row;
+        const prev = this.prev;
+
+        // === 强烈看多信号 ===
+        if (p.priceChange > 15 && p.volMcap > 40 && p.oiMcap > 25 && p.funding > 0.015) {
+          this.trend = 'LONG';
+          this.strength = 90;
+          this.reason = '价格暴升+成交爆量+OI堆积+正资费';
+          return;
+        }
+
+        // === 中度看多 ===
+        if (p.priceChange > 8 && p.volMcap > 25 && p.oiMcap > 15) {
+          if (prev && p.priceChange > prev.priceChange) {
+            this.trend = 'LONG';
+            this.strength = 75;
+            this.reason = '价格持续上升+成交放量';
+            return;
+          }
+        }
+
+        // === 弱势看多 ===
+        if (p.priceChange > 3 && p.volMcap > 15 && p.funding > 0.008) {
+          this.trend = 'LONG';
+          this.strength = 55;
+          this.reason = '温和上涨+成交温和';
+          return;
+        }
+
+        // === 强烈看空信号 ===
+        if (p.priceChange < -15 && p.volMcap > 40 && p.oiMcap > 25 && p.funding < -0.015) {
+          this.trend = 'SHORT';
+          this.strength = 90;
+          this.reason = '价格暴跌+成交爆量+OI堆积+负资费';
+          return;
+        }
+
+        // === 中度看空 ===
+        if (p.priceChange < -8 && p.volMcap > 25 && p.oiMcap > 15) {
+          if (prev && p.priceChange < prev.priceChange) {
+            this.trend = 'SHORT';
+            this.strength = 75;
+            this.reason = '价格持续下跌+成交放量';
+            return;
+          }
+        }
+
+        // === 弱势看空 ===
+        if (p.priceChange < -3 && p.volMcap > 15 && p.funding < -0.008) {
+          this.trend = 'SHORT';
+          this.strength = 55;
+          this.reason = '温和下跌+成交温和';
+          return;
+        }
+
+        // === 观望 ===
+        this.trend = 'NEUTRAL';
+        this.strength = 0;
+        this.reason = '方向不明确，等待突破';
+      }
+
+      getTrendTag() {
+        this.analyzeTrend();
+        
+        if (this.trend === 'LONG') {
+          return {
+            icon: '📈',
+            label: `做多 (${this.strength}%)`,
+            class: 'tag-long'
+          };
+        } else if (this.trend === 'SHORT') {
+          return {
+            icon: '📉',
+            label: `做空 (${this.strength}%)`,
+            class: 'tag-short'
+          };
+        } else {
+          return {
+            icon: '━',
+            label: '观望',
+            class: 'tag-neutral'
+          };
+        }
+      }
+    }
+
     // ======================== Wyckoff 阶段分析引擎 ========================
     
     class WyckoffPhaseAnalyzer {
@@ -1025,18 +1180,10 @@
         this.phaseDetails = {};
       }
 
-      // Wyckoff五个关键阶段
-      // 1. Accumulation (吸筹)
-      // 2. Markup (拉升)
-      // 3. Distribution (派发)
-      // 4. Markdown (砸盘)
-      // 5. Compression (压缩/整理)
-
       detectPhase() {
         const p = this.row;
         const prev = this.prev;
 
-        // 特征识别
         const isHighVol = p.volMcap > 30;
         const isLowVol = p.volMcap < 15;
         const isRising = p.priceChange > 5;
@@ -1044,172 +1191,182 @@
         const isFlat = Math.abs(p.priceChange) <= 5;
         const highOI = p.oiMcap > 30;
         const lowOI = p.oiMcap < 15;
-        const positiveFunding = p.funding > 0.01;
-        const negativeFunding = p.funding < -0.01;
 
-        // === 吸筹阶段 (Accumulation) ===
+        // === 吸筹阶段 ===
         if (isLowVol && isFlat && !prev) {
           this.currentPhase = 'accumulation';
           this.phaseDetails.name = '吸筹盘整';
           this.phaseDetails.emoji = '📦';
           this.phaseDetails.description = '底部缓慢吸筹，成交温和，主力在默默积累';
           this.phaseDetails.confidence = 70;
+          this.phaseDetails.trend = 'PRE_LONG';
           
           this.likelyNextPhases = ['潜伏', '底部夯实'];
           this.possiblePhases = ['突然放量', '缓慢抬升'];
           return;
         }
 
-        // === 潜伏阶段 (Hidden Phase) ===
+        // === 潜伏启动 ===
         if (isLowVol && isRising && !highOI) {
           this.currentPhase = 'latent';
           this.phaseDetails.name = '潜伏启动';
           this.phaseDetails.emoji = '🤫';
-          this.phaseDetails.description = '缓慢拉升测试盘面，OI未充分积累，观察资金态度';
+          this.phaseDetails.description = '缓慢拉升测试盘面，OI未充分积累';
           this.phaseDetails.confidence = 65;
+          this.phaseDetails.trend = 'WEAK_LONG';
           
           this.likelyNextPhases = ['缓慢抬升', '放量拉升'];
           this.possiblePhases = ['假突破', '回调整理'];
           return;
         }
 
-        // === 缓慢抬升 (Slow Markup) ===
+        // === 缓慢抬升 ===
         if (isLowVol && isRising && highOI && prev && p.priceChange > prev.priceChange) {
           this.currentPhase = 'slow_markup';
           this.phaseDetails.name = '缓慢抬升';
           this.phaseDetails.emoji = '📈';
           this.phaseDetails.description = 'OI稳步积累，小幅温和上涨，多头逐步进场';
           this.phaseDetails.confidence = 75;
+          this.phaseDetails.trend = 'MEDIUM_LONG';
           
           this.likelyNextPhases = ['加速拉升', '强势突破'];
           this.possiblePhases = ['回调洗盘', '平台整理'];
           return;
         }
 
-        // === 加速拉升 (Aggressive Markup) ===
+        // === 加速拉升 ===
         if (isHighVol && isRising && highOI && p.priceChange > 15) {
           this.currentPhase = 'aggressive_markup';
           this.phaseDetails.name = '加速拉升';
           this.phaseDetails.emoji = '🚀';
-          this.phaseDetails.description = '成交放量，价格快速上涨，主升浪启动！多头全力进攻';
+          this.phaseDetails.description = '成交放量，价格快速上涨，主升浪启动！';
           this.phaseDetails.confidence = 85;
+          this.phaseDetails.trend = 'STRONG_LONG';
           
           this.likelyNextPhases = ['继续上涨', '创新高'];
           this.possiblePhases = ['获利回吐', '短期调整'];
           return;
         }
 
-        // === 挤压压力 (Compression/Squeeze) ===
+        // === 挤压压力 ===
         if (isLowVol && isFlat && highOI && prev && prev.volMcap > p.volMcap * 1.5) {
           this.currentPhase = 'compression';
           this.phaseDetails.name = '挤压压力';
           this.phaseDetails.emoji = '🤐';
-          this.phaseDetails.description = '成交大幅萎缩，价格震荡，积压的能量即将释放（涨或跌）';
+          this.phaseDetails.description = '成交萎缩，价格震荡，积压能量即将释放';
           this.phaseDetails.confidence = 80;
+          this.phaseDetails.trend = 'UNKNOWN';
           
           this.likelyNextPhases = ['突然爆发', '剧烈波动'];
           this.possiblePhases = ['假突破', '虚假反弹'];
           return;
         }
 
-        // === 假突破 (Fake Breakout) ===
+        // === 假突破 ===
         if (isHighVol && isRising && p.priceChange > 10 && p.priceChange < 20 && 
             !highOI && prev && prev.priceChange < 0) {
           this.currentPhase = 'fake_breakout';
           this.phaseDetails.name = '可能假突破';
           this.phaseDetails.emoji = '⚠️';
-          this.phaseDetails.description = '成交不足、OI未够，看起来在涨实际在诱多。谨防回踩';
+          this.phaseDetails.description = '成交不足、OI未够，看起来在涨实际在诱多';
           this.phaseDetails.confidence = 70;
+          this.phaseDetails.trend = 'TRAP_LONG';
           
           this.likelyNextPhases = ['回调洗盘', '快速下跌'];
           this.possiblePhases = ['持续上涨', '平台整理'];
           return;
         }
 
-        // === 回调洗盘 (Pullback/Washout) ===
+        // === 回调洗盘 ===
         if (isFalling && isHighVol && prev && prev.priceChange > 10) {
           this.currentPhase = 'pullback';
           this.phaseDetails.name = '回调洗盘';
           this.phaseDetails.emoji = '📉';
-          this.phaseDetails.description = '大幅下跌，成交活跃，清理浮筹。可能是底部吸筹的开始';
+          this.phaseDetails.description = '大幅下跌，成交活跃，清理浮筹';
           this.phaseDetails.confidence = 75;
+          this.phaseDetails.trend = 'SHAKEOUT';
           
           this.likelyNextPhases = ['底部积累', '反弹确认'];
           this.possiblePhases = ['继续下跌', '止跌反弹'];
           return;
         }
 
-        // === 派发阶段 (Distribution) ===
+        // === 派发阶段 ===
         if (isHighVol && isFlat && highOI && p.priceChange < 3 && prev && prev.priceChange > 20) {
           this.currentPhase = 'distribution';
           this.phaseDetails.name = '派发顶部';
           this.phaseDetails.emoji = '📤';
-          this.phaseDetails.description = '高位成交活跃，但价格涨幅停滞。主力在派发筹码';
+          this.phaseDetails.description = '高位成交活跃，但价格涨幅停滞。主力在派发';
           this.phaseDetails.confidence = 80;
+          this.phaseDetails.trend = 'PRE_SHORT';
           
           this.likelyNextPhases = ['盘头回落', '长期下跌'];
           this.possiblePhases = ['再创新高', '平台整理'];
           return;
         }
 
-        // === 砸盘阶段 (Markdown) ===
+        // === 砸盘阶段 ===
         if (isHighVol && isFalling && p.priceChange < -10 && highOI) {
           this.currentPhase = 'markdown';
           this.phaseDetails.name = '砸盘下跌';
           this.phaseDetails.emoji = '💥';
-          this.phaseDetails.description = '成交爆量，价格跳水。空头发力或做空力量强劲';
+          this.phaseDetails.description = '成交爆量，价格跳水。空头全力进攻';
           this.phaseDetails.confidence = 85;
+          this.phaseDetails.trend = 'STRONG_SHORT';
           
           this.likelyNextPhases = ['继续下跌', '快速探底'];
           this.possiblePhases = ['反弹', '止跌'];
           return;
         }
 
-        // === 底部夯实 (Base Building) ===
+        // === 底部夯实 ===
         if (isLowVol && isFalling && prev && prev.isFalling && p.priceChange > prev.priceChange) {
           this.currentPhase = 'base_building';
           this.phaseDetails.name = '底部夯实';
           this.phaseDetails.emoji = '🔨';
-          this.phaseDetails.description = '下跌力度逐步减弱，低位震荡。即将反弹的信号';
+          this.phaseDetails.description = '下跌力度减弱，低位震荡。即将反弹信号';
           this.phaseDetails.confidence = 72;
+          this.phaseDetails.trend = 'BOTTOM';
           
           this.likelyNextPhases = ['反弹上升', '底部完成'];
           this.possiblePhases = ['继续探底', '止跌盘整'];
           return;
         }
 
-        // === 虚假反弹 (False Rally) ===
+        // === 虚假反弹 ===
         if (isRising && !isHighVol && prev && prev.isFalling && p.priceChange < 8) {
           this.currentPhase = 'false_rally';
           this.phaseDetails.name = '虚假反弹';
           this.phaseDetails.emoji = '🎭';
-          this.phaseDetails.description = '反弹成交不足，可能是空头设置的陷阱。谨慎参与';
+          this.phaseDetails.description = '反弹成交不足，可能是空头设置的陷阱';
           this.phaseDetails.confidence = 68;
+          this.phaseDetails.trend = 'TRAP_SHORT';
           
           this.likelyNextPhases = ['再次下跌', '二次探底'];
           this.possiblePhases = ['持续反弹', '放量突破'];
           return;
         }
 
-        // === 平台整理 (Consolidation) ===
+        // === 平台整理 ===
         if (isFlat && isLowVol && highOI) {
           this.currentPhase = 'consolidation';
           this.phaseDetails.name = '平台整理';
           this.phaseDetails.emoji = '━';
           this.phaseDetails.description = '盘面平静，资金博弈，等待方向明确';
           this.phaseDetails.confidence = 60;
+          this.phaseDetails.trend = 'UNKNOWN';
           
           this.likelyNextPhases = ['向上突破', '向下跌破'];
           this.possiblePhases = ['继续震荡', '缓慢爬升'];
           return;
         }
 
-        // 默认状态
         this.currentPhase = 'unknown';
         this.phaseDetails.name = '未知阶段';
         this.phaseDetails.emoji = '❓';
-        this.phaseDetails.description = '数据不足，持续观察中';
+        this.phaseDetails.description = '数据不足，持续观察';
         this.phaseDetails.confidence = 40;
+        this.phaseDetails.trend = 'UNKNOWN';
       }
 
       getPhaseHTML() {
@@ -1217,7 +1374,6 @@
 
         let html = `<div class="wyckoff-phases">`;
         
-        // 当前阶段
         if (this.currentPhase && this.phaseDetails.name) {
           html += `<div style="margin-bottom: 6px;">
             <span class="phase-badge phase-happening" title="当前发生中">🔴 ${this.phaseDetails.emoji} ${this.phaseDetails.name}</span>
@@ -1225,7 +1381,6 @@
           </div>`;
         }
 
-        // 可能即将发生
         if (this.likelyNextPhases.length > 0) {
           html += `<div style="margin-bottom: 4px; display: flex; gap: 4px; flex-wrap: wrap;">`;
           this.likelyNextPhases.forEach(phase => {
@@ -1234,7 +1389,6 @@
           html += `</div>`;
         }
 
-        // 可能性较低
         if (this.possiblePhases.length > 0) {
           html += `<div style="display: flex; gap: 4px; flex-wrap: wrap;">`;
           this.possiblePhases.forEach(phase => {
@@ -1701,843 +1855,921 @@
       document.getElementById('refresh-dot').classList.add('loading');
 
       try {
-        const [exchangeInfo, ticker24h, premiumIndex, gecko] = await Promise.all([
-          getCachedData('exchangeInfo', 'https://fapi.binance.com/fapi/v1/exchangeInfo'),
-          getJSON('https://fapi.binance.com/fapi/v1/ticker/24hr'),
-          getJSON('https://fapi.binance.com/fapi/v1/premiumIndex'),
-          getCachedData('gecko', 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1')
-        ]);
+        const [exchangeInfo, ticker24h, premiumIndex, gecko] = await
+          Promise.all([
+getCachedData('exchangeInfo', 'https://fapi.binance.com/fapi/v1/exchangeInfo'),
+getJSON('https://fapi.binance.com/fapi/v1/ticker/24hr'),
+getJSON('https://fapi.binance.com/fapi/v1/premiumIndex'),
+getCachedData('gecko', 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1')
+]);
 
-        if (!exchangeInfo || !ticker24h || !premiumIndex) {
-          throw new Error('接口请求失败');
-        }
-
-        const symbols = exchangeInfo.symbols
-          .filter(s => s.contractType === 'PERPETUAL' && s.quoteAsset === 'USDT' && s.status === 'TRADING')
-          .map(s => s.symbol)
-          .slice(0, 200);
-
-        const tickerMap = Object.fromEntries(ticker24h.map(x => [x.symbol, x]));
-        const premiumMap = Object.fromEntries(premiumIndex.map(x => [x.symbol, x]));
-        const mcapMap = {};
-
-        if (Array.isArray(gecko)) {
-          gecko.forEach(x => {
-            if (x.symbol) {
-              mcapMap[x.symbol.toUpperCase() + 'USDT'] = x.market_cap || 0;
-            }
-          });
-        }
-
-        const allPriceChanges = ticker24h.map(t => parseFloat(t.priceChangePercent || 0)).filter(p => !isNaN(p));
-        const avgChange = allPriceChanges.reduce((a, b) => a + b, 0) / allPriceChanges.length;
-        const maxChange = Math.max(...allPriceChanges);
-        const market = {
-          avgChange,
-          maxChange,
-          isStrongMarket: maxChange > 30
-        };
-
-        yaoBuyableCoins = [];
-        yaoWatchCoins = [];
-        buyEliteCoins = [];
-        buyPrimeCoins = [];
-        allCoinsData = [];
-
-        const newPreviousData = {};
-
-        for (const symbol of symbols) {
-          const t = tickerMap[symbol];
-          const p = premiumMap[symbol];
-
-          if (!t || !p) continue;
-
-          const price = parseFloat(p.markPrice || t.lastPrice || 0);
-          if (!price || price <= 0) continue;
-
-          const quoteVol = parseFloat(t.quoteVolume || 0);
-          const funding = parseFloat(p.lastFundingRate || 0) * 100;
-          const priceChange = parseFloat(t.priceChangePercent || 0);
-          const mcap = mcapMap[symbol] || 0;
-
-          let volMcap = null;
-          let oiMcap = null;
-
-          if (mcap > 0) {
-            const estimatedOi = (quoteVol * 0.15) / price;
-            const oiValue = estimatedOi * price;
-            volMcap = (quoteVol / mcap) * 100;
-            oiMcap = (oiValue / mcap) * 100;
-          }
-
-          const row = {
-            symbol,
-            price,
-            mcap,
-            quoteVol,
-            funding,
-            priceChange,
-            volMcap,
-            oiMcap,
-            timestamp: Date.now()
-          };
-
-          allCoinsData.push(row);
-          newPreviousData[symbol] = { ...row };
-
-          const prev = previousData[symbol];
-
-          // ===== 妖币检测 =====
-          const yaoBuyCheck = detectYaoBuyable(row, prev, market);
-          if (yaoBuyCheck.isBuyable) {
-            row.type = 'yao-buyable';
-            row.grade = yaoBuyCheck.grade;
-            row.score = yaoBuyCheck.score;
-            row.confidence = yaoBuyCheck.confidence;
-            row.signals = yaoBuyCheck.signals;
-            row.reason = yaoBuyCheck.reason;
-            
-            updateYaoCoinMemory(symbol, 'buyable');
-            yaoBuyableCoins.push(row);
-          } else {
-            const yaoWatchCheck = detectYaoWatch(row, prev, market);
-            if (yaoWatchCheck.isWatchable) {
-              row.type = 'yao-watch';
-              row.score = yaoWatchCheck.score;
-              row.confidence = yaoWatchCheck.confidence;
-              row.signals = yaoWatchCheck.signals;
-              row.reason = yaoWatchCheck.reason;
-              
-              updateYaoCoinMemory(symbol, 'watch');
-              yaoWatchCoins.push(row);
-            } else {
-              // ===== 建议币检测 =====
-              const buyEliteCheck = detectBuyElite(row, prev);
-              if (buyEliteCheck.isElite) {
-                row.type = 'buy-elite';
-                row.grade = buyEliteCheck.grade;
-                row.position = buyEliteCheck.position;
-                row.leverage = buyEliteCheck.leverage;
-                row.score = buyEliteCheck.score;
-                row.signals = buyEliteCheck.signals;
-                row.reason = buyEliteCheck.reason;
-                buyEliteCoins.push(row);
-              } else {
-                const buyPrimeCheck = detectBuyPrime(row, prev);
-                if (buyPrimeCheck.isPrime) {
-                  row.type = 'buy-prime';
-                  row.grade = buyPrimeCheck.grade;
-                  row.position = buyPrimeCheck.position;
-                  row.leverage = buyPrimeCheck.leverage;
-                  row.score = buyPrimeCheck.score;
-                  row.signals = buyPrimeCheck.signals;
-                  row.reason = buyPrimeCheck.reason;
-                  buyPrimeCoins.push(row);
-                }
-              }
-            }
-          }
-        }
-
-        yaoBuyableCoins.sort((a, b) => (b.score || 0) - (a.score || 0));
-        yaoWatchCoins.sort((a, b) => (b.score || 0) - (a.score || 0));
-        buyEliteCoins.sort((a, b) => (b.score || 0) - (a.score || 0));
-        buyPrimeCoins.sort((a, b) => (b.score || 0) - (a.score || 0));
-
-        previousData = newPreviousData;
-        localStorage.setItem('previousData', JSON.stringify(previousData));
-        localStorage.setItem('yaoCoinMemory', JSON.stringify(yaoCoinMemory));
-
-        renderMonitorList();
-        updateBadges();
-        cleanExpiredMemory();
-
-        document.getElementById('last-update').innerText = 
-          `✅ ${new Date().toLocaleTimeString()}`;
-
-      } catch (error) {
-        console.error('加载失败:', error);
-        document.getElementById('last-update').innerText = '❌ 获取失败';
-        document.getElementById('monitor-list').innerHTML = `
-          <div class="empty-state">
-            <div class="empty-icon">⚠️</div>
-            <div>加载失败: ${error.message}</div>
-            <div style="font-size: 11px; margin-top: 8px;">请检查网络连接</div>
-          </div>
-        `;
-      } finally {
-        isLoading = false;
-        document.getElementById('refresh-dot').classList.remove('loading');
-      }
+    if (!exchangeInfo || !ticker24h || !premiumIndex) {
+      throw new Error('接口请求失败');
     }
 
-    // ======================== 渲染函数 ========================
-
-    function renderMonitorList() {
-      const container = document.getElementById('monitor-list');
-      let html = '';
-
-      if (yaoBuyableCoins.length > 0) {
-        html += `<div class="section-title yao-buyable">🔥 妖币-可买入 (${yaoBuyableCoins.length})</div>`;
-        html += '<div class="coin-grid">';
-        yaoBuyableCoins.forEach(coin => {
-          html += renderYaoBuyableCard(coin);
-        });
-        html += '</div>';
-      }
-
-      if (yaoWatchCoins.length > 0) {
-        html += `<div class="section-title yao-watch">✨ 妖币-观察 (${yaoWatchCoins.length})</div>`;
-        html += '<div class="coin-grid">';
-        yaoWatchCoins.forEach(coin => {
-          html += renderYaoWatchCard(coin);
-        });
-        html += '</div>';
-      }
-
-      if (buyEliteCoins.length > 0) {
-        html += `<div class="section-title buy-elite">💎 建议币-精选 (${buyEliteCoins.length})</div>`;
-        html += '<div class="coin-grid">';
-        buyEliteCoins.forEach(coin => {
-          html += renderBuyEliteCard(coin);
-        });
-        html += '</div>';
-      }
-
-      if (buyPrimeCoins.length > 0) {
-        html += `<div class="section-title buy-prime">⭐ 建议币-优秀 (${buyPrimeCoins.length})</div>`;
-        html += '<div class="coin-grid">';
-        buyPrimeCoins.forEach(coin => {
-          html += renderBuyPrimeCard(coin);
-        });
-        html += '</div>';
-      }
-
-      if (!yaoBuyableCoins.length && !yaoWatchCoins.length && 
-          !buyEliteCoins.length && !buyPrimeCoins.length) {
-        html = `<div class="empty-state">
-          <div class="empty-icon">🔍</div>
-          <div>暂未发现符合条件的币种</div>
-          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 8px;">
-            系统正在分析 200+ 交易对...
-          </div>
-        </div>`;
-      }
-
-      container.innerHTML = html;
-    }
-
-    function renderYaoBuyableCard(coin) {
-      const score = coin.score || 0;
-      const confidence = coin.confidence || 0;
-      const gradeClass = coin.grade === 'S+' ? 'tag-yao-buyable-s' : 'tag-yao-buyable-a';
-      
-      const wyckoffAnalyzer = new WyckoffPhaseAnalyzer(coin, previousData[coin.symbol]);
-      const phaseHTML = wyckoffAnalyzer.getPhaseHTML();
-
-      return `
-        <div class="coin-card yao-buyable" onclick="showDetail('${coin.symbol}', 'yao-buyable')">
-          <div class="coin-header">
-            <div class="coin-title">
-              <span class="coin-symbol">${coin.symbol}</span>
-              <span class="coin-price">$${fmtNum(coin.price, 6)}</span>
-            </div>
-            <div class="coin-actions">
-              <button class="action-btn" onclick="copySymbol('${coin.symbol}', event)" title="复制">📋</button>
-              <button class="action-btn" onclick="openChart('${coin.symbol}', event)" title="图表">📈</button>
-            </div>
-          </div>
-
-          <div class="tags-row">
-            <span class="tag ${gradeClass}">等级: ${coin.grade}</span>
-            <span class="tag tag-yao-buyable tag-new">🚀 可买入</span>
-          </div>
-
-          ${phaseHTML}
-
-          <div class="advice-box danger">
-            🚀 ${coin.reason}
-          </div>
-
-          <div class="stats-grid">
-            <div class="stat">
-              <span class="stat-label">妖评分</span>
-              <span class="stat-val">${score.toFixed(0)}</span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">信心</span>
-              <span class="stat-val">${confidence.toFixed(0)}%</span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">24h</span>
-              <span class="stat-val ${coin.priceChange > 0 ? 'green' : 'red'}">${coin.priceChange.toFixed(2)}%</span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">市值</span>
-              <span class="stat-val">${coin.mcap ? fmtNum(coin.mcap, 2) : '-'}</span>
-            </div>
-          </div>
-
-          <div class="confidence-bar">
-            <div class="confidence-fill" style="width: ${confidence}%"></div>
-          </div>
-
-          <div style="margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap;">
-            ${coin.signals.slice(0, 3).map(s => `<span class="tag tag-yao-buyable">${s}</span>`).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    function renderYaoWatchCard(coin) {
-      const score = coin.score || 0;
-      const confidence = coin.confidence || 0;
-      
-      const wyckoffAnalyzer = new WyckoffPhaseAnalyzer(coin, previousData[coin.symbol]);
-      const phaseHTML = wyckoffAnalyzer.getPhaseHTML();
-
-      return `
-        <div class="coin-card yao-watch" onclick="showDetail('${coin.symbol}', 'yao-watch')">
-          <div class="coin-header">
-            <div class="coin-title">
-              <span class="coin-symbol">${coin.symbol}</span>
-              <span class="coin-price">$${fmtNum(coin.price, 6)}</span>
-            </div>
-            <div class="coin-actions">
-              <button class="action-btn" onclick="copySymbol('${coin.symbol}', event)" title="复制">📋</button>
-              <button class="action-btn" onclick="openChart('${coin.symbol}', event)" title="图表">📈</button>
-            </div>
-          </div>
-
-          <div class="tags-row">
-            <span class="tag tag-yao-watch">🔮 观察中</span>
-            <span class="tag tag-time">${getMemoryTime(coin.symbol)}</span>
-          </div>
-
-          ${phaseHTML}
-
-          <div class="advice-box purple">
-            👁️ ${coin.reason}
-          </div>
-
-          <div class="stats-grid">
-            <div class="stat">
-              <span class="stat-label">评分</span>
-              <span class="stat-val">${score.toFixed(0)}</span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">信心</span>
-              <span class="stat-val">${confidence.toFixed(0)}%</span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">市值</span>
-              <span class="stat-val">${coin.mcap ? fmtNum(coin.mcap, 2) : '-'}</span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">24h</span>
-              <span class="stat-val ${coin.priceChange > 0 ? 'green' : 'red'}">${coin.priceChange.toFixed(2)}%</span>
-            </div>
-          </div>
-
-          <div class="confidence-bar">
-            <div class="confidence-fill" style="width: ${confidence}%"></div>
-          </div>
-
-          <div style="margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap;">
-            ${coin.signals.slice(0, 3).map(s => `<span class="tag tag-yao-watch">${s}</span>`).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    function renderBuyEliteCard(coin) {
-      const score = coin.score || 0;
-      
-      const wyckoffAnalyzer = new WyckoffPhaseAnalyzer(coin, previousData[coin.symbol]);
-      const phaseHTML = wyckoffAnalyzer.getPhaseHTML();
-
-      return `
-        <div class="coin-card buy-elite" onclick="showDetail('${coin.symbol}', 'buy-elite')">
-          <div class="coin-header">
-            <div class="coin-title">
-              <span class="coin-symbol">${coin.symbol}</span>
-              <span class="coin-price">$${fmtNum(coin.price, 6)}</span>
-            </div>
-            <div class="coin-actions">
-              <button class="action-btn" onclick="copySymbol('${coin.symbol}', event)" title="复制">📋</button>
-              <button class="action-btn" onclick="openChart('${coin.symbol}', event)" title="图表">📈</button>
-            </div>
-          </div>
-
-          <div class="tags-row">
-            <span class="tag tag-buy-elite">精选${coin.grade}</span>
-            <span class="tag tag-buy-elite">仓位: ${coin.position}</span>
-          </div>
-
-          ${phaseHTML}
-
-          <div class="advice-box">
-            💡 ${coin.leverage} | ${coin.reason}
-          </div>
-
-          <div class="stats-grid">
-            <div class="stat">
-              <span class="stat-label">评分</span>
-              <span class="stat-val">${score.toFixed(0)}</span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">24h</span>
-              <span class="stat-val ${coin.priceChange > 0 ? 'green' : 'red'}">${coin.priceChange.toFixed(2)}%</span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">资费</span>
-              <span class="stat-val ${coin.funding > 0 ? 'green' : 'red'}">${coin.funding.toFixed(4)}%</span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">市值</span>
-              <span class="stat-val">${coin.mcap ? fmtNum(coin.mcap, 2) : '-'}</span>
-            </div>
-          </div>
-
-          <div class="confidence-bar">
-            <div class="confidence-fill" style="width: ${score * 1.3}%"></div>
-          </div>
-
-          <div style="margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap;">
-            ${coin.signals.slice(0, 3).map(s => `<span class="tag tag-buy-elite-a">${s}</span>`).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    function renderBuyPrimeCard(coin) {
-      const score = coin.score || 0;
-      
-      const wyckoffAnalyzer = new WyckoffPhaseAnalyzer(coin, previousData[coin.symbol]);
-      const phaseHTML = wyckoffAnalyzer.getPhaseHTML();
-
-      return `
-        <div class="coin-card buy-prime" onclick="showDetail('${coin.symbol}', 'buy-prime')">
-          <div class="coin-header">
-            <div class="coin-title">
-              <span class="coin-symbol">${coin.symbol}</span>
-              <span class="coin-price">$${fmtNum(coin.price, 6)}</span>
-            </div>
-            <div class="coin-actions">
-              <button class="action-btn" onclick="copySymbol('${coin.symbol}', event)" title="复制">📋</button>
-              <button class="action-btn" onclick="openChart('${coin.symbol}', event)" title="图表">📈</button>
-            </div>
-          </div>
-
-          <div class="tags-row">
-            <span class="tag tag-buy-prime">优秀${coin.grade}</span>
-            <span class="tag tag-buy-prime">仓位: ${coin.position}</span>
-          </div>
-
-          ${phaseHTML}
-
-          <div class="advice-box warn">
-            📊 ${coin.leverage} | ${coin.reason}
-          </div>
-
-          <div class="stats-grid">
-            <div class="stat">
-              <span class="stat-label">评分</span>
-              <span class="stat-val">${score.toFixed(0)}</span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">24h</span>
-              <span class="stat-val ${coin.priceChange > 0 ? 'green' : 'red'}">${coin.priceChange.toFixed(2)}%</span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">资费</span>
-              <span class="stat-val ${coin.funding > 0 ? 'green' : 'red'}">${coin.funding.toFixed(4)}%</span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">市值</span>
-              <span class="stat-val">${coin.mcap ? fmtNum(coin.mcap, 2) : '-'}</span>
-            </div>
-          </div>
-
-          <div class="confidence-bar">
-            <div class="confidence-fill" style="width: ${score * 1.3}%"></div>
-          </div>
-
-          <div style="margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap;">
-            ${coin.signals.slice(0, 3).map(s => `<span class="tag tag-buy-prime-a">${s}</span>`).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    function getMemoryTime(symbol) {
-      const mem = yaoCoinMemory[symbol];
-      if (!mem) return '新';
-      
-      const elapsed = (Date.now() - mem.firstDetected) / (60 * 60 * 1000);
-      if (elapsed < 1) return '< 1h';
-      if (elapsed < 6) return `${elapsed.toFixed(0)}h`;
-      return '6h+';
-    }
-
-    function updateBadges() {
-      document.getElementById('stat-yao-buy').textContent = yaoBuyableCoins.length;
-      document.getElementById('stat-yao-watch').textContent = yaoWatchCoins.length;
-      document.getElementById('stat-buy-elite').textContent = buyEliteCoins.length;
-      document.getElementById('stat-buy-prime').textContent = buyPrimeCoins.length;
-    }
-
-    // ======================== 搜索功能 ========================
-
-    let searchTimeout = null;
-
-    function handleSearch(query) {
-      clearTimeout(searchTimeout);
-      const results = document.getElementById('search-results');
-
-      if (!query.trim()) {
-        results.innerHTML = '';
-        return;
-      }
-
-      searchTimeout = setTimeout(() => {
-        const q = query.toUpperCase();
-        const filtered = allCoinsData
-          .filter(coin => coin.symbol.includes(q))
-          .slice(0, 50);
-
-        if (filtered.length === 0) {
-          results.innerHTML = `<div class="empty-state"><div>未找到相关币种</div></div>`;
-          return;
-        }
-
-        results.innerHTML = filtered.map(coin => {
-          let tag = '';
-          let tagClass = '';
-
-          if (coin.type === 'yao-buyable') {
-            tag = `🔥 妖币-可买`;
-            tagClass = 'tag-yao-buyable';
-          } else if (coin.type === 'yao-watch') {
-            tag = `✨ 妖币-观察`;
-            tagClass = 'tag-yao-watch';
-          } else if (coin.type === 'buy-elite') {
-            tag = `💎 建议-精选`;
-            tagClass = 'tag-buy-elite';
-          } else if (coin.type === 'buy-prime') {
-            tag = `⭐ 建议-优秀`;
-            tagClass = 'tag-buy-prime';
-          }
-
-          return `
-            <div class="search-item">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <div class="search-item-symbol">${coin.symbol}</div>
-                ${tag ? `<span class="tag ${tagClass}">${tag}</span>` : ''}
-              </div>
-              <div class="search-item-info">
-                <div>价格: $${fmtNum(coin.price, 6)}</div>
-                <div>市值: $${fmtNum(coin.mcap, 2)}</div>
-                <div>24h: <span class="${coin.priceChange > 0 ? 'green' : 'red'}">${coin.priceChange.toFixed(2)}%</span></div>
-              </div>
-              <button class="search-item-btn" onclick="showDetail('${coin.symbol}')">查看详情</button>
-            </div>
-          `;
-        }).join('');
-      }, 300);
-    }
-
-    // ======================== 详情页面 ========================
-
-    function showDetail(symbol, source = null) {
-      const coin = allCoinsData.find(c => c.symbol === symbol);
-      if (!coin) return;
-
-      let detailBoxClass = 'buy-elite';
-      let icon = '📊';
-      let title = '';
-
-      if (coin.type === 'yao-buyable') {
-        detailBoxClass = 'danger';
-        icon = '🔥';
-        title = '妖币可买';
-      } else if (coin.type === 'yao-watch') {
-        detailBoxClass = 'purple';
-        icon = '✨';
-        title = '妖币观察';
-      } else if (coin.type === 'buy-elite') {
-        detailBoxClass = 'success';
-        icon = '💎';
-        title = '建议精选';
-      } else if (coin.type === 'buy-prime') {
-        detailBoxClass = 'primary';
-        icon = '⭐';
-        title = '建议优秀';
-      }
-
-      const wyckoffAnalyzer = new WyckoffPhaseAnalyzer(coin, previousData[coin.symbol]);
-      const phaseAnalysisBox = wyckoffAnalyzer.getPhaseAnalysisBox();
-
-      let html = `
-        <div class="detail-title">
-          <span>${icon} ${coin.symbol}</span>
-          <span style="font-size: 12px; color: var(--text-secondary);">$${fmtNum(coin.price, 6)}</span>
-        </div>
-
-        ${phaseAnalysisBox}
-
-        <div class="detail-grid">
-          <div class="detail-item">
-            <div class="detail-item-label">当前价格</div>
-            <div class="detail-item-value">$${fmtNum(coin.price, 6)}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-item-label">市值</div>
-            <div class="detail-item-value">${coin.mcap ? fmtNum(coin.mcap, 2) : '-'}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-item-label">24h涨幅</div>
-            <div class="detail-item-value ${coin.priceChange > 0 ? 'green' : 'red'}">${coin.priceChange.toFixed(2)}%</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-item-label">成交量占比</div>
-            <div class="detail-item-value">${coin.volMcap ? coin.volMcap.toFixed(2) + '%' : '-'}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-item-label">OI占比</div>
-            <div class="detail-item-value">${coin.oiMcap ? coin.oiMcap.toFixed(2) + '%' : '-'}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-item-label">资金费率</div>
-            <div class="detail-item-value ${coin.funding > 0 ? 'green' : 'red'}">${coin.funding.toFixed(4)}%</div>
-          </div>
-          ${coin.score ? `
-            <div class="detail-item">
-              <div class="detail-item-label">评分</div>
-              <div class="detail-item-value">${coin.score.toFixed(0)}/100</div>
-            </div>
-          ` : ''}
-          ${coin.confidence ? `
-            <div class="detail-item">
-              <div class="detail-item-label">信心度</div>
-              <div class="detail-item-value">${coin.confidence.toFixed(0)}%</div>
-            </div>
-          ` : ''}
-        </div>
-
-        <div class="detail-box ${detailBoxClass}">
-          <h3>📊 分析指标</h3>
-          <div class="detail-row">
-            <span class="detail-label">检测信号数</span>
-            <span class="detail-value">${coin.signals ? coin.signals.length : 0}个</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">信号清单</span>
-            <span class="detail-value" style="text-align: right; max-width: 60%;">
-              ${coin.signals ? coin.signals.join(' | ') : '-'}
-            </span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">分析结论</span>
-            <span class="detail-value" style="text-align: right; max-width: 60%;">
-              ${coin.reason || '等待更多数据'}
-            </span>
-          </div>
-        </div>
-
-        ${coin.type === 'yao-buyable' || coin.type === 'yao-watch' ? `
-          <div class="detail-box danger">
-            <h3>🚀 妖币分析</h3>
-            <div class="detail-row">
-              <span class="detail-label">妖币等级</span>
-              <span class="detail-value">${coin.grade || '观察中'}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">预期空间</span>
-              <span class="detail-value">${coin.type === 'yao-buyable' ? '50-500x潜力' : '10-100x潜力'}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">风险等级</span>
-              <span class="detail-value">${coin.type === 'yao-buyable' ? '极高(高收益)' : '高(监控中)'}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">当前阶段</span>
-              <span class="detail-value">${wyckoffAnalyzer.phaseDetails.name} (${wyckoffAnalyzer.phaseDetails.confidence}%)</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">下一步可能</span>
-              <span class="detail-value" style="text-align: right;">
-                ${wyckoffAnalyzer.likelyNextPhases.join(' → ')}
-              </span>
-            </div>
-          </div>
-        ` : `
-          <div class="detail-box warn">
-            <h3>🎯 交易建议</h3>
-            <div class="detail-row">
-              <span class="detail-label">评级</span>
-              <span class="detail-value">${coin.grade || '-'}级</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">建议仓位</span>
-              <span class="detail-value">账户资金的 ${coin.position || '-'}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">杠杆建议</span>
-              <span class="detail-value">${coin.leverage || '-'}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">当前阶段</span>
-              <span class="detail-value">${wyckoffAnalyzer.phaseDetails.name}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">阶段描述</span>
-              <span class="detail-value" style="text-align: right; max-width: 60%;">
-                ${wyckoffAnalyzer.phaseDetails.description}
-              </span>
-            </div>
-          </div>
-        `}
-
-        <div class="detail-box">
-          <h3>🌐 快速查询通道</h3>
-          <div class="channel-grid">
-            <div class="channel-item" onclick="openBinance('${coin.symbol}')">
-              <div class="channel-icon">📊</div>
-              <div class="channel-name">币安交易</div>
-            </div>
-            <div class="channel-item" onclick="openTradingView('${coin.symbol}')">
-              <div class="channel-icon">📈</div>
-              <div class="channel-name">交易图表</div>
-            </div>
-            <div class="channel-item" onclick="openCoinMarketCap('${coin.symbol}')">
-              <div class="channel-icon">💰</div>
-              <div class="channel-name">市值排名</div>
-            </div>
-            <div class="channel-item" onclick="openCoingecko('${coin.symbol}')">
-              <div class="channel-icon">🦎</div>
-              <div class="channel-name">Coingecko</div>
-            </div>
-            <div class="channel-item" onclick="copySymbol('${coin.symbol}', null, true)">
-              <div class="channel-icon">📋</div>
-              <div class="channel-name">复制符号</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="detail-box ${coin.type === 'yao-buyable' ? 'danger' : coin.type === 'yao-watch' ? 'purple' : 'warn'}">
-          <h3>⚠️ ${coin.type === 'yao-buyable' ? '妖币风险提示' : coin.type === 'yao-watch' ? '观察提示' : '风险提示'}</h3>
-          <div style="font-size: 11px; color: inherit; line-height: 1.6;">
-            ${coin.type === 'yao-buyable' ? `
-              ✓ 妖币极具潜力，但风险极高<br/>
-              ✓ 仅适合高风险承受能力的投资者<br/>
-              ✓ 严格执行止损，不贪心<br/>
-              ✓ 分批建仓，控制风险敞口<br/>
-              ✓ 持续关注Wyckoff阶段变化<br/>
-              ✓ 可能是庄家控盘，谨防砸盘<br/>
-              ✓ 关键信号: ${coin.signals.slice(0, 2).join(' + ')}
-            ` : coin.type === 'yao-watch' ? `
-              ✓ 该币种有成为妖币的潜力<br/>
-              ✓ 当前处于${wyckoffAnalyzer.phaseDetails.name}阶段<br/>
-              ✓ 等待发展到 ${wyckoffAnalyzer.likelyNextPhases[0] || '加速阶段'} 时确认<br/>
-              ✓ 设置价格提醒或信号提醒<br/>
-              ✓ 观察OI和成交量变化<br/>
-              ✓ 资金还未充分启动
-            ` : `
-              ✓ 建议币基于多维指标综合评分<br/>
-              ✓ 当前处于${wyckoffAnalyzer.phaseDetails.name}阶段<br/>
-              ✓ 严格遵守止损止盈规则<br/>
-              ✓ 防止追高，合理控制风险<br/>
-              ✓ 等待${wyckoffAnalyzer.likelyNextPhases[0] || '下一个关键时刻'}<br/>
-              ✓ 相对稳定但仍需谨慎
-            `}
-          </div>
-        </div>
-      `;
-
-      document.getElementById('detail-body').innerHTML = html;
-      document.getElementById('detail-modal').classList.add('active');
-    }
-
-    function closeDetail() {
-      document.getElementById('detail-modal').classList.remove('active');
-    }
-
-    // ======================== 快速通道 ========================
-
-    function openBinance(symbol) {
-      window.open(`https://www.binance.com/en/trade/${symbol}`, '_blank');
-    }
-
-    function openTradingView(symbol) {
-      window.open(`https://www.tradingview.com/chart/?symbol=BINANCE:${symbol}`, '_blank');
-    }
-
-    function openCoinMarketCap(symbol) {
-      const pair = symbol.replace('USDT', '');
-      window.open(`https://coinmarketcap.com/currencies/${pair.toLowerCase()}/`, '_blank');
-    }
-
-    function openCoingecko(symbol) {
-      const pair = symbol.replace('USDT', '');
-      window.open(`https://www.coingecko.com/en/coins/${pair.toLowerCase()}`, '_blank');
-    }
-
-    function copySymbol(symbol, event, showMsg = false) {
-      if (event) event.stopPropagation();
-      navigator.clipboard.writeText(symbol);
-      if (showMsg) {
-        showNotification(`已复制: ${symbol}`, 'success');
-      }
-    }
-
-    function openChart(symbol, event) {
-      event.stopPropagation();
-      openTradingView(symbol);
-    }
-
-    // ======================== 自动刷新 ========================
-
-    function startAutoRefresh() {
-      let countdown = 60;
-
-      loadData();
-
-      autoRefreshInterval = setInterval(() => {
-        countdown--;
-        document.getElementById('refresh-countdown').innerText = countdown + 's';
-
-        if (countdown <= 0) {
-          countdown = 60;
-          loadData();
-        }
-      }, 1000);
-    }
-
-    // ======================== 初始化 ========================
-
-    document.addEventListener('DOMContentLoaded', () => {
-      if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission();
-      }
-
-      startAutoRefresh();
-      cleanExpiredMemory();
-
-      document.getElementById('detail-modal').addEventListener('click', (e) => {
-        if (e.target.id === 'detail-modal') {
-          closeDetail();
+    const symbols = exchangeInfo.symbols
+      .filter(s => s.contractType === 'PERPETUAL' && s.quoteAsset === 'USDT' && s.status === 'TRADING')
+      .map(s => s.symbol)
+      .slice(0, 200);
+
+    const tickerMap = Object.fromEntries(ticker24h.map(x => [x.symbol, x]));
+    const premiumMap = Object.fromEntries(premiumIndex.map(x => [x.symbol, x]));
+    const mcapMap = {};
+
+    if (Array.isArray(gecko)) {
+      gecko.forEach(x => {
+        if (x.symbol) {
+          mcapMap[x.symbol.toUpperCase() + 'USDT'] = x.market_cap || 0;
         }
       });
+    }
 
-      const searchInput = document.getElementById('search-input');
-      if (searchInput) {
-        searchInput.addEventListener('focus', () => {
-          document.getElementById('search-results').style.display = 'block';
-        });
+    const allPriceChanges = ticker24h.map(t => parseFloat(t.priceChangePercent || 0)).filter(p => !isNaN(p));
+    const avgChange = allPriceChanges.reduce((a, b) => a + b, 0) / allPriceChanges.length;
+    const maxChange = Math.max(...allPriceChanges);
+    const market = {
+      avgChange,
+      maxChange,
+      isStrongMarket: maxChange > 30
+    };
+
+    yaoBuyableCoins = [];
+    yaoWatchCoins = [];
+    buyEliteCoins = [];
+    buyPrimeCoins = [];
+    allCoinsData = [];
+
+    const newPreviousData = {};
+
+    for (const symbol of symbols) {
+      const t = tickerMap[symbol];
+      const p = premiumMap[symbol];
+
+      if (!t || !p) continue;
+
+      const price = parseFloat(p.markPrice || t.lastPrice || 0);
+      if (!price || price <= 0) continue;
+
+      const quoteVol = parseFloat(t.quoteVolume || 0);
+      const funding = parseFloat(p.lastFundingRate || 0) * 100;
+      const priceChange = parseFloat(t.priceChangePercent || 0);
+      const mcap = mcapMap[symbol] || 0;
+
+      let volMcap = null;
+      let oiMcap = null;
+
+      if (mcap > 0) {
+        const estimatedOi = (quoteVol * 0.15) / price;
+        const oiValue = estimatedOi * price;
+        volMcap = (quoteVol / mcap) * 100;
+        oiMcap = (oiValue / mcap) * 100;
       }
 
-      window.addEventListener('beforeunload', () => {
+      const row = {
+        symbol,
+        price,
+        mcap,
+        quoteVol,
+        funding,
+        priceChange,
+        volMcap,
+        oiMcap,
+        timestamp: Date.now()
+      };
+
+      allCoinsData.push(row);
+      newPreviousData[symbol] = { ...row };
+
+      const prev = previousData[symbol];
+
+      // ===== Wyckoff 阶段检测 =====
+      const wyckoffAnalyzer = new WyckoffPhaseAnalyzer(row, prev, market);
+      wyckoffAnalyzer.detectPhase();
+
+      // ===== 趋势方向检测 =====
+      const trendAnalyzer = new TrendAnalyzer(row, prev, market);
+      const trendTag = trendAnalyzer.getTrendTag();
+
+      // ===== 妖币检测 =====
+      const yaoBuyCheck = detectYaoBuyable(row, prev, market);
+      if (yaoBuyCheck.isBuyable) {
+        row.type = 'yao-buyable';
+        row.grade = yaoBuyCheck.grade;
+        row.score = yaoBuyCheck.score;
+        row.confidence = yaoBuyCheck.confidence;
+        row.signals = yaoBuyCheck.signals;
+        row.reason = yaoBuyCheck.reason;
+        row.trend = trendAnalyzer.trend;
+        row.trendStrength = trendAnalyzer.strength;
+        row.trendTag = trendTag;
+        row.wyckoff = wyckoffAnalyzer;
+        
+        updateYaoCoinMemory(symbol, 'buyable');
+        yaoBuyableCoins.push(row);
+      } else {
+        const yaoWatchCheck = detectYaoWatch(row, prev, market);
+        if (yaoWatchCheck.isWatchable) {
+          row.type = 'yao-watch';
+          row.score = yaoWatchCheck.score;
+          row.confidence = yaoWatchCheck.confidence;
+          row.signals = yaoWatchCheck.signals;
+          row.reason = yaoWatchCheck.reason;
+          row.trend = trendAnalyzer.trend;
+          row.trendStrength = trendAnalyzer.strength;
+          row.trendTag = trendTag;
+          row.wyckoff = wyckoffAnalyzer;
+          
+          updateYaoCoinMemory(symbol, 'watch');
+          yaoWatchCoins.push(row);
+        } else {
+          // ===== 建议币检测 =====
+          const buyEliteCheck = detectBuyElite(row, prev);
+          if (buyEliteCheck.isElite) {
+            row.type = 'buy-elite';
+            row.grade = buyEliteCheck.grade;
+            row.position = buyEliteCheck.position;
+            row.leverage = buyEliteCheck.leverage;
+            row.score = buyEliteCheck.score;
+            row.signals = buyEliteCheck.signals;
+            row.reason = buyEliteCheck.reason;
+            row.trend = trendAnalyzer.trend;
+            row.trendStrength = trendAnalyzer.strength;
+            row.trendTag = trendTag;
+            row.wyckoff = wyckoffAnalyzer;
+            buyEliteCoins.push(row);
+          } else {
+            const buyPrimeCheck = detectBuyPrime(row, prev);
+            if (buyPrimeCheck.isPrime) {
+              row.type = 'buy-prime';
+              row.grade = buyPrimeCheck.grade;
+              row.position = buyPrimeCheck.position;
+              row.leverage = buyPrimeCheck.leverage;
+              row.score = buyPrimeCheck.score;
+              row.signals = buyPrimeCheck.signals;
+              row.reason = buyPrimeCheck.reason;
+              row.trend = trendAnalyzer.trend;
+              row.trendStrength = trendAnalyzer.strength;
+              row.trendTag = trendTag;
+              row.wyckoff = wyckoffAnalyzer;
+              buyPrimeCoins.push(row);
+            }
+          }
+        }
+      }
+    }
+
+    yaoBuyableCoins.sort((a, b) => (b.score || 0) - (a.score || 0));
+    yaoWatchCoins.sort((a, b) => (b.score || 0) - (a.score || 0));
+    buyEliteCoins.sort((a, b) => (b.score || 0) - (a.score || 0));
+    buyPrimeCoins.sort((a, b) => (b.score || 0) - (a.score || 0));
+
+    previousData = newPreviousData;
+    localStorage.setItem('previousData', JSON.stringify(previousData));
+    localStorage.setItem('yaoCoinMemory', JSON.stringify(yaoCoinMemory));
+
+    renderMonitorList();
+    updateBadges();
+    cleanExpiredMemory();
+
+    document.getElementById('last-update').innerText = 
+      `✅ ${new Date().toLocaleTimeString()}`;
+
+  } catch (error) {
+    console.error('加载失败:', error);
+    document.getElementById('last-update').innerText = '❌ 获取失败';
+    document.getElementById('monitor-list').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">⚠️</div>
+        <div>加载失败: ${error.message}</div>
+        <div style="font-size: 11px; margin-top: 8px;">请检查网络连接</div>
+      </div>
+    `;
+  } finally {
+    isLoading = false;
+    document.getElementById('refresh-dot').classList.remove('loading');
+  }
+}
+
+// ======================== 渲染函数 ========================
+
+function renderMonitorList() {
+  const container = document.getElementById('monitor-list');
+  let html = '';
+
+  if (yaoBuyableCoins.length > 0) {
+    html += `<div class="section-title yao-buyable">🔥 妖币-可买入 (${yaoBuyableCoins.length})</div>`;
+    html += '<div class="coin-grid">';
+    yaoBuyableCoins.forEach(coin => {
+      html += renderYaoBuyableCard(coin);
+    });
+    html += '</div>';
+  }
+
+  if (yaoWatchCoins.length > 0) {
+    html += `<div class="section-title yao-watch">✨ 妖币-观察 (${yaoWatchCoins.length})</div>`;
+    html += '<div class="coin-grid">';
+    yaoWatchCoins.forEach(coin => {
+      html += renderYaoWatchCard(coin);
+    });
+    html += '</div>';
+  }
+
+  if (buyEliteCoins.length > 0) {
+    html += `<div class="section-title buy-elite">💎 建议币-精选 (${buyEliteCoins.length})</div>`;
+    html += '<div class="coin-grid">';
+    buyEliteCoins.forEach(coin => {
+      html += renderBuyEliteCard(coin);
+    });
+    html += '</div>';
+  }
+
+  if (buyPrimeCoins.length > 0) {
+    html += `<div class="section-title buy-prime">⭐ 建议币-优秀 (${buyPrimeCoins.length})</div>`;
+    html += '<div class="coin-grid">';
+    buyPrimeCoins.forEach(coin => {
+      html += renderBuyPrimeCard(coin);
+    });
+    html += '</div>';
+  }
+
+  if (!yaoBuyableCoins.length && !yaoWatchCoins.length && 
+      !buyEliteCoins.length && !buyPrimeCoins.length) {
+    html = `<div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <div>暂未发现符合条件的币种</div>
+      <div style="font-size: 11px; color: var(--text-secondary); margin-top: 8px;">
+        系统正在分析 200+ 交易对...
+      </div>
+    </div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function renderYaoBuyableCard(coin) {
+  const score = coin.score || 0;
+  const confidence = coin.confidence || 0;
+  const gradeClass = coin.grade === 'S+' ? 'tag-yao-buyable-s' : 'tag-yao-buyable-a';
+  
+  const phaseHTML = coin.wyckoff.getPhaseHTML();
+
+  return `
+    <div class="coin-card yao-buyable" onclick="showDetail('${coin.symbol}', 'yao-buyable')">
+      <div class="coin-header">
+        <div class="coin-title">
+          <span class="coin-symbol">${coin.symbol}</span>
+          <span class="coin-price">$${fmtNum(coin.price, 6)}</span>
+        </div>
+        <div class="coin-actions">
+          <button class="action-btn" onclick="copySymbol('${coin.symbol}', event)" title="复制">📋</button>
+          <button class="action-btn" onclick="openChart('${coin.symbol}', event)" title="图表">📈</button>
+        </div>
+      </div>
+
+      <div class="tags-row">
+        <span class="tag ${gradeClass}">等级: ${coin.grade}</span>
+        <span class="tag tag-yao-buyable tag-new">🚀 可买入</span>
+        <span class="tag ${coin.trendTag.class}">${coin.trendTag.icon} ${coin.trendTag.label}</span>
+      </div>
+
+      ${phaseHTML}
+
+      <div class="advice-box danger">
+        🚀 ${coin.reason}
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat">
+          <span class="stat-label">妖评分</span>
+          <span class="stat-val">${score.toFixed(0)}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">信心</span>
+          <span class="stat-val">${confidence.toFixed(0)}%</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">24h</span>
+          <span class="stat-val ${coin.priceChange > 0 ? 'green' : 'red'}">${coin.priceChange.toFixed(2)}%</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">市值</span>
+          <span class="stat-val">${coin.mcap ? fmtNum(coin.mcap, 2) : '-'}</span>
+        </div>
+      </div>
+
+      <div class="confidence-bar">
+        <div class="confidence-fill" style="width: ${confidence}%"></div>
+      </div>
+
+      <div style="margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap;">
+        ${coin.signals.slice(0, 3).map(s => `<span class="tag tag-yao-buyable">${s}</span>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderYaoWatchCard(coin) {
+  const score = coin.score || 0;
+  const confidence = coin.confidence || 0;
+  
+  const phaseHTML = coin.wyckoff.getPhaseHTML();
+
+  return `
+    <div class="coin-card yao-watch" onclick="showDetail('${coin.symbol}', 'yao-watch')">
+      <div class="coin-header">
+        <div class="coin-title">
+          <span class="coin-symbol">${coin.symbol}</span>
+          <span class="coin-price">$${fmtNum(coin.price, 6)}</span>
+        </div>
+        <div class="coin-actions">
+          <button class="action-btn" onclick="copySymbol('${coin.symbol}', event)" title="复制">📋</button>
+          <button class="action-btn" onclick="openChart('${coin.symbol}', event)" title="图表">📈</button>
+        </div>
+      </div>
+
+      <div class="tags-row">
+        <span class="tag tag-yao-watch">🔮 观察中</span>
+        <span class="tag tag-time">${getMemoryTime(coin.symbol)}</span>
+        <span class="tag ${coin.trendTag.class}">${coin.trendTag.icon} ${coin.trendTag.label}</span>
+      </div>
+
+      ${phaseHTML}
+
+      <div class="advice-box purple">
+        👁️ ${coin.reason}
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat">
+          <span class="stat-label">评分</span>
+          <span class="stat-val">${score.toFixed(0)}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">信心</span>
+          <span class="stat-val">${confidence.toFixed(0)}%</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">市值</span>
+          <span class="stat-val">${coin.mcap ? fmtNum(coin.mcap, 2) : '-'}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">24h</span>
+          <span class="stat-val ${coin.priceChange > 0 ? 'green' : 'red'}">${coin.priceChange.toFixed(2)}%</span>
+        </div>
+      </div>
+
+      <div class="confidence-bar">
+        <div class="confidence-fill" style="width: ${confidence}%"></div>
+      </div>
+
+      <div style="margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap;">
+        ${coin.signals.slice(0, 3).map(s => `<span class="tag tag-yao-watch">${s}</span>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderBuyEliteCard(coin) {
+  const score = coin.score || 0;
+  
+  const phaseHTML = coin.wyckoff.getPhaseHTML();
+
+  return `
+    <div class="coin-card buy-elite" onclick="showDetail('${coin.symbol}', 'buy-elite')">
+      <div class="coin-header">
+        <div class="coin-title">
+          <span class="coin-symbol">${coin.symbol}</span>
+          <span class="coin-price">$${fmtNum(coin.price, 6)}</span>
+        </div>
+        <div class="coin-actions">
+          <button class="action-btn" onclick="copySymbol('${coin.symbol}', event)" title="复制">📋</button>
+          <button class="action-btn" onclick="openChart('${coin.symbol}', event)" title="图表">📈</button>
+        </div>
+      </div>
+
+      <div class="tags-row">
+        <span class="tag tag-buy-elite">精选${coin.grade}</span>
+        <span class="tag tag-buy-elite">仓位: ${coin.position}</span>
+        <span class="tag ${coin.trendTag.class}">${coin.trendTag.icon} ${coin.trendTag.label}</span>
+      </div>
+
+      ${phaseHTML}
+
+      <div class="advice-box">
+        💡 ${coin.leverage} | ${coin.reason}
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat">
+          <span class="stat-label">评分</span>
+          <span class="stat-val">${score.toFixed(0)}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">24h</span>
+          <span class="stat-val ${coin.priceChange > 0 ? 'green' : 'red'}">${coin.priceChange.toFixed(2)}%</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">资费</span>
+          <span class="stat-val ${coin.funding > 0 ? 'green' : 'red'}">${coin.funding.toFixed(4)}%</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">市值</span>
+          <span class="stat-val">${coin.mcap ? fmtNum(coin.mcap, 2) : '-'}</span>
+        </div>
+      </div>
+
+      <div class="confidence-bar">
+        <div class="confidence-fill" style="width: ${score * 1.3}%"></div>
+      </div>
+
+      <div style="margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap;">
+        ${coin.signals.slice(0, 3).map(s => `<span class="tag tag-buy-elite-a">${s}</span>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderBuyPrimeCard(coin) {
+  const score = coin.score || 0;
+  
+  const phaseHTML = coin.wyckoff.getPhaseHTML();
+
+  return `
+    <div class="coin-card buy-prime" onclick="showDetail('${coin.symbol}', 'buy-prime')">
+      <div class="coin-header">
+        <div class="coin-title">
+          <span class="coin-symbol">${coin.symbol}</span>
+          <span class="coin-price">$${fmtNum(coin.price, 6)}</span>
+        </div>
+        <div class="coin-actions">
+          <button class="action-btn" onclick="copySymbol('${coin.symbol}', event)" title="复制">📋</button>
+          <button class="action-btn" onclick="openChart('${coin.symbol}', event)" title="图表">📈</button>
+        </div>
+      </div>
+
+      <div class="tags-row">
+        <span class="tag tag-buy-prime">优秀${coin.grade}</span>
+        <span class="tag tag-buy-prime">仓位: ${coin.position}</span>
+        <span class="tag ${coin.trendTag.class}">${coin.trendTag.icon} ${coin.trendTag.label}</span>
+      </div>
+
+      ${phaseHTML}
+
+      <div class="advice-box warn">
+        📊 ${coin.leverage} | ${coin.reason}
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat">
+          <span class="stat-label">评分</span>
+          <span class="stat-val">${score.toFixed(0)}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">24h</span>
+          <span class="stat-val ${coin.priceChange > 0 ? 'green' : 'red'}">${coin.priceChange.toFixed(2)}%</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">资费</span>
+          <span class="stat-val ${coin.funding > 0 ? 'green' : 'red'}">${coin.funding.toFixed(4)}%</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">市值</span>
+          <span class="stat-val">${coin.mcap ? fmtNum(coin.mcap, 2) : '-'}</span>
+        </div>
+      </div>
+
+      <div class="confidence-bar">
+        <div class="confidence-fill" style="width: ${score * 1.3}%"></div>
+      </div>
+
+      <div style="margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap;">
+        ${coin.signals.slice(0, 3).map(s => `<span class="tag tag-buy-prime-a">${s}</span>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function getMemoryTime(symbol) {
+  const mem = yaoCoinMemory[symbol];
+  if (!mem) return '新';
+  
+  const elapsed = (Date.now() - mem.firstDetected) / (60 * 60 * 1000);
+  if (elapsed < 1) return '< 1h';
+  if (elapsed < 6) return `${elapsed.toFixed(0)}h`;
+  return '6h+';
+}
+
+function updateBadges() {
+  document.getElementById('stat-yao-buy').textContent = yaoBuyableCoins.length;
+  document.getElementById('stat-yao-watch').textContent = yaoWatchCoins.length;
+  document.getElementById('stat-buy-elite').textContent = buyEliteCoins.length;
+  document.getElementById('stat-buy-prime').textContent = buyPrimeCoins.length;
+}
+
+// ======================== 搜索功能 ========================
+
+let searchTimeout = null;
+
+function handleSearch(query) {
+  clearTimeout(searchTimeout);
+  const results = document.getElementById('search-results');
+
+  if (!query.trim()) {
+    results.innerHTML = '';
+    return;
+  }
+
+  searchTimeout = setTimeout(() => {
+    const q = query.toUpperCase();
+    const filtered = allCoinsData
+      .filter(coin => coin.symbol.includes(q))
+      .slice(0, 50);
+
+    if (filtered.length === 0) {
+      results.innerHTML = `<div class="empty-state"><div>未找到相关币种</div></div>`;
+      return;
+    }
+
+    results.innerHTML = filtered.map(coin => {
+      let tag = '';
+      let tagClass = '';
+
+      if (coin.type === 'yao-buyable') {
+        tag = `🔥 妖币-可买`;
+        tagClass = 'tag-yao-buyable';
+      } else if (coin.type === 'yao-watch') {
+        tag = `✨ 妖币-观察`;
+        tagClass = 'tag-yao-watch';
+      } else if (coin.type === 'buy-elite') {
+        tag = `💎 建议-精选`;
+        tagClass = 'tag-buy-elite';
+      } else if (coin.type === 'buy-prime') {
+        tag = `⭐ 建议-优秀`;
+        tagClass = 'tag-buy-prime';
+      }
+
+      return `
+        <div class="search-item">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <div class="search-item-symbol">${coin.symbol}</div>
+            ${tag ? `<span class="tag ${tagClass}">${tag}</span>` : ''}
+          </div>
+          <div class="search-item-info">
+            <div>价格: $${fmtNum(coin.price, 6)}</div>
+            <div>市值: $${fmtNum(coin.mcap, 2)}</div>
+            <div>24h: <span class="${coin.priceChange > 0 ? 'green' : 'red'}">${coin.priceChange.toFixed(2)}%</span></div>
+          </div>
+          <button class="search-item-btn" onclick="showDetail('${coin.symbol}')">查看详情</button>
+        </div>
+      `;
+    }).join('');
+  }, 300);
+}
+
+// ======================== 详情页面 ========================
+
+function showDetail(symbol, source = null) {
+  const coin = allCoinsData.find(c => c.symbol === symbol);
+  if (!coin) return;
+
+  let detailBoxClass = 'buy-elite';
+  let icon = '📊';
+  let title = '';
+
+  if (coin.type === 'yao-buyable') {
+    detailBoxClass = 'danger';
+    icon = '🔥';
+    title = '妖币可买';
+  } else if (coin.type === 'yao-watch') {
+    detailBoxClass = 'purple';
+    icon = '✨';
+    title = '妖币观察';
+  } else if (coin.type === 'buy-elite') {
+    detailBoxClass = 'success';
+    icon = '💎';
+    title = '建议精选';
+  } else if (coin.type === 'buy-prime') {
+    detailBoxClass = 'primary';
+    icon = '⭐';
+    title = '建议优秀';
+  }
+
+  const wyckoffAnalyzer = coin.wyckoff;
+  const phaseAnalysisBox = wyckoffAnalyzer.getPhaseAnalysisBox();
+  const trendTag = coin.trendTag;
+
+  let html = `
+    <div class="detail-title">
+      <span>${icon} ${coin.symbol}</span>
+      <span style="font-size: 12px; color: var(--text-secondary);">$${fmtNum(coin.price, 6)}</span>
+      <span class="tag ${trendTag.class}">${trendTag.icon} ${trendTag.label}</span>
+    </div>
+
+    ${phaseAnalysisBox}
+
+    <div class="operation-guide">
+      <div class="operation-guide-title">📋 交易建议</div>
+      <div class="operation-guide-content">
+        <div class="operation-row">
+          <strong>方向：</strong>
+          ${coin.trendTag.icon} <strong style="color: var(--text-primary);">${coin.trend === 'LONG' ? '做多 (看涨)' : coin.trend === 'SHORT' ? '做空 (看跌)' : '观望'}</strong>
+        </div>
+        <div class="operation-row">
+          <strong>力度：</strong>
+          ${coin.trendStrength}% (${coin.trendStrength >= 75 ? '强势' : coin.trendStrength >= 55 ? '中度' : '弱势'})
+        </div>
+        ${coin.trend === 'LONG' ? `
+          <div class="operation-row">
+            <strong>多头逻辑：</strong>
+            ${coin.trendTag.label}
+          </div>
+          <div class="operation-row">
+            <strong>操作：</strong>
+            在支撑位买入，设止损在前低，目标看${coin.trendStrength >= 75 ? '短期涨幅10-30%' : '短期涨幅5-15%'}
+          </div>
+        ` : coin.trend === 'SHORT' ? `
+          <div class="operation-row">
+            <strong>空头逻辑：</strong>
+            ${coin.trendTag.label}
+          </div>
+          <div class="operation-row">
+            <strong>操作：</strong>
+            在阻力位做空，设止损在前高，目标看${coin.trendStrength >= 75 ? '短期跌幅10-30%' : '短期跌幅5-15%'}
+          </div>
+        ` : `
+          <div class="operation-row">
+            <strong>建议：</strong>
+            等待突破方向明确后再介入
+          </div>
+        `}
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <div class="detail-item">
+        <div class="detail-item-label">当前价格</div>
+        <div class="detail-item-value">$${fmtNum(coin.price, 6)}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-item-label">市值</div>
+        <div class="detail-item-value">${coin.mcap ? fmtNum(coin.mcap, 2) : '-'}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-item-label">24h涨幅</div>
+        <div class="detail-item-value ${coin.priceChange > 0 ? 'green' : 'red'}">${coin.priceChange.toFixed(2)}%</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-item-label">成交量占比</div>
+        <div class="detail-item-value">${coin.volMcap ? coin.volMcap.toFixed(2) + '%' : '-'}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-item-label">OI占比</div>
+        <div class="detail-item-value">${coin.oiMcap ? coin.oiMcap.toFixed(2) + '%' : '-'}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-item-label">资金费率</div>
+        <div class="detail-item-value ${coin.funding > 0 ? 'green' : 'red'}">${coin.funding.toFixed(4)}%</div>
+      </div>
+      ${coin.score ? `
+        <div class="detail-item">
+          <div class="detail-item-label">评分</div>
+          <div class="detail-item-value">${coin.score.toFixed(0)}/100</div>
+        </div>
+      ` : ''}
+      ${coin.confidence ? `
+        <div class="detail-item">
+          <div class="detail-item-label">信心度</div>
+          <div class="detail-item-value">${coin.confidence.toFixed(0)}%</div>
+        </div>
+      ` : ''}
+    </div>
+
+    <div class="detail-box ${detailBoxClass}">
+      <h3>📊 分析指标</h3>
+      <div class="detail-row">
+        <span class="detail-label">检测信号数</span>
+        <span class="detail-value">${coin.signals ? coin.signals.length : 0}个</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">信号清单</span>
+        <span class="detail-value" style="text-align: right; max-width: 60%;">
+          ${coin.signals ? coin.signals.join(' | ') : '-'}
+        </span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">分析结论</span>
+        <span class="detail-value" style="text-align: right; max-width: 60%;">
+          ${coin.reason || '等待更多数据'}
+        </span>
+      </div>
+    </div>
+
+    ${coin.type === 'yao-buyable' || coin.type === 'yao-watch' ? `
+      <div class="detail-box danger">
+        <h3>🚀 妖币分析</h3>
+        <div class="detail-row">
+          <span class="detail-label">妖币等级</span>
+          <span class="detail-value">${coin.grade || '观察中'}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">预期空间</span>
+          <span class="detail-value">${coin.type === 'yao-buyable' ? '50-500x潜力' : '10-100x潜力'}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">风险等级</span>
+          <span class="detail-value">${coin.type === 'yao-buyable' ? '极高(高收益)' : '高(监控中)'}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">当前阶段</span>
+          <span class="detail-value">${wyckoffAnalyzer.ph
+          aseDetails.name} (${wyckoffAnalyzer.phaseDetails.confidence}%)
+
+
+
+下一步可能
+
+${wyckoffAnalyzer.likelyNextPhases.join(' → ')}
+
+
+
+:
+
+🎯 交易建议
+
+
+评级
+${coin.grade || '-'}级
+
+
+建议仓位
+账户资金的 ${coin.position || '-'}
+
+
+杠杆建议
+${coin.leverage || '-'}
+
+
+当前阶段
+${wyckoffAnalyzer.phaseDetails.name}
+
+
+阶段描述
+
+${wyckoffAnalyzer.phaseDetails.description}
+
+
+
+`}
+    <div class="detail-box">
+      <h3>🌐 快速查询通道</h3>
+      <div class="channel-grid">
+        <div class="channel-item" onclick="openBinance('${coin.symbol}')">
+          <div class="channel-icon">📊</div>
+          <div class="channel-name">币安交易</div>
+        </div>
+        <div class="channel-item" onclick="openTradingView('${coin.symbol}')">
+          <div class="channel-icon">📈</div>
+          <div class="channel-name">交易图表</div>
+        </div>
+        <div class="channel-item" onclick="openCoinMarketCap('${coin.symbol}')">
+          <div class="channel-icon">💰</div>
+          <div class="channel-name">市值排名</div>
+        </div>
+        <div class="channel-item" onclick="openCoingecko('${coin.symbol}')">
+          <div class="channel-icon">🦎</div>
+          <div class="channel-name">Coingecko</div>
+        </div>
+        <div class="channel-item" onclick="copySymbol('${coin.symbol}', null, true)">
+          <div class="channel-icon">📋</div>
+          <div class="channel-name">复制符号</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-box ${coin.type === 'yao-buyable' ? 'danger' : coin.type === 'yao-watch' ? 'purple' : 'warn'}">
+      <h3>⚠️ ${coin.type === 'yao-buyable' ? '妖币风险提示' : coin.type === 'yao-watch' ? '观察提示' : '风险提示'}</h3>
+      <div style="font-size: 11px; color: inherit; line-height: 1.6;">
+        ${coin.type === 'yao-buyable' ? `
+          ✓ 妖币极具潜力，但风险极高<br/>
+          ✓ 仅适合高风险承受能力的投资者<br/>
+          ✓ 严格执行止损，不贪心<br/>
+          ✓ 分批建仓，控制风险敞口<br/>
+          ✓ 持续关注Wyckoff阶段变化<br/>
+          ✓ 可能是庄家控盘，谨防砸盘<br/>
+          ✓ 关键信号: ${coin.signals.slice(0, 2).join(' + ')}
+        ` : coin.type === 'yao-watch' ? `
+          ✓ 该币种有成为妖币的潜力<br/>
+          ✓ 当前处于${wyckoffAnalyzer.phaseDetails.name}阶段<br/>
+          ✓ 等待发展到 ${wyckoffAnalyzer.likelyNextPhases[0] || '加速阶段'} 时确认<br/>
+          ✓ 设置价格提醒或信号提醒<br/>
+          ✓ 观察OI和成交量变化<br/>
+          ✓ 资金还未充分启动
+        ` : `
+          ✓ 建议币基于多维指标综合评分<br/>
+          ✓ 当前处于${wyckoffAnalyzer.phaseDetails.name}阶段<br/>
+          ✓ 严格遵守止损止盈规则<br/>
+          ✓ 防止追高，合理控制风险<br/>
+          ✓ 等待${wyckoffAnalyzer.likelyNextPhases[0] || '下一个关键时刻'}<br/>
+          ✓ 相对稳定但仍需谨慎
+        `}
+      </div>
+    </div>
+  `;
+
+  document.getElementById('detail-body').innerHTML = html;
+  document.getElementById('detail-modal').classList.add('active');
+}
+
+function closeDetail() {
+  document.getElementById('detail-modal').classList.remove('active');
+}
+
+// ======================== 快速通道 ========================
+
+function openBinance(symbol) {
+  window.open(`https://www.binance.com/en/trade/${symbol}`, '_blank');
+}
+
+function openTradingView(symbol) {
+  window.open(`https://www.tradingview.com/chart/?symbol=BINANCE:${symbol}`, '_blank');
+}
+
+function openCoinMarketCap(symbol) {
+  const pair = symbol.replace('USDT', '');
+  window.open(`https://coinmarketcap.com/currencies/${pair.toLowerCase()}/`, '_blank');
+}
+
+function openCoingecko(symbol) {
+  const pair = symbol.replace('USDT', '');
+  window.open(`https://www.coingecko.com/en/coins/${pair.toLowerCase()}`, '_blank');
+}
+
+function copySymbol(symbol, event, showMsg = false) {
+  if (event) event.stopPropagation();
+  navigator.clipboard.writeText(symbol);
+  if (showMsg) {
+    showNotification(`已复制: ${symbol}`, 'success');
+  }
+}
+
+function openChart(symbol, event) {
+  event.stopPropagation();
+  openTradingView(symbol);
+}
+
+// ======================== 自动刷新 ========================
+
+function startAutoRefresh() {
+  let countdown = 60;
+
+  loadData();
+
+  autoRefreshInterval = setInterval(() => {
+    countdown--;
+    document.getElementById('refresh-countdown').innerText = countdown + 's';
+
+    if (countdown <= 0) {
+      countdown = 60;
+      loadData();
+    }
+  }, 1000);
+}
+
+// ======================== 初始化 ========================
+
+document.addEventListener('DOMContentLoaded', () => {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+
+  startAutoRefresh();
+  cleanExpiredMemory();
+
+  document.getElementById('detail-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'detail-modal') {
+      closeDetail();
+    }
+  });
+
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) {
+    searchInput.addEventListener('focus', () => {
+      document.getElementById('search-results').style.display = 'block';
+    });
+    document.addEventListener('click', (e) => {
+      if (!searchInput.contains(e.target) && !document.getElementById('search-results').contains(e.target)) {
+        document.getElementById('search-results').style.display = 'none';
+      }
+    });
+  }
+
+  window.addEventListener('beforeunload', () => {
+    if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+    localStorage.setItem('previousData', JSON.stringify(previousData));
+    localStorage.setItem('yaoCoinMemory', JSON.stringify(yaoCoinMemory));
+  });
+});
+          window.addEventListener('beforeunload', () => {
         if (autoRefreshInterval) clearInterval(autoRefreshInterval);
         localStorage.setItem('previousData', JSON.stringify(previousData));
         localStorage.setItem('yaoCoinMemory', JSON.stringify(yaoCoinMemory));
