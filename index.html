@@ -123,9 +123,10 @@
       align-items: center;
     }
     .section-title.buy { background: rgba(34,197,94,.12); border-left-color: #10b981; color: #86efac; }
+    .section-title.sell { background: rgba(239,68,68,.12); border-left-color: #ef4444; color: #fca5a5; }
     .section-title.excellent { background: rgba(59,130,246,.12); border-left-color: #3b82f6; color: #bfdbfe; }
     .section-title.yao-buy { background: rgba(245,158,11,.12); border-left-color: var(--orange); color: #fef3c7; }
-    .section-title.yao-watch { background: rgba(239,68,68,.12); border-left-color: #ef4444; color: #fecaca; }
+    .section-title.yao-sell { background: rgba(168,85,247,.12); border-left-color: var(--purple); color: #e9d5ff; }
     .section-title.watching { background: rgba(168,85,247,.12); border-left-color: var(--purple); color: #e9d5ff; }
     .section-count { font-size: 12px; color: var(--sub); font-weight: 400; }
 
@@ -154,22 +155,12 @@
       box-shadow: 0 12px 32px rgba(0,0,0,.4);
     }
     .coin-card.buy { border-color: rgba(34,197,94,.6); }
+    .coin-card.sell { border-color: rgba(239,68,68,.6); }
     .coin-card.excellent { border-color: rgba(59,130,246,.6); }
     .coin-card.yao-buy { border-color: rgba(245,158,11,.6); }
-    .coin-card.yao-watch { border-color: rgba(239,68,68,.6); }
+    .coin-card.yao-sell { border-color: rgba(168,85,247,.6); }
     .coin-card.watching { border-color: rgba(168,85,247,.6); }
 
-    .watch-badge {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      background: rgba(168,85,247,.8);
-      color: #e9d5ff;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 10px;
-      font-weight: 700;
-    }
     .trend-protection {
       position: absolute;
       top: 8px;
@@ -575,8 +566,6 @@
       padding: 80px 20px;
     }
 
-    .star { color: var(--yellow); font-weight: 900; }
-    
     .loading {
       text-align: center;
       color: var(--cyan);
@@ -639,8 +628,8 @@
   <div class="container">
     <div class="header">
       <div>
-        <h1>⚡ 妖币捕手 Pro</h1>
-        <div class="header-info">威科夫分析 · 关注状态管理 · 趋势保护 · 实时突破点捕捉</div>
+        <h1>⚡ 妖币捕手 Pro - 多空双飞</h1>
+        <div class="header-info">威科夫分析 · 短期权重最高 · 多空信号 · 启动点捕捉</div>
       </div>
       <div class="header-controls">
         <div class="status-bar">
@@ -648,10 +637,10 @@
             刷新: <span id="update-time">--:--</span>
           </span>
           <span class="status-item">
-            <span id="buy-count">0</span> 直接买入
+            🟢 <span id="buy-count">0</span> 做多
           </span>
           <span class="status-item">
-            <span id="watch-count">0</span> 关注中
+            🔴 <span id="sell-count">0</span> 做空
           </span>
         </div>
         <button class="refresh-btn" id="manual-refresh-btn" onclick="manualRefresh()">
@@ -927,8 +916,7 @@ function onSearchInput() {
 
   if (!input) {
     suggestionsDiv.classList.remove('active');
-    return;
-  }
+    return;  }
 
   const results = searchBinanceAssets(input);
 
@@ -1139,11 +1127,20 @@ function analyzeWyckoff(klines) {
   return priceUp ? 'breakout' : 'unknown';
 }
 
-// ============ 信号检测 ============
+// ============ 信号检测 - 多空双重 ============
 
 function detectSignals(symbol, klines) {
   if (!klines || klines.length < 10) {
-    return { signals: [], strength: 0, direction: null, rsi: 0, macd: null, cvd: { trend: 'neutral' } };
+    return { 
+      signals: [], 
+      strength: 0, 
+      direction: null, 
+      rsi: 0, 
+      macd: null, 
+      cvd: { trend: 'neutral' },
+      longStrength: 0,
+      shortStrength: 0
+    };
   }
 
   const closes = klines.map(k => k.c);
@@ -1154,59 +1151,93 @@ function detectSignals(symbol, klines) {
   const cvd = calcCVD(klines);
 
   let signals = [];
-  let strength = 0;
+  let longStrength = 0;
+  let shortStrength = 0;
   let direction = null;
 
+  // ========== 做多信号 ==========
+  
+  // RSI 超卖 - 最强做多信号（短期反弹）
   if (rsi < 30) {
     signals.push('rsi_oversold');
-    strength += 20;
-    direction = 'LONG';
+    longStrength += 30;
   }
 
-  if (rsi > 75 && closes[closes.length - 1] < closes[closes.length - 2]) {
-    signals.push('rsi_overbought_drop');
-    strength += 20;
-    direction = 'SHORT';
+  // 下跌中成交量增加 - 做多信号（可能触底）
+  if (closes[closes.length - 1] < closes[closes.length - 2] && volumes[volumes.length - 1] > volumes[volumes.length - 2]) {
+    signals.push('capitulation_volume');
+    longStrength += 25;
   }
 
-  const avgVol = volumes.slice(0, 10).reduce((a, b) => a + b) / 10;
-  if (volumes[volumes.length - 1] > avgVol * 2) {
-    signals.push('volume_breakout');
-    strength += 15;
-  }
-
+  // CVD 看涨背离 - 价格创新低但成交量看涨
   if (closes[closes.length - 1] < Math.min(...closes.slice(-10, -1)) && cvd.trend === 'up') {
     signals.push('cvd_bullish_divergence');
-    strength += 25;
-    direction = 'LONG';
+    longStrength += 30;
   }
 
-  if (closes[closes.length - 1] > Math.max(...closes.slice(-10, -1)) && cvd.trend === 'down') {
-    signals.push('cvd_bearish_divergence');
-    strength += 25;
-    direction = 'SHORT';
-  }
-
+  // MACD 金叉或为正 - 做多
   if (macd && macd.macd > 0) {
     signals.push('macd_positive');
-    strength += 15;
-    direction = 'LONG';
+    longStrength += 20;
   }
 
-  const priceUp = closes[closes.length - 1] > closes[closes.length - 2];
-  const volUp = volumes[volumes.length - 1] > volumes[volumes.length - 2];
-  if (priceUp && volUp) {
-    signals.push('price_volume_sync_up');
-    strength += 20;
-    direction = 'LONG';
+  // 价格反弹 + 成交量确认
+  if (closes[closes.length - 1] > closes[closes.length - 2] && volumes[volumes.length - 1] > volumes[volumes.length - 2]) {
+    signals.push('bounce_with_volume');
+    longStrength += 20;
   }
-  if (!priceUp && volUp) {
-    signals.push('price_volume_sync_down');
-    strength += 20;
+
+  // ========== 做空信号 ==========
+
+  // RSI 超买 - 最强做空信号（短期回调）
+  if (rsi > 75) {
+    signals.push('rsi_overbought');
+    shortStrength += 30;
+  }
+
+  // 上升中成交量下降 - 做空信号（动能衰竭）
+  if (closes[closes.length - 1] > closes[closes.length - 2] && volumes[volumes.length - 1] < volumes[volumes.length - 2]) {
+    signals.push('exhaustion_volume');
+    shortStrength += 25;
+  }
+
+  // CVD 看跌背离 - 价格创新高但成交量看跌
+  if (closes[closes.length - 1] > Math.max(...closes.slice(-10, -1)) && cvd.trend === 'down') {
+    signals.push('cvd_bearish_divergence');
+    shortStrength += 30;
+  }
+
+  // MACD 死叉或为负 - 做空
+  if (macd && macd.macd < 0) {
+    signals.push('macd_negative');
+    shortStrength += 20;
+  }
+
+  // 价格下跌 + 成交量确认
+  if (closes[closes.length - 1] < closes[closes.length - 2] && volumes[volumes.length - 1] > volumes[volumes.length - 2]) {
+    signals.push('decline_with_volume');
+    shortStrength += 20;
+  }
+
+  // ========== 判断主方向 ==========
+  if (longStrength > shortStrength) {
+    direction = 'LONG';
+  } else if (shortStrength > longStrength) {
     direction = 'SHORT';
   }
 
-  return { signals, strength: Math.min(strength, 100), direction, rsi, macd, cvd };
+  const strength = Math.max(longStrength, shortStrength);
+
+  return { 
+    signals, 
+    strength: Math.min(strength, 100), 
+    direction, 
+    rsi, 
+    macd, 
+    cvd,
+    longStrength: Math.min(longStrength, 100),
+    shortStrength: Math.min(shortStrength, 100)
+  };
 }
 
 // ============ 风险评估 ============
@@ -1256,7 +1287,7 @@ function startTrendProtection(symbol) {
   }
 }
 
-// ============ 推荐等级判断（改松版本） ============
+// ============ 推荐等级判断 - 多空版本 ============
 
 function determineLevel(symbol, coin_data, signal_data) {
   const riskLevel = assessRisk(coin_data);
@@ -1266,31 +1297,29 @@ function determineLevel(symbol, coin_data, signal_data) {
     return allCoins[symbol]?.level || null;
   }
 
-  // ============ 直接买入（改松） ============
+  // ========== 做多推荐 ==========
+
+  // 🟢 直接做多 - 短期启动点
   if (
-    signal_data.strength >= 50 &&
+    signal_data.longStrength >= 50 &&
     riskLevel !== 'high' &&
-    coin_data.change_1h > 0 &&
     signal_data.direction === 'LONG'
   ) {
     startTrendProtection(symbol);
     return 'buy';
   }
 
-  // ============ 妖币买入 ============
+  // 🔥 妖币做多 - 低价 + 强信号
   if (isYao) {
-    if (signal_data.strength >= 50 && riskLevel !== 'high' && signal_data.direction === 'LONG') {
+    if (signal_data.longStrength >= 50 && riskLevel !== 'high') {
       startTrendProtection(symbol);
       return 'yao-buy';
     }
-    if (signal_data.strength >= 35) {
-      return 'yao-watch';
-    }
   }
 
-  // ============ 优秀币 ============
+  // 🔵 优秀币做多 - 中等信号
   if (
-    signal_data.strength >= 40 &&
+    signal_data.longStrength >= 40 &&
     riskLevel !== 'high' &&
     coin_data.change_1h > -2
   ) {
@@ -1298,7 +1327,27 @@ function determineLevel(symbol, coin_data, signal_data) {
     return 'excellent';
   }
 
-  // ============ 关注中 ============
+  // ========== 做空推荐 ==========
+
+  // 🔴 直接做空 - 短期回调点
+  if (
+    signal_data.shortStrength >= 50 &&
+    riskLevel !== 'high' &&
+    signal_data.direction === 'SHORT'
+  ) {
+    startTrendProtection(symbol);
+    return 'sell';
+  }
+
+  // 🟣 妖币做空 - 低价 + 下跌信号
+  if (isYao) {
+    if (signal_data.shortStrength >= 50 && riskLevel !== 'high') {
+      startTrendProtection(symbol);
+      return 'yao-sell';
+    }
+  }
+
+  // ========== 关注中 ==========
   if (signal_data.strength >= 30) {
     startWatching(symbol);
     return 'watching';
@@ -1360,15 +1409,20 @@ async function analyzeCoin(symbol) {
     const signal_1h = detectSignals(symbol, klines_1h);
     const signal_4h = detectSignals(symbol, klines_4h || []);
 
-    const totalSignalStrength = (signal_5m.strength + signal_1h.strength * 1.5 + signal_4h.strength) / 3.5;
-    const mainDirection = signal_1h.direction || signal_5m.direction;
+    // 短期权重最高：5m占40% + 1h占40% + 4h占20%
+    const totalLongStrength = (signal_5m.longStrength * 0.4 + signal_1h.longStrength * 0.4 + signal_4h.longStrength * 0.2);
+    const totalShortStrength = (signal_5m.shortStrength * 0.4 + signal_1h.shortStrength * 0.4 + signal_4h.shortStrength * 0.2);
+    const totalSignalStrength = Math.max(totalLongStrength, totalShortStrength);
+
+    const mainDirection = totalLongStrength > totalShortStrength ? 'LONG' : totalShortStrength > totalLongStrength ? 'SHORT' : null;
 
     if (!signalHistory[symbol]) signalHistory[symbol] = [];
     if (signal_5m.signals.length > 0 || signal_1h.signals.length > 0) {
       signalHistory[symbol].push({
         time: Date.now(),
         signals: [...signal_5m.signals, ...signal_1h.signals],
-        strength: totalSignalStrength
+        strength: totalSignalStrength,
+        direction: mainDirection
       });
       if (signalHistory[symbol].length > 100) signalHistory[symbol].shift();
     }
@@ -1395,13 +1449,20 @@ async function analyzeCoin(symbol) {
       phase_5m, phase_1h, phase_4h,
       
       signal_5m, signal_15m, signal_1h, signal_4h,
+      longStrength: totalLongStrength,
+      shortStrength: totalShortStrength,
       signalStrength: totalSignalStrength,
       mainDirection,
       signalCount: signalHistory[symbol]?.filter(s => Date.now() - s.time < 300000).length || 0
     };
 
     const riskLevel = assessRisk(coinData);
-    const level = determineLevel(symbol, coinData, { strength: totalSignalStrength, direction: mainDirection });
+    const level = determineLevel(symbol, coinData, { 
+      longStrength: totalLongStrength, 
+      shortStrength: totalShortStrength,
+      strength: totalSignalStrength, 
+      direction: mainDirection 
+    });
 
     allCoins[symbol] = {
       data: coinData,
@@ -1472,8 +1533,11 @@ async function analyzePair(pair, market = 'spot') {
     const signal_1h = detectSignals(symbol, klines_1h);
     const signal_4h = detectSignals(symbol, klines_4h || []);
 
-    const totalSignalStrength = (signal_5m.strength + signal_1h.strength * 1.5 + signal_4h.strength) / 3.5;
-    const mainDirection = signal_1h.direction || signal_5m.direction;
+    const totalLongStrength = (signal_5m.longStrength * 0.4 + signal_1h.longStrength * 0.4 + signal_4h.longStrength * 0.2);
+    const totalShortStrength = (signal_5m.shortStrength * 0.4 + signal_1h.shortStrength * 0.4 + signal_4h.shortStrength * 0.2);
+    const totalSignalStrength = Math.max(totalLongStrength, totalShortStrength);
+
+    const mainDirection = totalLongStrength > totalShortStrength ? 'LONG' : totalShortStrength > totalLongStrength ? 'SHORT' : null;
 
     const coinData = {
       symbol,
@@ -1491,12 +1555,19 @@ async function analyzePair(pair, market = 'spot') {
       macd_1h, cvd_1h, cvd_5m,
       phase_5m, phase_1h, phase_4h,
       signal_5m, signal_15m, signal_1h, signal_4h,
+      longStrength: totalLongStrength,
+      shortStrength: totalShortStrength,
       signalStrength: totalSignalStrength,
       mainDirection
     };
 
     const riskLevel = assessRisk(coinData);
-    const level = determineLevel(symbol, coinData, { strength: totalSignalStrength, direction: mainDirection });
+    const level = determineLevel(symbol, coinData, { 
+      longStrength: totalLongStrength, 
+      shortStrength: totalShortStrength,
+      strength: totalSignalStrength, 
+      direction: mainDirection 
+    });
 
     allCoins[symbol] = {
       data: coinData,
@@ -1561,20 +1632,29 @@ async function renderMonitor() {
     return;
   }
 
-  const buyCoins = coins.filter(c => c.level === 'buy').sort((a, b) => b.data.signalStrength - a.data.signalStrength).slice(0, 10);
+  const buyCoins = coins.filter(c => c.level === 'buy').sort((a, b) => b.data.longStrength - a.data.longStrength).slice(0, 10);
+  const sellCoins = coins.filter(c => c.level === 'sell').sort((a, b) => b.data.shortStrength - a.data.shortStrength).slice(0, 10);
   const excellentCoins = coins.filter(c => c.level === 'excellent').sort((a, b) => b.data.signalStrength - a.data.signalStrength).slice(0, 10);
-  const yaoBuyCoins = coins.filter(c => c.level === 'yao-buy').sort((a, b) => b.data.signalStrength - a.data.signalStrength).slice(0, 10);
-  const yaoWatchCoins = coins.filter(c => c.level === 'yao-watch').sort((a, b) => b.data.signalStrength - a.data.signalStrength).slice(0, 10);
+  const yaoBuyCoins = coins.filter(c => c.level === 'yao-buy').sort((a, b) => b.data.longStrength - a.data.longStrength).slice(0, 10);
+  const yaoSellCoins = coins.filter(c => c.level === 'yao-sell').sort((a, b) => b.data.shortStrength - a.data.shortStrength).slice(0, 10);
   const watchingCoins_list = coins.filter(c => c.level === 'watching').sort((a, b) => b.data.signalStrength - a.data.signalStrength).slice(0, 10);
 
   let html = '';
 
   if (buyCoins.length) {
     html += `<div class="section-title buy">
-      🟢 可以直接买入 (${buyCoins.length})
-      <span class="section-count">信号强度中等 · 点位较好 · 拉升途中</span>
+      🟢 可以做多 (${buyCoins.length})
+      <span class="section-count">启动信号 · 短期看涨 · 点位较好</span>
     </div>`;
     html += `<div class="grid">${buyCoins.map(c => renderCoinCard(c, 'buy')).join('')}</div>`;
+  }
+
+  if (sellCoins.length) {
+    html += `<div class="section-title sell">
+      🔴 可以做空 (${sellCoins.length})
+      <span class="section-count">回调信号 · 短期看跌 · 高位回调</span>
+    </div>`;
+    html += `<div class="grid">${sellCoins.map(c => renderCoinCard(c, 'sell')).join('')}</div>`;
   }
 
   if (excellentCoins.length) {
@@ -1587,18 +1667,18 @@ async function renderMonitor() {
 
   if (yaoBuyCoins.length) {
     html += `<div class="section-title yao-buy">
-      🔥 妖币买入 (${yaoBuyCoins.length})
+      🔥 妖币做多 (${yaoBuyCoins.length})
       <span class="section-count">刚启动 · 高潜力 · 短线机会</span>
     </div>`;
     html += `<div class="grid">${yaoBuyCoins.map(c => renderCoinCard(c, 'yao-buy')).join('')}</div>`;
   }
 
-  if (yaoWatchCoins.length) {
-    html += `<div class="section-title yao-watch">
-      🟠 妖币观察 (${yaoWatchCoins.length})
-      <span class="section-count">可能有风险 · 等待最佳点位</span>
+  if (yaoSellCoins.length) {
+    html += `<div class="section-title yao-sell">
+      🟣 妖币做空 (${yaoSellCoins.length})
+      <span class="section-count">下跌信号 · 反弹空单 · 高风险高收益</span>
     </div>`;
-    html += `<div class="grid">${yaoWatchCoins.map(c => renderCoinCard(c, 'yao-watch')).join('')}</div>`;
+    html += `<div class="grid">${yaoSellCoins.map(c => renderCoinCard(c, 'yao-sell')).join('')}</div>`;
   }
 
   if (watchingCoins_list.length) {
@@ -1618,8 +1698,8 @@ async function renderMonitor() {
   }
 
   document.getElementById('monitor-content').innerHTML = html;
-  document.getElementById('buy-count').textContent = buyCoins.length;
-  document.getElementById('watch-count').textContent = watchingCoins_list.length;
+  document.getElementById('buy-count').textContent = buyCoins.length + sellCoins.length;
+  document.getElementById('sell-count').textContent = watchingCoins_list.length;
   updateTime();
 }
 
@@ -1630,6 +1710,22 @@ function renderCoinCard(coin, level) {
                     coin.riskLevel === 'mid' ? 'risk-mid' : 'risk-low';
 
   const trendStatus = isTrendProtected(c.symbol) ? `<div class="trend-protection">🛡️ 保护中</div>` : '';
+
+  // 判断买卖方向的颜色
+  let cardLevelClass = level;
+  let displayStrength = 0;
+  let displayDirection = '待定';
+
+  if (level === 'buy' || level === 'yao-buy' || level === 'excellent') {
+    displayStrength = Math.round(c.longStrength);
+    displayDirection = '看多';
+  } else if (level === 'sell' || level === 'yao-sell') {
+    displayStrength = Math.round(c.shortStrength);
+    displayDirection = '看空';
+  } else {
+    displayStrength = Math.round(c.signalStrength);
+    displayDirection = c.mainDirection || '待定';
+  }
 
   let html = `
     <div class="coin-card ${level}" onclick="viewDetail('${c.symbol}')">
@@ -1653,11 +1749,17 @@ function renderCoinCard(coin, level) {
           coin.riskLevel === 'mid' ? '中风险' : '低风险'
         }</span>
         <span class="tag phase">${getPhaseEmoji(c.phase_1h)} ${c.phase_1h}</span>
-        <span class="tag trend">${getTrendEmoji(c.mainDirection)} ${c.mainDirection || '待定'}</span>
-        <span class="tag signal-count">📊 强度${Math.round(c.signalStrength)}</span>
+        <span class="tag trend">${getTrendEmoji(displayDirection)} ${displayDirection}</span>
+        <span class="tag signal-count">📊 强度${displayStrength}</span>
       </div>
 
       <div class="metrics">
+        <div class="metric">
+          <div class="metric-label">5m涨幅</div>
+          <div class="metric-value ${c.change_5m > 0 ? 'up' : 'down'} ${Math.abs(c.change_5m) > 1 ? 'star' : ''}">
+            ${fmtPct(c.change_5m)}
+          </div>
+        </div>
         <div class="metric">
           <div class="metric-label">1h涨幅</div>
           <div class="metric-value ${c.change_1h > 0 ? 'up' : 'down'} ${Math.abs(c.change_1h) > 2 ? 'star' : ''}">
@@ -1676,16 +1778,10 @@ function renderCoinCard(coin, level) {
             ${Math.round(c.rsi_1h)}
           </div>
         </div>
-        <div class="metric">
-          <div class="metric-label">成交量</div>
-          <div class="metric-value">
-            ${fmt(c.volume24h / 1e6)}M
-          </div>
-        </div>
       </div>
 
       <div class="analysis-text">
-        ${getPriceExpectation(c, coin.riskLevel)}
+        ${getPriceExpectation(c, coin.riskLevel, level)}
         <br><br>
         ${getTradeAdvice(c, coin.riskLevel, level)}
       </div>
@@ -1716,45 +1812,59 @@ function getPhaseEmoji(phase) {
 }
 
 function getTrendEmoji(trend) {
-  if (trend === 'LONG') return '🟢';
-  if (trend === 'SHORT') return '🔴';
+  if (trend === 'LONG' || trend === '看多') return '🟢';
+  if (trend === 'SHORT' || trend === '看空') return '🔴';
   return '⚪';
 }
 
-function getPriceExpectation(c, riskLevel) {
+function getPriceExpectation(c, riskLevel, level) {
   if (riskLevel === 'high') {
-    return '风险较高，短期可能调整，建议观察关键支撑位。';
+    return '⚠️ 风险较高，短期可能调整，建议观察关键支撑位。';
+  }
+
+  if (level === 'buy' || level === 'yao-buy') {
+    if (c.longStrength > 60) {
+      return '✅ 做多信号强烈，有望继续上涨，可追进或等回调低吸。';
+    }
+    return '✅ 做多信号中等，建议低吸或等待确认。';
+  }
+
+  if (level === 'sell' || level === 'yao-sell') {
+    if (c.shortStrength > 60) {
+      return '⚠️ 做空信号强烈，短期有下跌压力，可追空或等反弹高空。';
+    }
+    return '⚠️ 做空信号中等，短期可能下跌或整理。';
   }
 
   if (c.mainDirection === 'LONG') {
-    if (c.signalStrength > 60) {
-      return '多个信号共振，有望继续上涨，可追进或等回调。';
-    }
-    return '看多信号中等，建议低吸或等待确认。';
+    return '👀 看多信号中等，继续观察或低吸。';
   }
 
   if (c.mainDirection === 'SHORT') {
-    return '看空信号，短期可能下跌或整理，建议规避。';
+    return '👀 看空信号中等，继续观察或高空。';
   }
 
-  return '走势不明确，继续观察关键点位。';
+  return '❓ 走势不明确，继续观察关键点位。';
 }
 
 function getTradeAdvice(c, riskLevel, level) {
   if (level === 'buy') {
-    return `✅ 可直接买入。点位好，拉升途中，盈亏比大。分批建仓，设止损在24h低点附近。`;
+    return `🟢 <strong>做多建议：</strong>可直接买入。启动信号清晰，点位较好。分批建仓，设止损在1h低点附近。目标看1h高点上方。`;
+  }
+  if (level === 'sell') {
+    return `🔴 <strong>做空建议：</strong>可直接做空。回调信号明确，点位较好。分批建仓，设止损在1h高点附近。目标看1h低点下方。`;
   }
   if (level === 'excellent') {
-    return `🔵 优秀币。走势向好，建议继续观察或低吸。回调到支撑位可升级为买入。`;
+    return `🔵 <strong>优秀币：</strong>走势向好，建议继续观察或低吸。回调到支撑位可升级为买入。`;
   }
   if (level === 'yao-buy') {
-    return `🔥 妖币买入。价格低，庄家控盘，刚启动拉盘。高潜力高风险，只能短线，赚了就跑。`;
+    return `🔥 <strong>妖币做多：</strong>价格低，庄家控盘，刚启动拉盘。高潜力高风险，只能短线快进快出。赚了就跑，不恋战。`;
   }
-  if (level === 'yao-watch') {
-    return `🟠 妖币观察。妖币特征明显但有风险。等待回调或动能恢复再介入。`;
+  if (level === 'yao-sell') {
+    return `🟣 <strong>妖币做空：</strong>价格低，下跌信号明确。高风险高收益，反弹高空或追空。快速止盈，勿贪。`;
   }
   if (level === 'watching') {
-    return `🔍 关注中。信号已出现，继续观察确认。`;
+    return `🔍 <strong>关注中：</strong>信号已出现，继续观察确认。等待更强的信号或关键点位突破。`;
   }
   return `⚪ 继续观察。`;
 }
@@ -1781,8 +1891,13 @@ function renderDetail(symbol) {
   const riskClass = coin.riskLevel === 'high' ? 'risk-high' : 
                     coin.riskLevel === 'mid' ? 'risk-mid' : 'risk-low';
 
+  let displayDirection = c.mainDirection || '待定';
+  let displayStrength = Math.round(c.signalStrength);
+
   let html = `
     <div class="detail-page">
+      <button class="back-btn" onclick="switchPage('monitor', null)">← 返回首页</button>
+      
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
         <div>
           <h2 style="font-size: 32px; color: var(--cyan); margin-bottom: 8px;">${c.symbol}</h2>
@@ -1798,6 +1913,20 @@ function renderDetail(symbol) {
             ⚠️ ${coin.riskLevel === 'high' ? '高风险' : coin.riskLevel === 'mid' ? '中风险' : '低风险'}
           </span>
           ${isTrendProtected(c.symbol) ? '<span class="tag" style="background: rgba(34,197,94,.2); border-color: rgba(34,197,94,.4); color: #a7f3d0; font-size: 12px; padding: 8px 12px;">🛡️ 趋势保护中</span>' : ''}
+        </div>
+      </div>
+
+      <!-- 多空对比 -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+        <div style="background: rgba(34,197,94,.15); border: 1px solid rgba(34,197,94,.3); border-radius: 8px; padding: 12px;">
+          <div style="color: var(--green); font-weight: 700; margin-bottom: 8px;">🟢 做多强度</div>
+          <div style="font-size: 24px; font-weight: 900; color: var(--green);">${Math.round(c.longStrength)}</div>
+          <div style="color: var(--sub); font-size: 11px; margin-top: 4px;">5m:${Math.round(c.signal_5m.longStrength)} 1h:${Math.round(c.signal_1h.longStrength)} 4h:${Math.round(c.signal_4h.longStrength)}</div>
+        </div>
+        <div style="background: rgba(239,68,68,.15); border: 1px solid rgba(239,68,68,.3); border-radius: 8px; padding: 12px;">
+          <div style="color: var(--red); font-weight: 700; margin-bottom: 8px;">🔴 做空强度</div>
+          <div style="font-size: 24px; font-weight: 900; color: var(--red);">${Math.round(c.shortStrength)}</div>
+          <div style="color: var(--sub); font-size: 11px; margin-top: 4px;">5m:${Math.round(c.signal_5m.shortStrength)} 1h:${Math.round(c.signal_1h.shortStrength)} 4h:${Math.round(c.signal_4h.shortStrength)}</div>
         </div>
       </div>
 
@@ -1834,7 +1963,7 @@ function renderDetail(symbol) {
           </div>
         </div>
         <div class="detail-metric">
-          <div class="detail-metric-label">信号强度</div>
+          <div class="detail-metric-label">总体信号强度</div>
           <div class="detail-metric-value ${c.signalStrength > 50 ? 'up' : 'down'} ${c.signalStrength > 65 ? 'star' : ''}">
             ${Math.round(c.signalStrength)}
           </div>
@@ -1846,12 +1975,13 @@ function renderDetail(symbol) {
         <h3 style="color: var(--cyan); margin-bottom: 12px; font-weight: 700;">📊 4时间框架威科夫分析</h3>
         <div class="timeframe-analysis">
           <div class="tf-analysis">
-            <div class="tf-title">5分钟</div>
+            <div class="tf-title">5分钟 (40%权重)</div>
             <div class="tf-content">
               <strong>相位:</strong> ${c.phase_5m}<br>
               <strong>RSI:</strong> ${Math.round(c.rsi_5m)}<br>
               <strong>涨幅:</strong> ${fmtPct(c.change_5m)}<br>
-              <strong>量能:</strong> ${c.cvd_5m.trend}
+              <strong>多强:</strong> ${Math.round(c.signal_5m.longStrength)}<br>
+              <strong>空强:</strong> ${Math.round(c.signal_5m.shortStrength)}
             </div>
           </div>
           <div class="tf-analysis">
@@ -1860,25 +1990,28 @@ function renderDetail(symbol) {
               <strong>相位:</strong> ${c.signal_15m?.direction || '待定'}<br>
               <strong>RSI:</strong> ${Math.round(c.rsi_15m)}<br>
               <strong>涨幅:</strong> ${fmtPct(c.change_15m)}<br>
-              <strong>信号数:</strong> ${c.signal_15m?.signals.length || 0}
+              <strong>多强:</strong> ${Math.round(c.signal_15m.longStrength)}<br>
+              <strong>空强:</strong> ${Math.round(c.signal_15m.shortStrength)}
             </div>
           </div>
           <div class="tf-analysis">
-            <div class="tf-title">1小时(主)</div>
+            <div class="tf-title">1小时(主) (40%权重)</div>
             <div class="tf-content">
               <strong>相位:</strong> ${c.phase_1h}<br>
               <strong>RSI:</strong> ${Math.round(c.rsi_1h)}<br>
               <strong>MACD:</strong> ${c.macd_1h ? (c.macd_1h.macd > 0 ? '⬆️ 正' : '⬇️ 负') : '--'}<br>
-              <strong>量能:</strong> ${c.cvd_1h.trend}
+              <strong>多强:</strong> ${Math.round(c.signal_1h.longStrength)}<br>
+              <strong>空强:</strong> ${Math.round(c.signal_1h.shortStrength)}
             </div>
           </div>
           <div class="tf-analysis">
-            <div class="tf-title">4小时(关键)</div>
+            <div class="tf-title">4小时(关键) (20%权重)</div>
             <div class="tf-content">
               <strong>相位:</strong> ${c.phase_4h}<br>
               <strong>RSI:</strong> ${Math.round(c.rsi_4h)}<br>
               <strong>涨幅:</strong> ${fmtPct(c.change_4h)}<br>
-              <strong>方向:</strong> ${getTrendEmoji(c.signal_4h?.direction)} ${c.signal_4h?.direction || '待定'}
+              <strong>多强:</strong> ${Math.round(c.signal_4h.longStrength)}<br>
+              <strong>空强:</strong> ${Math.round(c.signal_4h.shortStrength)}
             </div>
           </div>
         </div>
@@ -1955,9 +2088,11 @@ function renderDetail(symbol) {
       <div style="background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.3); border-radius: 12px; padding: 16px; margin-top: 20px;">
         <h3 style="color: #86efac; margin-bottom: 12px;">💡 交易建议</h3>
         <div style="font-size: 12px; line-height: 1.8; color: #d1fae5;">
-          ${getPriceExpectation(c, coin.riskLevel)}
+          ${getPriceExpectation(c, coin.riskLevel, coin.level)}
           <br><br>
           ${getTradeAdvice(c, coin.riskLevel, coin.level)}
+          <br><br>
+          <strong style="color: #fbbf24;">⚡ 关键提示：</strong>短期信号权重最高（5m占40% + 1h占40% + 4h占20%），适合捕捉启动点和回调点。多空信号实时更新，请持续关注。
         </div>
       </div>
     </div>
@@ -2142,3 +2277,4 @@ window.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
 </html>
+  
