@@ -1357,22 +1357,32 @@ async function getMarketCapData(symbol) {
   }
 
   try {
-    const res = await fetchJSON(
-      `${CONFIG.coingeckoApi}/simple/price?ids=${symbol.toLowerCase()}&vs_currencies=usd&include_market_cap=true`
-    );
+    const coinName = symbol.toLowerCase();
+    const url = `${CONFIG.coingeckoApi}/simple/price?ids=${coinName}&vs_currencies=usd&include_market_cap=true`;
+    
+    const res = await fetchJSON(url);
 
-    const data = res[symbol.toLowerCase()];
-    if (data && data.usd_market_cap) {
-      marketCapCache[cacheKey] = { data: data.usd_market_cap, time: Date.now() };
-      return data.usd_market_cap;
+    // 检查响应数据有效性
+    if (!res || typeof res !== 'object') {
+      console.warn(`获取 ${symbol} 市值失败：无效响应`);
+      return null;
     }
+
+    const data = res[coinName];
+    
+    if (data && typeof data === 'object' && data.usd_market_cap) {
+      const mcap = data.usd_market_cap;
+      marketCapCache[cacheKey] = { data: mcap, time: Date.now() };
+      return mcap;
+    }
+
+    console.warn(`获取 ${symbol} 市值失败：未找到数据`);
+    return null;
   } catch (e) {
     console.warn(`获取 ${symbol} 市值失败:`, e.message);
+    return null;
   }
-
-  return null;
 }
-
 // ============ 快速扫描 ============
 async function quickScanCoin(symbol) {
   try {
