@@ -51,6 +51,38 @@
       color: var(--sub);
       font-size: 11px;
     }
+    .header-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .refresh-btn {
+      background: linear-gradient(135deg, var(--cyan), #22d3ee);
+      color: var(--bg);
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: .3s;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .refresh-btn:hover {
+      opacity: 0.9;
+      transform: scale(1.05);
+    }
+    .refresh-btn.loading {
+      opacity: 0.6;
+      pointer-events: none;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
 
     .tabs {
       display: flex;
@@ -359,7 +391,8 @@
       padding: 10px 14px;
       border-radius: 8px;
       font-size: 13px;
-      width: 300px;
+      flex: 1;
+      min-width: 250px;
     }
     input::placeholder {
       color: var(--sub);
@@ -376,6 +409,10 @@
     }
     .search-btn:hover {
       opacity: 0.9;
+    }
+    .search-btn.loading {
+      opacity: 0.6;
+      pointer-events: none;
     }
 
     .notification {
@@ -420,6 +457,52 @@
       padding: 40px;
       font-weight: 700;
     }
+
+    .status-bar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .status-item {
+      background: rgba(59,130,246,.1);
+      border: 1px solid rgba(59,130,246,.2);
+      color: var(--sub);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+    }
+
+    .quick-channel-section {
+      background: rgba(168,85,247,.12);
+      border: 1px solid rgba(168,85,247,.3);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .quick-channel-title {
+      color: var(--cyan);
+      margin-bottom: 16px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .channel-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .channel-hint {
+      font-size: 11px;
+      color: var(--sub);
+      padding: 8px 0;
+      border-top: 1px solid rgba(255,255,255,.1);
+      margin-top: 8px;
+    }
   </style>
 </head>
 <body>
@@ -429,22 +512,27 @@
         <h1>⚡ 妖币捕手 Pro</h1>
         <div class="header-info">威科夫分析 · 关注状态管理 · 趋势保护 · 实时突破点捕捉</div>
       </div>
-      <div style="display: flex; gap: 10px; align-items: center;">
-        <span style="background: rgba(59,130,246,.1); border: 1px solid rgba(59,130,246,.2); color: var(--sub); padding: 6px 10px; border-radius: 6px; font-size: 11px;">
-          刷新: <span id="update-time">--:--</span>
-        </span>
-        <span style="background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.2); color: var(--green); padding: 6px 10px; border-radius: 6px; font-size: 11px;">
-          <span id="buy-count">0</span> 直接买入
-        </span>
-        <span style="background: rgba(168,85,247,.1); border: 1px solid rgba(168,85,247,.2); color: var(--purple); padding: 6px 10px; border-radius: 6px; font-size: 11px;">
-          <span id="watch-count">0</span> 关注中
-        </span>
+      <div class="header-controls">
+        <div class="status-bar">
+          <span class="status-item">
+            刷新: <span id="update-time">--:--</span>
+          </span>
+          <span class="status-item">
+            <span id="buy-count">0</span> 直接买入
+          </span>
+          <span class="status-item">
+            <span id="watch-count">0</span> 关注中
+          </span>
+        </div>
+        <button class="refresh-btn" id="manual-refresh-btn" onclick="manualRefresh()">
+          <span id="refresh-icon">🔄</span> 手动刷新
+        </button>
       </div>
     </div>
 
     <div class="tabs">
       <button class="tab active" onclick="switchPage('monitor', this)">📊 首页监控</button>
-      <button class="tab" onclick="switchPage('search', this)">🔍 搜索币种</button>
+      <button class="tab" onclick="switchPage('search', this)">🔍 搜索分析</button>
     </div>
 
     <div id="error-container"></div>
@@ -457,8 +545,8 @@
     <!-- 搜索页面 -->
     <div id="search-page" class="page">
       <div class="search-box">
-        <input type="text" id="search-input" placeholder="输入币种名称 (e.g., PEPE, WIF, BONK)" />
-        <button class="search-btn" onclick="searchCoin()">搜索分析</button>
+        <input type="text" id="search-input" placeholder="输入任意币种名称 (PEPE、BTC、ETH、DOGE 等)" />
+        <button class="search-btn" id="search-btn" onclick="searchCoin()">🔍 搜索分析</button>
       </div>
       <div id="search-content"></div>
     </div>
@@ -480,7 +568,6 @@ const CONFIG = {
   refreshMs: 60000,
   binanceUrl: 'https://api.binance.com/api/v3',
   watchDurationMs: 300000, // 5分钟
-  trendProtectionDurationMs: 600000 // 10分钟
 };
 
 let allCoins = {};
@@ -489,6 +576,7 @@ let signalHistory = {};
 let watchingCoins = {}; // 关注中的币
 let trendProtectionCoins = {}; // 趋势保护中的币
 let currentPage = 'monitor';
+let isRefreshing = false;
 
 // ============ 工具函数 ============
 
@@ -535,6 +623,66 @@ function copyToClipboard(text) {
   showNotification('✅ 已复制: ' + text);
 }
 
+// ============ 快捷通道链接 ============
+
+function getDexScreenerLink(symbol) {
+  return `https://dexscreener.com/search?q=${symbol}`;
+}
+
+function getLargeTransferLink(symbol) {
+  return `https://whale-alert.io/?s=${symbol}`;
+}
+
+function getLiquidationMapLink(symbol) {
+  return `https://www.liquidationmap.info/?symbol=${symbol}`;
+}
+
+function getFundingRateLink() {
+  return `https://www.coinglass.com/en/funding-rate`;
+}
+
+function getOpenInterestLink() {
+  return `https://www.coinglass.com/en/oi`;
+}
+
+function getCoinGlassLink(symbol) {
+  return `https://www.coinglass.com/en/coin/${symbol.toLowerCase()}`;
+}
+
+function getEtherscanLink(symbol) {
+  const tokenAddresses = {
+    'ETH': 'ethereum',
+    'USDC': '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+    'USDT': '0xdac17f958d2ee523a2206206994597c13d831ec7',
+    'DAI': '0x6b175474e89094c44da98b954eedeac495271d0f'
+  };
+  const addr = tokenAddresses[symbol];
+  if (addr && addr.startsWith('0x')) {
+    return `https://etherscan.io/token/${addr}`;
+  }
+  return `https://etherscan.io/search?q=${symbol}`;
+}
+
+function getBscScanLink(symbol) {
+  return `https://bscscan.com/search?q=${symbol}`;
+}
+
+function getSolscanLink(symbol) {
+  return `https://solscan.io/token/${symbol}`;
+}
+
+function getCoinGeckoLink(symbol) {
+  return `https://www.coingecko.com/en/search?query=${symbol}`;
+}
+
+function getChartLink(symbol) {
+  return `https://www.tradingview.com/chart/?symbol=BINANCE:${symbol}USDT`;
+}
+
+function openLink(url) {
+  window.open(url, '_blank');
+}
+
 // ============ 关注状态管理 ============
 
 function startWatching(symbol) {
@@ -553,7 +701,6 @@ function isQualifiedForRecommend(symbol) {
   if (!watching) return false;
 
   const elapsed = Date.now() - watching.startTime;
-  // 关注满5分钟且最近30秒内有良好信号
   return elapsed >= CONFIG.watchDurationMs && (Date.now() - watching.lastGoodSignal) < 30000;
 }
 
@@ -572,12 +719,6 @@ function isTrendProtected(symbol) {
   const protection = trendProtectionCoins[symbol];
   if (!protection) return false;
 
-  const elapsed = Date.now() - protection.startTime;
-  if (elapsed > CONFIG.trendProtectionDurationMs) {
-    delete trendProtectionCoins[symbol];
-    return false;
-  }
-
   const coin = allCoins[symbol];
   if (!coin) return false;
 
@@ -588,6 +729,7 @@ function isTrendProtected(symbol) {
   if (breakSupport || trendBreak) {
     delete trendProtectionCoins[symbol];
     console.log(`💔 ${symbol} 趋势破坏，取消保护`);
+    showNotification(`💔 ${symbol} 趋势破坏，已从首页移除`, 'warning');
     return false;
   }
 
@@ -744,7 +886,7 @@ function detectSignals(symbol, klines) {
     direction = 'LONG';
   }
 
-  if (rsi > 75 && closes[closes.length - 1] < closes[closes.length - 2]) {
+  if  (rsi > 75 && closes[closes.length - 1] < closes[closes.length - 2]) {
     signals.push('rsi_overbought_drop');
     strength += 20;
     direction = 'SHORT';
@@ -974,6 +1116,31 @@ async function analyzeCoin(symbol) {
   }
 }
 
+// ============ 手动刷新 ============
+
+async function manualRefresh() {
+  if (isRefreshing) return;
+  
+  isRefreshing = true;
+  const btn = document.getElementById('manual-refresh-btn');
+  const icon = document.getElementById('refresh-icon');
+  
+  btn.classList.add('loading');
+  icon.textContent = '⏳';
+  
+  try {
+    showNotification('⏳ 正在刷新数据...', 'success');
+    await renderMonitor();
+    showNotification('✅ 数据刷新完成', 'success');
+  } catch (error) {
+    showNotification('❌ 刷新失败: ' + error.message, 'error');
+  } finally {
+    isRefreshing = false;
+    btn.classList.remove('loading');
+    icon.textContent = '🔄';
+  }
+}
+
 // ============ 渲染首页 ============
 
 async function renderMonitor() {
@@ -1079,11 +1246,7 @@ function renderCoinCard(coin, level) {
 
   let trendStatus = '';
   if (isProtected) {
-    const protection = trendProtectionCoins[c.symbol];
-    const elapsed = Date.now() - protection.startTime;
-    const remaining = Math.max(0, CONFIG.trendProtectionDurationMs - elapsed);
-    const minutes = Math.ceil(remaining / 60000);
-    trendStatus = `<div class="trend-protection">🛡️ ${minutes}分钟</div>`;
+    trendStatus = `<div class="trend-protection">🛡️ 保护中</div>`;
   }
 
   let html = `
@@ -1174,10 +1337,12 @@ function getTrendEmoji(direction) {
 function getAnalysisTitle(c, riskLevel, level) {
   if (level === 'watching') {
     const watching = watchingCoins[c.symbol];
-    const elapsed = Date.now() - watching.startTime;
-    const remaining = Math.max(0, CONFIG.watchDurationMs - elapsed);
-    const seconds = Math.ceil(remaining / 1000);
-    return `🔍 持续关注中 (${seconds}s)`;
+    if (watching) {
+      const elapsed = Date.now() - watching.startTime;
+      const remaining = Math.max(0, CONFIG.watchDurationMs - elapsed);
+      const seconds = Math.ceil(remaining / 1000);
+      return `🔍 持续关注中 (${seconds}s)`;
+    }
   }
 
   if (level === 'buy' && isTrendProtected(c.symbol)) {
@@ -1234,10 +1399,6 @@ function getAnalysisText(c, riskLevel, level) {
   return text || '走势待观察。';
 }
 
-function openLink(url) {
-  window.open(url, '_blank');
-}
-
 function viewDetail(symbol) {
   currentPage = 'detail';
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1250,7 +1411,7 @@ function viewDetail(symbol) {
 function renderDetail(symbol) {
   const coin = allCoins[symbol];
   if (!coin) {
-    document.getElementById('detail-content').innerHTML = '<div class="error-box">❌ 币种不存在或数据未加载</div>';
+    document.getElementById('detail-content').innerHTML = '<div class="error-box">❌ 币种不存在或数据未加载，请从首页选择或搜索重新加载</div>';
     return;
   }
 
@@ -1273,14 +1434,10 @@ function renderDetail(symbol) {
   }
 
   if (isProtected) {
-    const protection = trendProtectionCoins[symbol];
-    const elapsed = Date.now() - protection.startTime;
-    const remaining = Math.max(0, CONFIG.trendProtectionDurationMs - elapsed);
-    const minutes = Math.ceil(remaining / 60000);
     watchInfo = `
       <div style="background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.3); border-radius: 12px; padding: 12px; margin-bottom: 12px;">
         <strong style="color: var(--green);">🛡️ 趋势保护</strong>
-        <br>保护剩余: ${minutes}分钟 · 趋势破坏自动下线
+        <br>永久保护直到趋势破坏 · 实时监控中
       </div>
     `;
   }
@@ -1375,18 +1532,59 @@ function renderDetail(symbol) {
     </div>
 
     <!-- 快速通道 -->
-    <div style="background: rgba(168,85,247,.12); border: 1px solid rgba(168,85,247,.3); border-radius: 12px; padding: 16px;">
-      <h3 style="color: var(--cyan); margin-bottom: 12px; font-size: 14px;">⚡ 快速通道</h3>
-      <div class="quick-links" style="gap: 10px;">
-        <span class="quick-link" onclick="copyToClipboard('${symbol}'); event.stopPropagation();" style="padding: 10px 14px;">
-          📋 复制币种 ${symbol}
+    <div class="quick-channel-section">
+      <div class="quick-channel-title">⚡ 快速通道 (9个工具)</div>
+      
+      <!-- 第一行：交易和DEX -->
+      <div class="channel-grid">
+        <span class="quick-link" onclick="copyToClipboard('${symbol}'); event.stopPropagation();" title="复制币种代码" style="padding: 10px 12px; text-align: center; font-size: 11px;">
+          📋 复制
         </span>
-        <span class="quick-link" onclick="openLink('https://www.binance.com/en/trade/${symbol}_USDT'); event.stopPropagation();" style="padding: 10px 14px;">
-          💱 币安交易
+        <span class="quick-link" onclick="openLink('https://www.binance.com/en/trade/${symbol}_USDT'); event.stopPropagation();" title="在币安交易" style="padding: 10px 12px; text-align: center; background: rgba(34,197,94,.2); border-color: rgba(34,197,94,.4); font-size: 11px;">
+          💱 币安
         </span>
-        <span class="quick-link" onclick="openLink('https://www.coinglass.com/'); event.stopPropagation();" style="padding: 10px 14px;">
-          📊 Coinglass清液
+        <span class="quick-link" onclick="openLink('${getChartLink(symbol)}'); event.stopPropagation();" title="TradingView高级图表" style="padding: 10px 12px; text-align: center; background: rgba(59,130,246,.2); border-color: rgba(59,130,246,.4); font-size: 11px;">
+          📊 图表
         </span>
+        <span class="quick-link" onclick="openLink('${getDexScreenerLink(symbol)}'); event.stopPropagation();" title="DEX链上数据、大额成交、流动性" style="padding: 10px 12px; text-align: center; background: rgba(168,85,247,.2); border-color: rgba(168,85,247,.4); font-size: 11px;">
+          🔗 DexScreen
+        </span>
+      </div>
+
+      <!-- 第二行：链上和鲸鱼监控 -->
+      <div class="channel-grid">
+        <span class="quick-link" onclick="openLink('${getLargeTransferLink(symbol)}'); event.stopPropagation();" title="Whale Alert - 监控鲸鱼大额转账" style="padding: 10px 12px; text-align: center; background: rgba(245,158,11,.2); border-color: rgba(245,158,11,.4); font-size: 11px;">
+          🐋 鲸鱼
+        </span>
+        <span class="quick-link" onclick="openLink('${getEtherscanLink(symbol)}'); event.stopPropagation();" title="Etherscan - 以太坊链上数据" style="padding: 10px 12px; text-align: center; background: rgba(139,92,246,.2); border-color: rgba(139,92,246,.4); font-size: 11px;">
+          ⛓️ Etherscan
+        </span>
+        <span class="quick-link" onclick="openLink('${getBscScanLink(symbol)}'); event.stopPropagation();" title="BscScan - BSC链上数据" style="padding: 10px 12px; text-align: center; background: rgba(255,184,82,.2); border-color: rgba(255,184,82,.4); font-size: 11px;">
+          🔶 BscScan
+        </span>
+        <span class="quick-link" onclick="openLink('${getSolscanLink(symbol)}'); event.stopPropagation();" title="Solscan - Solana链上数据" style="padding: 10px 12px; text-align: center; background: rgba(20,241,149,.2); border-color: rgba(20,241,149,.4); font-size: 11px;">
+          ◎ Solscan
+        </span>
+      </div>
+
+      <!-- 第三行：衍生品和风险 -->
+      <div class="channel-grid">
+        <span class="quick-link" onclick="openLink('${getLiquidationMapLink(symbol)}'); event.stopPropagation();" title="LiquidationMap - 实时清算热力图" style="padding: 10px 12px; text-align: center; background: rgba(239,68,68,.2); border-color: rgba(239,68,68,.4); font-size: 11px;">
+          🔥 清算
+        </span>
+        <span class="quick-link" onclick="openLink('${getFundingRateLink()}'); event.stopPropagation();" title="CoinGlass - 实时资金费率" style="padding: 10px 12px; text-align: center; background: rgba(34,197,94,.2); border-color: rgba(34,197,94,.4); font-size: 11px;">
+          💰 资金费
+        </span>
+        <span class="quick-link" onclick="openLink('${getOpenInterestLink()}'); event.stopPropagation();" title="CoinGlass - 未平仓头寸追踪" style="padding: 10px 12px; text-align: center; background: rgba(59,130,246,.2); border-color: rgba(59,130,246,.4); font-size: 11px;">
+          📈 OI
+        </span>
+        <span class="quick-link" onclick="openLink('${getCoinGeckoLink(symbol)}'); event.stopPropagation();" title="CoinGecko - 币种信息和链上数据" style="padding: 10px 12px; text-align: center; background: rgba(168,85,247,.2); border-color: rgba(168,85,247,.4); font-size: 11px;">
+          🪙 Gecko
+        </span>
+      </div>
+
+      <div class="channel-hint">
+        💡 DEX看成交和流动性 · 鲸鱼看大额动向 · 清算图看风险 · 资金费率看合约情绪
       </div>
     </div>
   `;
@@ -1434,24 +1632,63 @@ function getTradeAdvice(c, riskLevel, level) {
 
 // ============ 搜索功能 ============
 
-function searchCoin() {
+async function searchCoin() {
   const input = document.getElementById('search-input').value.toUpperCase().trim();
   if (!input) {
     showNotification('❌ 请输入币种名称', 'error');
     return;
   }
 
-  if (!allCoins[input]) {
+  const btn = document.getElementById('search-btn');
+  btn.classList.add('loading');
+  btn.textContent = '⏳ 搜索中...';
+
+  try {
+    // 先检查是否在已加载的列表中
+    if (allCoins[input]) {
+      switchPage('detail', null);
+      renderDetail(input);
+      btn.classList.remove('loading');
+      btn.textContent = '🔍 搜索分析';
+      return;
+    }
+
+    // 否则进行新的分析
+    showNotification(`⏳ 正在分析 ${input}...`, 'info');
+    const result = await analyzeCoin(input);
+
+    if (!result) {
+      document.getElementById('search-content').innerHTML = `
+        <div class="error-box">
+          ❌ 无法获取 ${input} 的数据
+          <br>可能原因：
+          <br>1. 币种名称不正确
+          <br>2. 币安没有该币种交易对 (${input}USDT)
+          <br>3. 网络连接问题
+          <br>请检查币种名称后重试
+        </div>
+      `;
+      btn.classList.remove('loading');
+      btn.textContent = '🔍 搜索分析';
+      return;
+    }
+
+    showNotification(`✅ ${input} 分析完成`, 'success');
+    switchPage('detail', null);
+    renderDetail(input);
+  } catch (error) {
+    console.error('搜索失败:', error);
     document.getElementById('search-content').innerHTML = `
       <div class="error-box">
-        ❌ 未找到 ${input} 或数据未加载
-        <br>请确保币种在监控列表中，或稍后重试
+        ❌ 搜索失败: ${error.message}
+        <br>请检查网络连接或稍后重试
       </div>
     `;
-    return;
+    showNotification('❌ 搜索失败', 'error');
+  } finally {
+    btn.classList.remove('loading');
+    btn.textContent = '🔍 搜索分析';
   }
-
-  viewDetail(input);
 }
 
 // ============ 初始化和刷新 ============
@@ -1468,18 +1705,35 @@ async function init() {
   showNotification('✅ 数据加载完成，每分钟自动更新', 'success');
   
   setInterval(async () => {
-    await renderMonitor();
+    if (currentPage === 'monitor') {
+      await renderMonitor();
+    }
   }, CONFIG.refreshMs);
-}
 
-window.addEventListener('DOMContentLoaded', init);
-
-// 允许回车搜索
-document.addEventListener('DOMContentLoaded', () => {
+  // 搜索框回车键
   document.getElementById('search-input')?.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') searchCoin();
   });
-});
+
+  // 定期更新关注倒计时
+  setInterval(() => {
+    Object.keys(watchingCoins).forEach(symbol => {
+      const watching = watchingCoins[symbol];
+      const elapsed = Date.now() - watching.startTime;
+      if (elapsed >= CONFIG.watchDurationMs) {
+        const coin = allCoins[symbol];
+        if (coin && isQualifiedForRecommend(symbol)) {
+          startTrendProtection(symbol);
+          if (currentPage === 'monitor') {
+            renderMonitor();
+          }
+        }
+      }
+    });
+  }, 1000);
+}
+
+window.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
 </html>
