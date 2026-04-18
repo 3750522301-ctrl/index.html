@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="google" content="notranslate" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>⚡ 妖币猎手 Pro - Freeland风格监控</title>
+  <title>⚡ 妖币猎手 Pro - Wyckoff精准阶段分析</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
@@ -289,17 +289,23 @@
       border-left: 3px solid var(--primary);
     }
 
+    .section-title.empty {
+      color: var(--warning);
+      background: rgba(245, 158, 11, 0.1);
+      border-left: 3px solid var(--warning);
+    }
+
     /* ===== 硬币卡片网格 ===== */
     .coin-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
       gap: 12px;
       margin-bottom: 16px;
     }
 
     @media (max-width: 1200px) {
       .coin-grid {
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
       }
     }
 
@@ -418,19 +424,62 @@
 
     .tag-buy-elite { background: rgba(34, 197, 94, 0.4); color: #4ade80; border-color: rgba(34, 197, 94, 0.7); }
     .tag-buy-elite-a { background: rgba(34, 197, 94, 0.35); color: #86efac; border-color: rgba(34, 197, 94, 0.6); }
-    .tag-buy-elite-b { background: rgba(34, 197, 94, 0.25); color: #bbf7d0; border-color: rgba(34, 197, 94, 0.5); }
 
     .tag-buy-prime { background: rgba(16, 196, 245, 0.3); color: #60a5fa; border-color: rgba(16, 196, 245, 0.6); }
     .tag-buy-prime-a { background: rgba(16, 196, 245, 0.25); color: #93c5fd; border-color: rgba(16, 196, 245, 0.5); }
-    .tag-buy-prime-b { background: rgba(16, 196, 245, 0.2); color: #bfdbfe; border-color: rgba(16, 196, 245, 0.4); }
 
     .tag-time { background: rgba(245, 158, 11, 0.25); color: #fbbf24; border-color: rgba(245, 158, 11, 0.5); }
-
     .tag-new { background: rgba(168, 85, 247, 0.4); color: #e9d5ff; border-color: rgba(168, 85, 247, 0.7); animation: pulse-new 1s infinite; }
 
     @keyframes pulse-new {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.7; }
+    }
+
+    /* ===== Wyckoff阶段标签 ===== */
+    .wyckoff-phases {
+      background: rgba(16, 196, 245, 0.08);
+      border: 1px solid rgba(16, 196, 245, 0.2);
+      border-radius: 6px;
+      padding: 8px;
+      margin-bottom: 8px;
+      font-size: 10px;
+    }
+
+    .phase-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 3px;
+      font-weight: bold;
+      font-size: 9px;
+      margin-right: 4px;
+      margin-bottom: 4px;
+      border: 1px solid;
+    }
+
+    .phase-happening {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.5), rgba(245, 158, 11, 0.5));
+      color: #fff;
+      border-color: rgba(239, 68, 68, 0.7);
+      font-weight: 900;
+      animation: pulse-phase 1.5s infinite;
+    }
+
+    .phase-likely {
+      background: rgba(34, 197, 94, 0.3);
+      color: #4ade80;
+      border-color: rgba(34, 197, 94, 0.5);
+    }
+
+    .phase-possible {
+      background: rgba(245, 158, 11, 0.25);
+      color: #fbbf24;
+      border-color: rgba(245, 158, 11, 0.5);
+    }
+
+    @keyframes pulse-phase {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
     }
 
     /* ===== 统计信息 ===== */
@@ -506,6 +555,30 @@
       background: rgba(168, 85, 247, 0.12);
       border-left-color: rgba(168, 85, 247, 0.5);
       color: #d8b4fe;
+    }
+
+    /* ===== 动态阶段分析 ===== */
+    .phase-analysis {
+      background: linear-gradient(135deg, rgba(16, 196, 245, 0.15), rgba(168, 85, 247, 0.08));
+      border: 1px solid rgba(16, 196, 245, 0.3);
+      border-radius: 6px;
+      padding: 8px;
+      margin-bottom: 8px;
+      font-size: 10px;
+      line-height: 1.6;
+    }
+
+    .phase-analysis-title {
+      color: var(--primary);
+      font-weight: bold;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .phase-analysis-content {
+      color: var(--text-secondary);
     }
 
     /* ===== 详情模态框 ===== */
@@ -781,6 +854,9 @@
         flex-direction: column;
         align-items: flex-start;
       }
+      .coin-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -789,7 +865,7 @@
     <!-- ===== 顶部导航 ===== -->
     <div class="header">
       <div>
-        <h1>⚡ 妖币猎手 Pro</h1>
+        <h1>⚡ 妖币猎手 Pro - Wyckoff精准分析</h1>
       </div>
       <div class="nav-btns">
         <button class="nav-btn active" onclick="goPage('monitor')">📊 监控</button>
@@ -864,7 +940,6 @@
     
     let previousData = JSON.parse(localStorage.getItem('previousData') || '{}');
     let yaoCoinMemory = JSON.parse(localStorage.getItem('yaoCoinMemory') || '{}');
-    let yaoWatchHistory = JSON.parse(localStorage.getItem('yaoWatchHistory') || '{}');
     
     let soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
     
@@ -918,7 +993,6 @@
       div.textContent = message;
       document.body.appendChild(div);
 
-      // 浏览器通知
       if (Notification.permission === 'granted') {
         new Notification('妖币猎手', {
           body: message,
@@ -929,7 +1003,8 @@
       playSound();
       setTimeout(() => div.remove(), 5000);
     }
-        function goPage(page) {
+
+    function goPage(page) {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
       
@@ -937,7 +1012,256 @@
       event.target.classList.add('active');
     }
 
-    // ======================== 数据分析引擎 ========================
+    // ======================== Wyckoff 阶段分析引擎 ========================
+    
+    class WyckoffPhaseAnalyzer {
+      constructor(row, prev, market) {
+        this.row = row;
+        this.prev = prev;
+        this.market = market;
+        this.currentPhase = null;
+        this.likelyNextPhases = [];
+        this.possiblePhases = [];
+        this.phaseDetails = {};
+      }
+
+      // Wyckoff五个关键阶段
+      // 1. Accumulation (吸筹)
+      // 2. Markup (拉升)
+      // 3. Distribution (派发)
+      // 4. Markdown (砸盘)
+      // 5. Compression (压缩/整理)
+
+      detectPhase() {
+        const p = this.row;
+        const prev = this.prev;
+
+        // 特征识别
+        const isHighVol = p.volMcap > 30;
+        const isLowVol = p.volMcap < 15;
+        const isRising = p.priceChange > 5;
+        const isFalling = p.priceChange < -5;
+        const isFlat = Math.abs(p.priceChange) <= 5;
+        const highOI = p.oiMcap > 30;
+        const lowOI = p.oiMcap < 15;
+        const positiveFunding = p.funding > 0.01;
+        const negativeFunding = p.funding < -0.01;
+
+        // === 吸筹阶段 (Accumulation) ===
+        if (isLowVol && isFlat && !prev) {
+          this.currentPhase = 'accumulation';
+          this.phaseDetails.name = '吸筹盘整';
+          this.phaseDetails.emoji = '📦';
+          this.phaseDetails.description = '底部缓慢吸筹，成交温和，主力在默默积累';
+          this.phaseDetails.confidence = 70;
+          
+          this.likelyNextPhases = ['潜伏', '底部夯实'];
+          this.possiblePhases = ['突然放量', '缓慢抬升'];
+          return;
+        }
+
+        // === 潜伏阶段 (Hidden Phase) ===
+        if (isLowVol && isRising && !highOI) {
+          this.currentPhase = 'latent';
+          this.phaseDetails.name = '潜伏启动';
+          this.phaseDetails.emoji = '🤫';
+          this.phaseDetails.description = '缓慢拉升测试盘面，OI未充分积累，观察资金态度';
+          this.phaseDetails.confidence = 65;
+          
+          this.likelyNextPhases = ['缓慢抬升', '放量拉升'];
+          this.possiblePhases = ['假突破', '回调整理'];
+          return;
+        }
+
+        // === 缓慢抬升 (Slow Markup) ===
+        if (isLowVol && isRising && highOI && prev && p.priceChange > prev.priceChange) {
+          this.currentPhase = 'slow_markup';
+          this.phaseDetails.name = '缓慢抬升';
+          this.phaseDetails.emoji = '📈';
+          this.phaseDetails.description = 'OI稳步积累，小幅温和上涨，多头逐步进场';
+          this.phaseDetails.confidence = 75;
+          
+          this.likelyNextPhases = ['加速拉升', '强势突破'];
+          this.possiblePhases = ['回调洗盘', '平台整理'];
+          return;
+        }
+
+        // === 加速拉升 (Aggressive Markup) ===
+        if (isHighVol && isRising && highOI && p.priceChange > 15) {
+          this.currentPhase = 'aggressive_markup';
+          this.phaseDetails.name = '加速拉升';
+          this.phaseDetails.emoji = '🚀';
+          this.phaseDetails.description = '成交放量，价格快速上涨，主升浪启动！多头全力进攻';
+          this.phaseDetails.confidence = 85;
+          
+          this.likelyNextPhases = ['继续上涨', '创新高'];
+          this.possiblePhases = ['获利回吐', '短期调整'];
+          return;
+        }
+
+        // === 挤压压力 (Compression/Squeeze) ===
+        if (isLowVol && isFlat && highOI && prev && prev.volMcap > p.volMcap * 1.5) {
+          this.currentPhase = 'compression';
+          this.phaseDetails.name = '挤压压力';
+          this.phaseDetails.emoji = '🤐';
+          this.phaseDetails.description = '成交大幅萎缩，价格震荡，积压的能量即将释放（涨或跌）';
+          this.phaseDetails.confidence = 80;
+          
+          this.likelyNextPhases = ['突然爆发', '剧烈波动'];
+          this.possiblePhases = ['假突破', '虚假反弹'];
+          return;
+        }
+
+        // === 假突破 (Fake Breakout) ===
+        if (isHighVol && isRising && p.priceChange > 10 && p.priceChange < 20 && 
+            !highOI && prev && prev.priceChange < 0) {
+          this.currentPhase = 'fake_breakout';
+          this.phaseDetails.name = '可能假突破';
+          this.phaseDetails.emoji = '⚠️';
+          this.phaseDetails.description = '成交不足、OI未够，看起来在涨实际在诱多。谨防回踩';
+          this.phaseDetails.confidence = 70;
+          
+          this.likelyNextPhases = ['回调洗盘', '快速下跌'];
+          this.possiblePhases = ['持续上涨', '平台整理'];
+          return;
+        }
+
+        // === 回调洗盘 (Pullback/Washout) ===
+        if (isFalling && isHighVol && prev && prev.priceChange > 10) {
+          this.currentPhase = 'pullback';
+          this.phaseDetails.name = '回调洗盘';
+          this.phaseDetails.emoji = '📉';
+          this.phaseDetails.description = '大幅下跌，成交活跃，清理浮筹。可能是底部吸筹的开始';
+          this.phaseDetails.confidence = 75;
+          
+          this.likelyNextPhases = ['底部积累', '反弹确认'];
+          this.possiblePhases = ['继续下跌', '止跌反弹'];
+          return;
+        }
+
+        // === 派发阶段 (Distribution) ===
+        if (isHighVol && isFlat && highOI && p.priceChange < 3 && prev && prev.priceChange > 20) {
+          this.currentPhase = 'distribution';
+          this.phaseDetails.name = '派发顶部';
+          this.phaseDetails.emoji = '📤';
+          this.phaseDetails.description = '高位成交活跃，但价格涨幅停滞。主力在派发筹码';
+          this.phaseDetails.confidence = 80;
+          
+          this.likelyNextPhases = ['盘头回落', '长期下跌'];
+          this.possiblePhases = ['再创新高', '平台整理'];
+          return;
+        }
+
+        // === 砸盘阶段 (Markdown) ===
+        if (isHighVol && isFalling && p.priceChange < -10 && highOI) {
+          this.currentPhase = 'markdown';
+          this.phaseDetails.name = '砸盘下跌';
+          this.phaseDetails.emoji = '💥';
+          this.phaseDetails.description = '成交爆量，价格跳水。空头发力或做空力量强劲';
+          this.phaseDetails.confidence = 85;
+          
+          this.likelyNextPhases = ['继续下跌', '快速探底'];
+          this.possiblePhases = ['反弹', '止跌'];
+          return;
+        }
+
+        // === 底部夯实 (Base Building) ===
+        if (isLowVol && isFalling && prev && prev.isFalling && p.priceChange > prev.priceChange) {
+          this.currentPhase = 'base_building';
+          this.phaseDetails.name = '底部夯实';
+          this.phaseDetails.emoji = '🔨';
+          this.phaseDetails.description = '下跌力度逐步减弱，低位震荡。即将反弹的信号';
+          this.phaseDetails.confidence = 72;
+          
+          this.likelyNextPhases = ['反弹上升', '底部完成'];
+          this.possiblePhases = ['继续探底', '止跌盘整'];
+          return;
+        }
+
+        // === 虚假反弹 (False Rally) ===
+        if (isRising && !isHighVol && prev && prev.isFalling && p.priceChange < 8) {
+          this.currentPhase = 'false_rally';
+          this.phaseDetails.name = '虚假反弹';
+          this.phaseDetails.emoji = '🎭';
+          this.phaseDetails.description = '反弹成交不足，可能是空头设置的陷阱。谨慎参与';
+          this.phaseDetails.confidence = 68;
+          
+          this.likelyNextPhases = ['再次下跌', '二次探底'];
+          this.possiblePhases = ['持续反弹', '放量突破'];
+          return;
+        }
+
+        // === 平台整理 (Consolidation) ===
+        if (isFlat && isLowVol && highOI) {
+          this.currentPhase = 'consolidation';
+          this.phaseDetails.name = '平台整理';
+          this.phaseDetails.emoji = '━';
+          this.phaseDetails.description = '盘面平静，资金博弈，等待方向明确';
+          this.phaseDetails.confidence = 60;
+          
+          this.likelyNextPhases = ['向上突破', '向下跌破'];
+          this.possiblePhases = ['继续震荡', '缓慢爬升'];
+          return;
+        }
+
+        // 默认状态
+        this.currentPhase = 'unknown';
+        this.phaseDetails.name = '未知阶段';
+        this.phaseDetails.emoji = '❓';
+        this.phaseDetails.description = '数据不足，持续观察中';
+        this.phaseDetails.confidence = 40;
+      }
+
+      getPhaseHTML() {
+        this.detectPhase();
+
+        let html = `<div class="wyckoff-phases">`;
+        
+        // 当前阶段
+        if (this.currentPhase && this.phaseDetails.name) {
+          html += `<div style="margin-bottom: 6px;">
+            <span class="phase-badge phase-happening" title="当前发生中">🔴 ${this.phaseDetails.emoji} ${this.phaseDetails.name}</span>
+            <span style="font-size: 9px; color: var(--text-secondary);">${this.phaseDetails.confidence}% 确定</span>
+          </div>`;
+        }
+
+        // 可能即将发生
+        if (this.likelyNextPhases.length > 0) {
+          html += `<div style="margin-bottom: 4px; display: flex; gap: 4px; flex-wrap: wrap;">`;
+          this.likelyNextPhases.forEach(phase => {
+            html += `<span class="phase-badge phase-likely" title="可能即将发生">▶️ ${phase}</span>`;
+          });
+          html += `</div>`;
+        }
+
+        // 可能性较低
+        if (this.possiblePhases.length > 0) {
+          html += `<div style="display: flex; gap: 4px; flex-wrap: wrap;">`;
+          this.possiblePhases.forEach(phase => {
+            html += `<span class="phase-badge phase-possible" title="可能性较低">❓ ${phase}</span>`;
+          });
+          html += `</div>`;
+        }
+
+        html += `</div>`;
+        return html;
+      }
+
+      getPhaseAnalysisBox() {
+        this.detectPhase();
+
+        return `<div class="phase-analysis">
+          <div class="phase-analysis-title">
+            ${this.phaseDetails.emoji} Wyckoff阶段: ${this.phaseDetails.name}
+          </div>
+          <div class="phase-analysis-content">
+            ${this.phaseDetails.description}
+          </div>
+        </div>`;
+      }
+    }
+
+    // ======================== 妖币分析器 ========================
     
     class YaoCoinAnalyzer {
       constructor(row, prev, market) {
@@ -948,22 +1272,18 @@
         this.score = 0;
       }
 
-      // 1️⃣ 结构蓄势分析 - Wyckoff风格
       analyzeStructure() {
         const p = this.row;
         
-        // 检查是否处于横盘吸筹
         if (this.prev) {
           const priceRange = Math.abs(p.price - this.prev.price) / this.prev.price;
-          
-          // 横盘且缩量 = 在吸筹
           const isCompression = priceRange < 0.03 && p.volMcap < (this.prev.volMcap || p.volMcap) * 0.8;
+          
           if (isCompression) {
             this.signals.push('缩量横盘');
             return 15;
           }
           
-          // 抬高低点 = cause在积累
           const lowerHighHigh = p.price > this.prev.price && priceRange > 0.02;
           if (lowerHighHigh && p.volMcap < 50) {
             this.signals.push('抬高低点');
@@ -974,16 +1294,13 @@
         return 0;
       }
 
-      // 2️⃣ OI异常积累检测
       analyzeOI() {
         const p = this.row;
         if (!p.oiMcap) return 0;
 
-        // OI占比很高说明资金在堆仓
         if (p.oiMcap > 30) {
           this.signals.push('OI堆积');
           
-          // OI上升但价格未充分释放 = 蓄势
           if (this.prev && this.prev.oiMcap && p.oiMcap > this.prev.oiMcap * 1.15) {
             this.signals.push('OI持续抬升');
             return 20;
@@ -992,7 +1309,6 @@
           return 12;
         }
 
-        // OI适中 + 突然拉升 = 多头积极
         if (p.oiMcap > 15 && p.oiMcap < 30) {
           if (this.prev && p.oiMcap > this.prev.oiMcap * 1.2) {
             this.signals.push('OI突增');
@@ -1003,23 +1319,19 @@
         return 0;
       }
 
-      // 3️⃣ CVD资金强度检测
       analyzeOrderFlow() {
         const p = this.row;
         
-        // 成交量占比高 + 涨幅适中 = 有大单承接
         if (p.volMcap > 30 && p.priceChange > 5 && p.priceChange < 25) {
           this.signals.push('CVD强吸');
           return 18;
         }
 
-        // 成交放量但不怎么涨 = 在吸筹
         if (p.volMcap > 25 && p.priceChange < 8) {
           this.signals.push('吸筹放量');
           return 14;
         }
 
-        // 成交量突增
         if (this.prev && p.volMcap > (this.prev.volMcap || 0) * 1.5) {
           this.signals.push('成交暴增');
           return 10;
@@ -1028,17 +1340,14 @@
         return 0;
       }
 
-      // 4️⃣ 流动性清算行为
       analyzeLiquidation() {
         const p = this.row;
         
-        // 资费高 = 多头拥挤
         if (p.funding > 0.02) {
           this.signals.push('多头拥挤');
           return 8;
         }
 
-        // 资费负值但小 = 洗盘清空空头
         if (p.funding < 0 && p.funding > -0.01) {
           if (p.priceChange > 10) {
             this.signals.push('空头清算');
@@ -1049,23 +1358,19 @@
         return 0;
       }
 
-      // 5️⃣ 庄家主力意图综合判断
       analyzeIntention() {
         let score = 0;
 
-        // 小市值 + 高成交 + 资金异常 = 有人在控制
         if (this.row.mcap && this.row.mcap < 5e7 && this.row.volMcap > 20) {
           this.signals.push('小币高热');
           score += 12;
         }
 
-        // 低价格 + 突然活跃 = 预埋地雷
         if (this.row.price < 0.01 && this.row.volMcap > 30) {
           this.signals.push('低价启动');
           score += 15;
         }
 
-        // 横盘后突破 = 准备拉升
         if (this.prev) {
           const prevVol = this.prev.volMcap || 0;
           const currVol = this.row.volMcap || 0;
@@ -1076,7 +1381,6 @@
           }
         }
 
-        // 大跌后反弹 + 放量 = 扫底承接
         if (this.row.priceChange < -10 && this.prev && this.prev.priceChange < this.row.priceChange) {
           if (this.row.volMcap > 25) {
             this.signals.push('V形反弹');
@@ -1087,13 +1391,11 @@
         return score;
       }
 
-      // 6️⃣ 持续性确认
       analyzeConfirmation() {
         if (!this.prev) return 0;
 
         const signal = this.signals;
         
-        // 多个信号同时出现 = 更确定
         if (signal.length >= 3) {
           return 15;
         }
@@ -1120,7 +1422,6 @@
       }
 
       getConfidence() {
-        // 信号数越多，信心度越高
         return Math.min(100, this.signals.length * 25);
       }
     }
@@ -1135,21 +1436,14 @@
         this.score = 0;
       }
 
-      // 精选币：真正赚钱的
       analyzeElite() {
         const p = this.row;
         
-        // 必要条件1：技术面强
         const techGood = this.checkTechnical();
-        
-        // 必要条件2：资金面好
         const fundGood = this.checkFunding();
-        
-        // 必要条件3：有动量
         const momentumGood = this.checkMomentum();
 
         if (techGood && fundGood && momentumGood) {
-          // 连续确认
           if (this.signals.length >= 3) {
             this.score = 75;
             return true;
@@ -1159,14 +1453,10 @@
         return false;
       }
 
-      // 优秀币：保底选项
       analyzePrime() {
         const p = this.row;
         
-        // 条件1：走势不错
         const techOk = this.checkTechnical();
-        
-        // 条件2：数据优秀
         const dataOk = this.checkData();
 
         if (techOk && dataOk) {
@@ -1182,13 +1472,11 @@
       checkTechnical() {
         const p = this.row;
         
-        // 涨幅合理（有空间但不是末端追高）
         if (p.priceChange > 5 && p.priceChange < 50) {
           this.signals.push('涨幅合理');
           return true;
         }
 
-        // 深度回调后反弹
         if (this.prev && p.priceChange > this.prev.priceChange + 8) {
           this.signals.push('反弹确认');
           return true;
@@ -1200,7 +1488,6 @@
       checkFunding() {
         const p = this.row;
         
-        // 资费健康（不拥挤，不反向）
         if (p.funding > -0.01 && p.funding < 0.015) {
           this.signals.push('资费健康');
           return true;
@@ -1212,7 +1499,6 @@
       checkMomentum() {
         const p = this.row;
         
-        // 成交活跃 + 有资金
         if (p.volMcap > 20 && p.volMcap < 100) {
           this.signals.push('动量良好');
           return true;
@@ -1224,7 +1510,6 @@
       checkData() {
         const p = this.row;
         
-        // 成交量适中且OI稳定
         if (p.volMcap > 15 && p.volMcap < 80) {
           if (!this.prev || Math.abs(p.oiMcap - (this.prev.oiMcap || 0)) < 20) {
             this.signals.push('数据优秀');
@@ -1236,15 +1521,13 @@
       }
     }
 
-    // ======================== 妖币检测函数 ========================
+    // ======================== 妖币检测 ========================
 
     function detectYaoBuyable(row, prev, market) {
       const analyzer = new YaoCoinAnalyzer(row, prev, market);
       const score = analyzer.getYaoBuyableScore();
       const confidence = analyzer.getConfidence();
 
-      // 妖币可买：需要极强的多个信号同时出现
-      // 评分 >= 75 + 信号 >= 4 + 信心度高
       if (score >= 75 && analyzer.signals.length >= 4 && confidence >= 75) {
         let grade = 'A';
         if (score >= 90 && confidence >= 85) {
@@ -1271,7 +1554,6 @@
       const score = analyzer.getYaoBuyableScore();
       const confidence = analyzer.getConfidence();
 
-      // 妖币观察：有潜力但还不够强
       if (score >= 50 && analyzer.signals.length >= 2 && confidence >= 50) {
         return {
           isWatchable: true,
@@ -1321,7 +1603,7 @@
       return { isPrime: false };
     }
 
-    // ======================== 妖币记忆 & 通知 ========================
+    // ======================== 妖币记忆 ========================
 
     function updateYaoCoinMemory(symbol, type) {
       const now = Date.now();
@@ -1334,8 +1616,7 @@
           notified: false
         };
         
-        // 新妖币通知
-        showNotification(`👁 新妖相出现：${symbol}`, 'alert');
+        showNotification(`👁 新妖币: ${symbol}`, 'alert');
         playSound();
         
         return 'new';
@@ -1345,9 +1626,8 @@
         mem.currentType = type;
         mem.lastUpdate = now;
 
-        // 升级通知
         if (prevType === 'watch' && type === 'buyable' && !mem.notified) {
-          showNotification(`🚀 升级：${symbol} 从观察升级为妖币可买！`, 'alert');
+          showNotification(`🚀 升级：${symbol} 妖币可买！`, 'alert');
           playSound();
           mem.notified = true;
           return 'upgrade';
@@ -1364,7 +1644,6 @@
       Object.keys(yaoCoinMemory).forEach(symbol => {
         const mem = yaoCoinMemory[symbol];
         
-        // 观察的币6小时没更新就删
         if (mem.currentType === 'watch' && (now - mem.lastUpdate) > h6) {
           delete yaoCoinMemory[symbol];
         }
@@ -1381,8 +1660,8 @@
     };
 
     const CACHE_TIME = {
-      exchangeInfo: 60 * 60 * 1000,  // 1小时
-      gecko: 30 * 60 * 1000          // 30分钟
+      exchangeInfo: 60 * 60 * 1000,
+      gecko: 30 * 60 * 1000
     };
 
     async function getJSON(url) {
@@ -1450,7 +1729,6 @@
           });
         }
 
-        // 市场上下文
         const allPriceChanges = ticker24h.map(t => parseFloat(t.priceChangePercent || 0)).filter(p => !isNaN(p));
         const avgChange = allPriceChanges.reduce((a, b) => a + b, 0) / allPriceChanges.length;
         const maxChange = Math.max(...allPriceChanges);
@@ -1561,17 +1839,10 @@
           }
         }
 
-        // 排序
         yaoBuyableCoins.sort((a, b) => (b.score || 0) - (a.score || 0));
         yaoWatchCoins.sort((a, b) => (b.score || 0) - (a.score || 0));
         buyEliteCoins.sort((a, b) => (b.score || 0) - (a.score || 0));
         buyPrimeCoins.sort((a, b) => (b.score || 0) - (a.score || 0));
-
-        // 检查是否连优秀币都没有 - 才显示
-        if (buyEliteCoins.length === 0 && buyPrimeCoins.length === 0) {
-          // 市场太弱，可以空着
-          console.log('市场较弱，无优秀币');
-        }
 
         previousData = newPreviousData;
         localStorage.setItem('previousData', JSON.stringify(previousData));
@@ -1660,6 +1931,9 @@
       const score = coin.score || 0;
       const confidence = coin.confidence || 0;
       const gradeClass = coin.grade === 'S+' ? 'tag-yao-buyable-s' : 'tag-yao-buyable-a';
+      
+      const wyckoffAnalyzer = new WyckoffPhaseAnalyzer(coin, previousData[coin.symbol]);
+      const phaseHTML = wyckoffAnalyzer.getPhaseHTML();
 
       return `
         <div class="coin-card yao-buyable" onclick="showDetail('${coin.symbol}', 'yao-buyable')">
@@ -1678,6 +1952,8 @@
             <span class="tag ${gradeClass}">等级: ${coin.grade}</span>
             <span class="tag tag-yao-buyable tag-new">🚀 可买入</span>
           </div>
+
+          ${phaseHTML}
 
           <div class="advice-box danger">
             🚀 ${coin.reason}
@@ -1716,6 +1992,9 @@
     function renderYaoWatchCard(coin) {
       const score = coin.score || 0;
       const confidence = coin.confidence || 0;
+      
+      const wyckoffAnalyzer = new WyckoffPhaseAnalyzer(coin, previousData[coin.symbol]);
+      const phaseHTML = wyckoffAnalyzer.getPhaseHTML();
 
       return `
         <div class="coin-card yao-watch" onclick="showDetail('${coin.symbol}', 'yao-watch')">
@@ -1734,6 +2013,8 @@
             <span class="tag tag-yao-watch">🔮 观察中</span>
             <span class="tag tag-time">${getMemoryTime(coin.symbol)}</span>
           </div>
+
+          ${phaseHTML}
 
           <div class="advice-box purple">
             👁️ ${coin.reason}
@@ -1771,6 +2052,9 @@
 
     function renderBuyEliteCard(coin) {
       const score = coin.score || 0;
+      
+      const wyckoffAnalyzer = new WyckoffPhaseAnalyzer(coin, previousData[coin.symbol]);
+      const phaseHTML = wyckoffAnalyzer.getPhaseHTML();
 
       return `
         <div class="coin-card buy-elite" onclick="showDetail('${coin.symbol}', 'buy-elite')">
@@ -1789,6 +2073,8 @@
             <span class="tag tag-buy-elite">精选${coin.grade}</span>
             <span class="tag tag-buy-elite">仓位: ${coin.position}</span>
           </div>
+
+          ${phaseHTML}
 
           <div class="advice-box">
             💡 ${coin.leverage} | ${coin.reason}
@@ -1826,6 +2112,9 @@
 
     function renderBuyPrimeCard(coin) {
       const score = coin.score || 0;
+      
+      const wyckoffAnalyzer = new WyckoffPhaseAnalyzer(coin, previousData[coin.symbol]);
+      const phaseHTML = wyckoffAnalyzer.getPhaseHTML();
 
       return `
         <div class="coin-card buy-prime" onclick="showDetail('${coin.symbol}', 'buy-prime')">
@@ -1844,6 +2133,8 @@
             <span class="tag tag-buy-prime">优秀${coin.grade}</span>
             <span class="tag tag-buy-prime">仓位: ${coin.position}</span>
           </div>
+
+          ${phaseHTML}
 
           <div class="advice-box warn">
             📊 ${coin.leverage} | ${coin.reason}
@@ -1896,7 +2187,7 @@
       document.getElementById('stat-buy-prime').textContent = buyPrimeCoins.length;
     }
 
-    // ======================== 搜索 ========================
+    // ======================== 搜索功能 ========================
 
     let searchTimeout = null;
 
@@ -1956,7 +2247,7 @@
       }, 300);
     }
 
-    // ======================== 详情页 ========================
+    // ======================== 详情页面 ========================
 
     function showDetail(symbol, source = null) {
       const coin = allCoinsData.find(c => c.symbol === symbol);
@@ -1984,11 +2275,16 @@
         title = '建议优秀';
       }
 
+      const wyckoffAnalyzer = new WyckoffPhaseAnalyzer(coin, previousData[coin.symbol]);
+      const phaseAnalysisBox = wyckoffAnalyzer.getPhaseAnalysisBox();
+
       let html = `
         <div class="detail-title">
           <span>${icon} ${coin.symbol}</span>
           <span style="font-size: 12px; color: var(--text-secondary);">$${fmtNum(coin.price, 6)}</span>
         </div>
+
+        ${phaseAnalysisBox}
 
         <div class="detail-grid">
           <div class="detail-item">
@@ -2064,6 +2360,16 @@
               <span class="detail-label">风险等级</span>
               <span class="detail-value">${coin.type === 'yao-buyable' ? '极高(高收益)' : '高(监控中)'}</span>
             </div>
+            <div class="detail-row">
+              <span class="detail-label">当前阶段</span>
+              <span class="detail-value">${wyckoffAnalyzer.phaseDetails.name} (${wyckoffAnalyzer.phaseDetails.confidence}%)</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">下一步可能</span>
+              <span class="detail-value" style="text-align: right;">
+                ${wyckoffAnalyzer.likelyNextPhases.join(' → ')}
+              </span>
+            </div>
           </div>
         ` : `
           <div class="detail-box warn">
@@ -2079,6 +2385,16 @@
             <div class="detail-row">
               <span class="detail-label">杠杆建议</span>
               <span class="detail-value">${coin.leverage || '-'}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">当前阶段</span>
+              <span class="detail-value">${wyckoffAnalyzer.phaseDetails.name}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">阶段描述</span>
+              <span class="detail-value" style="text-align: right; max-width: 60%;">
+                ${wyckoffAnalyzer.phaseDetails.description}
+              </span>
             </div>
           </div>
         `}
@@ -2117,21 +2433,22 @@
               ✓ 仅适合高风险承受能力的投资者<br/>
               ✓ 严格执行止损，不贪心<br/>
               ✓ 分批建仓，控制风险敞口<br/>
-              ✓ 持续关注市场动态，及时调整<br/>
-              ✓ 可能是庄家控盘，谨防砸盘
+              ✓ 持续关注Wyckoff阶段变化<br/>
+              ✓ 可能是庄家控盘，谨防砸盘<br/>
+              ✓ 关键信号: ${coin.signals.slice(0, 2).join(' + ')}
             ` : coin.type === 'yao-watch' ? `
               ✓ 该币种有成为妖币的潜力<br/>
-              ✓ 目前仍在观察阶段，未确认<br/>
-              ✓ 持续监控关键指标变化<br/>
-              ✓ 等待更明确的信号后再考虑<br/>
-              ✓ 可设置提醒，不要错过机会<br/>
+              ✓ 当前处于${wyckoffAnalyzer.phaseDetails.name}阶段<br/>
+              ✓ 等待发展到 ${wyckoffAnalyzer.likelyNextPhases[0] || '加速阶段'} 时确认<br/>
+              ✓ 设置价格提醒或信号提醒<br/>
+              ✓ 观察OI和成交量变化<br/>
               ✓ 资金还未充分启动
             ` : `
               ✓ 建议币基于多维指标综合评分<br/>
-              ✓ 仅供参考，不构成投资建议<br/>
+              ✓ 当前处于${wyckoffAnalyzer.phaseDetails.name}阶段<br/>
               ✓ 严格遵守止损止盈规则<br/>
               ✓ 防止追高，合理控制风险<br/>
-              ✓ 定期复核市场行情变化<br/>
+              ✓ 等待${wyckoffAnalyzer.likelyNextPhases[0] || '下一个关键时刻'}<br/>
               ✓ 相对稳定但仍需谨慎
             `}
           </div>
@@ -2200,7 +2517,6 @@
     // ======================== 初始化 ========================
 
     document.addEventListener('DOMContentLoaded', () => {
-      // 请求通知权限
       if ('Notification' in window && Notification.permission === 'default') {
         Notification.requestPermission();
       }
@@ -2214,7 +2530,6 @@
         }
       });
 
-      // 侦听搜索输入框焦点
       const searchInput = document.getElementById('search-input');
       if (searchInput) {
         searchInput.addEventListener('focus', () => {
