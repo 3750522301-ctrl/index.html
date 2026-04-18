@@ -452,6 +452,16 @@
     .tag.risk-mid { background: rgba(245, 158, 11, 0.2); border-color: rgba(245, 158, 11, 0.4); color: #fcd34d; }
     .tag.risk-low { background: rgba(34, 197, 94, 0.2); border-color: rgba(34, 197, 94, 0.4); color: #86efac; }
 
+    .resonance-tag {
+      font-size: 10px;
+      padding: 4px 8px;
+      background: rgba(168, 85, 247, 0.2);
+      border: 1px solid rgba(168, 85, 247, 0.4);
+      border-radius: 4px;
+      color: #d8b4fe;
+      white-space: nowrap;
+    }
+
     .metrics {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -1003,12 +1013,9 @@
     async function loadExchangeInfo() {
       try {
         const res = await fetchJSON(`${CONFIG.binanceUrl}/exchangeInfo`);
-        const symbols = res.symbols || [];
 
-        binanceAssets = {};
-        allSymbols = [];
-
-        symbols.forEach(sym => {
+        const spotSymbols = res.symbols || [];
+        spotSymbols.forEach(sym => {
           const baseAsset = sym.baseAsset;
           const quoteAsset = sym.quoteAsset;
           const symbolStr = sym.symbol;
@@ -1119,15 +1126,16 @@
     }
 
     // ============ 获取K线数据 ============
-    async function getKlineData(symbol, interval = '1h', limit = 100) {
-      const cacheKey = `${symbol}_${interval}`;
+    async function getKlineData(symbol, interval = '1h', limit = 100, market = 'spot') {
+      const cacheKey = `${market}_${symbol}_${interval}`;
       if (klineCache[cacheKey] && Date.now() - klineCache[cacheKey].time < 60000) {
         return klineCache[cacheKey].data;
       }
 
       try {
+        const baseUrl = market === 'futures' ? CONFIG.futuresUrl : CONFIG.binanceUrl;
         const res = await fetchJSON(
-          `${CONFIG.binanceUrl}/klines?symbol=${symbol}USDT&interval=${interval}&limit=${limit}`
+          `${baseUrl}/klines?symbol=${symbol}USDT&interval=${interval}&limit=${limit}`
         );
 
         const data = res.map(k => ({
@@ -1142,25 +1150,26 @@
         klineCache[cacheKey] = { data, time: Date.now() };
         return data;
       } catch (e) {
-        console.warn(`获取 ${symbol} K线失败:`, e.message);
+        console.warn(`获取 ${symbol} ${market} K线失败:`, e.message);
         return [];
       }
     }
 
     // ============ 获取24小时数据 ============
-    async function get24hStats(symbol) {
+    async function get24hStats(symbol, market = 'spot') {
       try {
-        const res = await fetchJSON(`${CONFIG.binanceUrl}/ticker/24hr?symbol=${symbol}USDT`);
+        const baseUrl = market === 'futures' ? CONFIG.futuresUrl : CONFIG.binanceUrl;
+        const res = await fetchJSON(`${baseUrl}/ticker/24hr?symbol=${symbol}USDT`);
 
         return {
           price: parseFloat(res.lastPrice),
           change24h: parseFloat(res.priceChangePercent),
-          volume24h: parseFloat(res.quoteAssetVolume),
+          volume24h: parseFloat(res.quoteVolume || res.quoteAssetVolume || 0),
           highPrice: parseFloat(res.highPrice),
           lowPrice: parseFloat(res.lowPrice)
         };
       } catch (e) {
-        console.warn(`获取 ${symbol} 24h数据失败:`, e.message);
+        console.warn(`获取 ${symbol} ${market} 24h数据失败:`, e.message);
         return null;
       }
     }
@@ -1309,137 +1318,188 @@
       };
     }
 
+    // ============ 检查共振条件 ============
+    function checkResonance(coin) {
+      const resonance = {
+        hasPrice: false,
+        hasCVD: false,
+        hasOI: false,
+        count: 0,
+        details: []
+      };
+
+      const priceUp = coin.change1h > 0;
+      const cvdUp = coin.cvd1h.trend === 'up';
+      const oiUp = coin.openInterest > 0 && coin.fundingRate > 0;
+
+      if (priceUp) {
+        resonance.hasPrice = true;
+        resonance.count++;
+        resonance.details.push('价格向上');
+      }
+
+      if (cvdUp) {
+        resonance.hasCVD = true;
+        resonance.count++;
+        resonance.details.push('CVD向上');
+      }
+
+      if (oiUp) {
+        resonance.hasOI = true;
+        resonance.count++;
+        resonance.details.push('OI增加');
+      }
+
+      return resonance;
+    }
+
     // ============ 搜索用专用分析函数 ============
     async function analyzeCoinForSearch(symbol) {
       try {
-        const [kline1h, stats24h] = await Promise.all([
-          getKlineData(symbol, '1h', 100),
-          get24hStats(symbol)
-        ]);
+        const assetInfo = binanceAssets[symbol];
+        if (!assetInfo) return null;
 
-        if (!stats24h || !kline1h || kline1h.length === 0) {
-          return null;
+        const marketsToTry = [];
+        if (assetInfo.spot && assetInfo.spot.length > 0) marketsToTry.push('spot');
+        if (assetInfo.futures && assetInfo.futures.length > 0) marketsToTry.push('futures');
+
+        for (const market of marketsToTry) {
+          try {
+            const [kline1h, stats24h] = await Promise.all([
+              getKlineData(symbol, '1h', 100, market),
+              get24hStats(symbol, market)
+            ]);
+
+            if (!stats24h || !kline1h || kline1h.length === 0) {
+              continue;
+            }
+
+            const [kline5m, kline4h, kline1d, futuresData] = await Promise.all([
+              getKlineData(symbol, '5m', 50, market).catch(() => []),
+              getKlineData(symbol, '4h', 100, market).catch(() => []),
+              getKlineData(symbol, '1d', 100, market).catch(() => []),
+              getFuturesData(symbol).catch(() => ({
+                openInterest: 0,
+                fundingRate: 0,
+                globalLongShortRatio: 1
+              }))
+            ]);
+
+            const safePrices = arr => arr && arr.length ? arr.map(k => k.close) : [stats24h.price];
+
+            const prices5m = safePrices(kline5m);
+            const prices1h = safePrices(kline1h);
+            const prices4h = safePrices(kline4h);
+            const prices1d = safePrices(kline1d);
+
+            const rsi5m = calcRSI(prices5m, 14);
+            const rsi1h = calcRSI(prices1h, 14);
+            const rsi4h = calcRSI(prices4h, 14);
+            const rsi1d = calcRSI(prices1d, 14);
+
+            const macd1h = calcMACD(prices1h);
+            const macd4h = calcMACD(prices4h);
+
+            const volumes5m = kline5m.length ? kline5m.map(k => k.volume) : [0];
+            const volumes1h = kline1h.length ? kline1h.map(k => k.volume) : [0];
+
+            const cvd5m = calcCVD(volumes5m, true);
+            const cvd1h = calcCVD(volumes1h, true);
+
+            const calcChange = prices => prices.length > 1
+              ? ((prices[prices.length - 1] - prices[0]) / prices[0]) * 100
+              : 0;
+
+            const change5m = calcChange(prices5m);
+            const change1h = calcChange(prices1h);
+            const change4h = calcChange(prices4h);
+            const change1d = calcChange(prices1d);
+
+            const mainDirection = change1h > 0 ? 'up' : 'down';
+
+            const phase5m = rsi5m > 70 ? 'overbought' : rsi5m < 30 ? 'oversold' : 'normal';
+            const phase1h = rsi1h > 70 ? 'overbought' : rsi1h < 30 ? 'oversold' : 'normal';
+            const phase4h = rsi4h > 70 ? 'overbought' : rsi4h < 30 ? 'oversold' : 'normal';
+            const phase1d = rsi1d > 70 ? 'overbought' : rsi1d < 30 ? 'oversold' : 'normal';
+
+            let buySignalCount = 0;
+            let sellSignalCount = 0;
+
+            if (rsi5m < 30) buySignalCount += 2;
+            if (rsi5m > 70) sellSignalCount += 2;
+            if (rsi1h < 30) buySignalCount += 3;
+            if (rsi1h > 70) sellSignalCount += 3;
+            if (rsi4h < 30) buySignalCount += 2;
+            if (rsi4h > 70) sellSignalCount += 2;
+
+            if (macd1h.histogram > 0) buySignalCount += 2;
+            if (macd1h.histogram < 0) sellSignalCount += 2;
+            if (macd4h.histogram > 0) buySignalCount += 2;
+            if (macd4h.histogram < 0) sellSignalCount += 2;
+
+            const totalSignal = buySignalCount - sellSignalCount;
+
+            let grade = 'c';
+            let gradeScore = 1;
+            if (totalSignal >= 15) {
+              grade = 'splus'; gradeScore = 5;
+            } else if (totalSignal >= 10) {
+              grade = 's'; gradeScore = 4;
+            } else if (totalSignal >= 5) {
+              grade = 'a'; gradeScore = 3;
+            } else if (totalSignal >= 0) {
+              grade = 'b'; gradeScore = 2;
+            }
+
+            const crowdingRisk = calculateCrowdingRisk(
+              futuresData.globalLongShortRatio || 1,
+              0,
+              rsi1h,
+              mainDirection
+            );
+
+            return {
+              symbol,
+              price: stats24h.price,
+              change24h: stats24h.change24h,
+              marketCap: null,
+              rsi5m, rsi1h, rsi4h, rsi1d,
+              macd1h, macd4h,
+              cvd5m, cvd1h,
+              change5m, change1h, change4h, change1d,
+              mainDirection,
+              phase5m, phase1h, phase4h, phase1d,
+              buySignalCount,
+              sellSignalCount,
+              totalSignal,
+              grade,
+              gradeScore,
+              openInterest: futuresData.openInterest || 0,
+              fundingRate: futuresData.fundingRate || 0,
+              globalLongShortRatio: futuresData.globalLongShortRatio || 1,
+              oiMcapRatio: 0,
+              crowdingRisk,
+              longReasons: [],
+              shortReasons: [],
+              recommendType: market === 'futures' ? 'contract' : 'spot',
+              recommendLeverage: market === 'futures' ? 2 : 1,
+              recommendPosition: 1,
+              searchMarket: market,
+              timestamp: Date.now()
+            };
+          } catch (err) {
+            console.warn(`搜索分析 ${symbol} 在 ${market} 市场失败:`, err.message);
+          }
         }
 
-        const [kline5m, kline4h, kline1d, futuresData] = await Promise.all([
-          getKlineData(symbol, '5m', 50).catch(() => []),
-          getKlineData(symbol, '4h', 100).catch(() => []),
-          getKlineData(symbol, '1d', 100).catch(() => []),
-          getFuturesData(symbol).catch(() => ({
-            openInterest: 0,
-            fundingRate: 0,
-            globalLongShortRatio: 1
-          }))
-        ]);
-
-        const safePrices = arr => arr && arr.length ? arr.map(k => k.close) : [stats24h.price];
-
-        const prices5m = safePrices(kline5m);
-        const prices1h = safePrices(kline1h);
-        const prices4h = safePrices(kline4h);
-        const prices1d = safePrices(kline1d);
-
-        const rsi5m = calcRSI(prices5m, 14);
-        const rsi1h = calcRSI(prices1h, 14);
-        const rsi4h = calcRSI(prices4h, 14);
-        const rsi1d = calcRSI(prices1d, 14);
-
-        const macd1h = calcMACD(prices1h);
-        const macd4h = calcMACD(prices4h);
-
-        const volumes5m = kline5m.length ? kline5m.map(k => k.volume) : [0];
-        const volumes1h = kline1h.length ? kline1h.map(k => k.volume) : [0];
-
-        const cvd5m = calcCVD(volumes5m, true);
-        const cvd1h = calcCVD(volumes1h, true);
-
-        const calcChange = prices => prices.length > 1
-          ? ((prices[prices.length - 1] - prices[0]) / prices[0]) * 100
-          : 0;
-
-        const change5m = calcChange(prices5m);
-        const change1h = calcChange(prices1h);
-        const change4h = calcChange(prices4h);
-        const change1d = calcChange(prices1d);
-
-        const mainDirection = change1h > 0 ? 'up' : 'down';
-
-        const phase5m = rsi5m > 70 ? 'overbought' : rsi5m < 30 ? 'oversold' : 'normal';
-        const phase1h = rsi1h > 70 ? 'overbought' : rsi1h < 30 ? 'oversold' : 'normal';
-        const phase4h = rsi4h > 70 ? 'overbought' : rsi4h < 30 ? 'oversold' : 'normal';
-        const phase1d = rsi1d > 70 ? 'overbought' : rsi1d < 30 ? 'oversold' : 'normal';
-
-        let buySignalCount = 0;
-        let sellSignalCount = 0;
-
-        if (rsi5m < 30) buySignalCount += 2;
-        if (rsi5m > 70) sellSignalCount += 2;
-        if (rsi1h < 30) buySignalCount += 3;
-        if (rsi1h > 70) sellSignalCount += 3;
-        if (rsi4h < 30) buySignalCount += 2;
-        if (rsi4h > 70) sellSignalCount += 2;
-
-        if (macd1h.histogram > 0) buySignalCount += 2;
-        if (macd1h.histogram < 0) sellSignalCount += 2;
-        if (macd4h.histogram > 0) buySignalCount += 2;
-        if (macd4h.histogram < 0) sellSignalCount += 2;
-
-        const totalSignal = buySignalCount - sellSignalCount;
-
-        let grade = 'c';
-        let gradeScore = 1;
-        if (totalSignal >= 15) {
-          grade = 'splus'; gradeScore = 5;
-        } else if (totalSignal >= 10) {
-          grade = 's'; gradeScore = 4;
-        } else if (totalSignal >= 5) {
-          grade = 'a'; gradeScore = 3;
-        } else if (totalSignal >= 0) {
-          grade = 'b'; gradeScore = 2;
-        }
-
-        const crowdingRisk = calculateCrowdingRisk(
-          futuresData.globalLongShortRatio || 1,
-          0,
-          rsi1h,
-          mainDirection
-        );
-
-        return {
-          symbol,
-          price: stats24h.price,
-          change24h: stats24h.change24h,
-          marketCap: null,
-          rsi5m, rsi1h, rsi4h, rsi1d,
-          macd1h, macd4h,
-          cvd5m, cvd1h,
-          change5m, change1h, change4h, change1d,
-          mainDirection,
-          phase5m, phase1h, phase4h, phase1d,
-          buySignalCount,
-          sellSignalCount,
-          totalSignal,
-          grade,
-          gradeScore,
-          openInterest: futuresData.openInterest || 0,
-          fundingRate: futuresData.fundingRate || 0,
-          globalLongShortRatio: futuresData.globalLongShortRatio || 1,
-          oiMcapRatio: 0,
-          crowdingRisk,
-          longReasons: [],
-          shortReasons: [],
-          recommendType: 'spot',
-          recommendLeverage: 1,
-          recommendPosition: 1,
-          timestamp: Date.now()
-        };
+        return null;
       } catch (e) {
         console.error(`搜索分析 ${symbol} 失败:`, e.message);
         return null;
       }
     }
 
-    // ============ 完整分析函数 ============
+    // ============ 完整分析函数（S级以上加强权重） ============
     async function analyzeCoin(symbol, quickScanData = null) {
       try {
         let kline5m, kline1h, kline4h, kline1d, stats24h, futuresData;
@@ -1506,6 +1566,7 @@
         let buySignalCount = 0;
         let sellSignalCount = 0;
 
+        // RSI 信号
         if (rsi5m < 30) buySignalCount += 2;
         if (rsi5m > 70) sellSignalCount += 2;
         if (rsi1h < 30) buySignalCount += 3;
@@ -1513,22 +1574,27 @@
         if (rsi4h < 30) buySignalCount += 2;
         if (rsi4h > 70) sellSignalCount += 2;
 
+        // MACD 信号
         if (macd1h.histogram > 0) buySignalCount += 2;
         if (macd1h.histogram < 0) sellSignalCount += 2;
         if (macd4h.histogram > 0) buySignalCount += 2;
         if (macd4h.histogram < 0) sellSignalCount += 2;
 
+        // CVD 信号
         if (cvd5m.trend === 'up') buySignalCount += 1;
         if (cvd5m.trend === 'down') sellSignalCount += 1;
         if (cvd1h.trend === 'up') buySignalCount += 1;
         if (cvd1h.trend === 'down') sellSignalCount += 1;
 
+        // 涨跌信号
         if (change5m > 0.5) buySignalCount += 1;
         if (change5m < -0.5) sellSignalCount += 1;
         if (change1h > 1) buySignalCount += 2;
         if (change1h < -1) sellSignalCount += 2;
 
         const totalSignal = buySignalCount - sellSignalCount;
+
+        // ============ 初步评级（基础） ============
         let grade = 'c';
         let gradeScore = 0;
 
@@ -1547,6 +1613,35 @@
         } else {
           grade = 'c';
           gradeScore = 1;
+        }
+
+        // ============ S级及以上：检查共振条件 ============
+        let resonance = { count: 0, details: [], hasPrice: false, hasCVD: false, hasOI: false };
+        if (grade === 'splus' || grade === 's') {
+          resonance = checkResonance({
+            change1h,
+            cvd1h,
+            openInterest: futuresData.openInterest,
+            fundingRate: futuresData.fundingRate
+          });
+
+          // S级必须：价格 + CVD + OI 三者共振
+          if (grade === 's') {
+            if (resonance.count < 3 || !resonance.hasPrice || !resonance.hasCVD || !resonance.hasOI) {
+              // 不满足三共振，降级到 A
+              grade = 'a';
+              gradeScore = 3;
+            }
+          }
+
+          // S+级必须：全部共振 + OI > CVD > 价格权重
+          if (grade === 'splus') {
+            if (resonance.count < 3) {
+              // 降级到 S
+              grade = 's';
+              gradeScore = 4;
+            }
+          }
         }
 
         const oiMcapRatio = 0;
@@ -1615,6 +1710,7 @@
           crowdingRisk,
           longReasons,
           shortReasons,
+          resonance,
           recommendType,
           recommendLeverage,
           recommendPosition,
@@ -1701,55 +1797,53 @@
       }
     }
 
-    // ============ 手动刷新 ============
-    function manualRefresh() {
-      twoPhaseFullRefresh();
+    async function manualRefresh() {
+      await twoPhaseFullRefresh();
     }
 
-    // ============ 渲染监控内容 ============
+    // ============ 渲染监控页面 ============
     function renderMonitorContent() {
-      const grades = { splus: [], s: [], a: [], b: [], c: [] };
+      const container = document.getElementById('monitor-content');
 
-      Object.values(allCoins).forEach(coin => {
-        if (!coin) return;
-        if (grades[coin.grade]) {
-          grades[coin.grade].push(coin);
-        }
+      if (Object.keys(allCoins).length === 0) {
+        container.innerHTML = '<div class="error-box">⏳ 正在扫描中，请稍候...</div>';
+        return;
+      }
+
+      const grades = ['splus', 's', 'a', 'b', 'c'];
+      const gradeCounts = {};
+      grades.forEach(g => {
+        gradeCounts[g] = Object.values(allCoins).filter(c => c.grade === g).length;
       });
 
-      Object.keys(grades).forEach(grade => {
-        grades[grade].sort((a, b) => {
-          const scoreA = Math.abs(a.totalSignal);
-          const scoreB = Math.abs(b.totalSignal);
-          return scoreB - scoreA;
-        });
-      });
-
-      document.getElementById('grade-splus-count').textContent = grades.splus.length;
-      document.getElementById('grade-s-count').textContent = grades.s.length;
-      document.getElementById('grade-a-count').textContent = grades.a.length;
-      document.getElementById('grade-b-count').textContent = grades.b.length;
-      document.getElementById('grade-c-count').textContent = grades.c.length;
+      document.getElementById('grade-splus-count').textContent = gradeCounts.splus;
+      document.getElementById('grade-s-count').textContent = gradeCounts.s;
+      document.getElementById('grade-a-count').textContent = gradeCounts.a;
+      document.getElementById('grade-b-count').textContent = gradeCounts.b;
+      document.getElementById('grade-c-count').textContent = gradeCounts.c;
       document.getElementById('analyzed-count').textContent = Object.keys(allCoins).length;
 
       let html = '';
 
-      const gradeConfigs = [
-        { key: 'splus', label: 'S+', color: 'splus' },
-        { key: 's', label: 'S', color: 's' },
-        { key: 'a', label: 'A', color: 'a' },
-        { key: 'b', label: 'B', color: 'b' },
-        { key: 'c', label: 'C', color: 'c' }
-      ];
+      grades.forEach(grade => {
+        const coins = Object.values(allCoins)
+          .filter(c => c.grade === grade)
+          .sort((a, b) => b.totalSignal - a.totalSignal);
 
-      gradeConfigs.forEach(config => {
-        const coins = grades[config.key];
         if (coins.length === 0) return;
+
+        const gradeLabels = {
+          splus: 'S+',
+          s: 'S',
+          a: 'A',
+          b: 'B',
+          c: 'C'
+        };
 
         html += `
           <div class="grade-section">
-            <div class="grade-header ${config.color}">
-              <div class="grade-label ${config.color}">${config.label} 级</div>
+            <div class="grade-header ${grade}">
+              <div class="grade-label ${grade}">${gradeLabels[grade]} 级</div>
               <div class="grade-count">${coins.length} 个币种</div>
             </div>
             <div class="grid">
@@ -1759,18 +1853,23 @@
         `;
       });
 
-      document.getElementById('monitor-content').innerHTML = html;
+      container.innerHTML = html;
     }
 
-    // ============ 渲染币种卡片 ============
     function renderCoinCard(coin) {
-      if (!coin) return '';
+      const riskTag = coin.crowdingRisk.level === 'high' ? 'risk-high' : 
+                       coin.crowdingRisk.level === 'mid' ? 'risk-mid' : 'risk-low';
 
-      const changeClass = coin.change24h > 0 ? 'up' : 'down';
-      const riskTag = coin.crowdingRisk.score >= 80 ? 'risk-high' : coin.crowdingRisk.score >= 60 ? 'risk-mid' : 'risk-low';
+      const spot = coin.symbol;
+      const futures = coin.symbol;
 
-      const spot = (binanceAssets[coin.symbol]?.spot || []).map(s => s.symbol).join(', ') || 'N/A';
-      const futures = (binanceAssets[coin.symbol]?.futures || []).map(s => s.symbol).join(', ') || 'N/A';
+      // 构建共振标签
+      let resonanceTag = '';
+      if (coin.resonance && coin.resonance.count >= 3) {
+        resonanceTag = `<span class="resonance-tag">✨ 三共振</span>`;
+      } else if (coin.resonance && coin.resonance.count === 2) {
+        resonanceTag = `<span class="resonance-tag">🔄 双共振</span>`;
+      }
 
       return `
         <div class="coin-card ${coin.grade}" onclick="showDetail('${coin.symbol}')">
@@ -1779,12 +1878,15 @@
               <div class="coin-name">${coin.symbol}</div>
               <div class="coin-price">$${fmt(coin.price, 8)}</div>
             </div>
-            <div class="price-change ${changeClass}">${fmtPct(coin.change24h)}</div>
+            <div class="price-change ${coin.change24h > 0 ? 'up' : 'down'}">
+              ${fmtPct(coin.change24h)}
+            </div>
           </div>
 
           <div style="margin-bottom: 8px;">
             <span class="grade-badge ${coin.grade}">${coin.grade.toUpperCase()}</span>
-                      </div>
+            ${resonanceTag}
+          </div>
 
           <div class="recommend-section">
             <div class="recommend-label">💼 现货/合约推荐</div>
