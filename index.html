@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>币安永续精选监控 - v4.1 强化版</title>
+  <title>币安永续精选 - 妖币 + 建议买入 v5.1</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -87,31 +87,22 @@
       opacity: 0.5;
       cursor: not-allowed;
     }
-    .filter-group {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 18px;
-      flex-wrap: wrap;
-      align-items: center;
+    .section {
+      margin-bottom: 30px;
     }
-    .filter-btn {
-      background: rgba(16,196,245,.12);
+    .section-title {
+      font-size: 18px;
       color: #10c4f5;
-      border: 1px solid rgba(16,196,245,.3);
-      padding: 8px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 12px;
-      transition: all 0.2s;
-    }
-    .filter-btn.active {
-      background: #11b7e6;
-      border-color: #11b7e6;
-      color: white;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid rgba(16,196,245,.2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     .stats {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 14px;
       margin-bottom: 18px;
     }
@@ -138,12 +129,12 @@
       border: 1px solid rgba(16,196,245,.18);
       border-radius: 16px;
       overflow: auto;
-      max-height: 700px;
+      max-height: 600px;
     }
-    .status {
+    .empty-state {
       text-align: center;
-      color: #9db0c4;
-      padding: 30px;
+      color: #8ca3ba;
+      padding: 40px 20px;
       font-size: 14px;
     }
     table {
@@ -189,9 +180,12 @@
       white-space: nowrap;
     }
 
-    .level-极其好 { background: rgba(34, 197, 94, .3); color: #22c55e; border-color: #22c55e; font-weight: bold; }
-    .level-非常好 { background: rgba(34, 197, 94, .2); color: #86efac; border-color: #22c55e; }
-    .level-较好 { background: rgba(59, 130, 246, .2); color: #93c5fd; border-color: #3b82f6; }
+    .level-妖币 { background: rgba(168, 85, 247, .3); color: #d8b4fe; border-color: #a855f7; font-weight: bold; }
+    .level-建议 { background: rgba(34, 197, 94, .3); color: #22c55e; border-color: #22c55e; font-weight: bold; }
+
+    .risk-高风险观察 { background: rgba(239, 68, 68, .2); color: #fca5a5; border-color: #ef4444; }
+    .risk-等待回调 { background: rgba(245, 158, 11, .2); color: #fcd34d; border-color: #f59e0b; }
+    .risk-现在可入 { background: rgba(34, 197, 94, .2); color: #86efac; border-color: #22c55e; }
 
     .detail-box {
       background: rgba(10, 22, 40, .9);
@@ -274,10 +268,6 @@
       font-size: 14px;
     }
 
-    .analysis-item {
-      margin-bottom: 8px;
-    }
-
     .warning-box {
       background: rgba(245,158,11,.1);
       border: 1px solid rgba(245,158,11,.3);
@@ -289,8 +279,35 @@
       line-height: 1.5;
     }
 
+    .reason-box {
+      background: rgba(168,85,247,.1);
+      border: 1px solid rgba(168,85,247,.3);
+      border-radius: 10px;
+      padding: 12px;
+      margin-top: 10px;
+      color: #d8b4fe;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .reason-box h3 {
+      color: #a855f7;
+      margin-bottom: 8px;
+    }
+
+    .notice-box {
+      background: rgba(59, 130, 246, .1);
+      border: 1px solid rgba(59, 130, 246, .3);
+      border-radius: 10px;
+      padding: 14px;
+      margin-top: 16px;
+      color: #93c5fd;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
     @media (max-width: 1200px) {
-      .stats { grid-template-columns: repeat(3, 1fr); }
+      .stats { grid-template-columns: repeat(2, 1fr); }
       .detail-grid { grid-template-columns: 1fr; }
       .link-group { grid-template-columns: repeat(2, 1fr); }
     }
@@ -303,11 +320,11 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">v4.1 强化版</div>
+  <div class="version-tag">v5.1 精选版</div>
 
   <div class="container">
     <h1>⚡ 币安永续精选监控</h1>
-    <p class="subtitle">强化分析能力 | 综合评估好币 | 快捷查询通道</p>
+    <p class="subtitle">求精不求量 | 妖币 + 建议买入 | 没有就不显示</p>
 
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('list', this)">📊 精选币种</button>
@@ -321,74 +338,97 @@
         <button id="refresh-btn" onclick="loadData()">🔄 手动刷新</button>
       </div>
 
-      <div class="filter-group">
-        <span style="color: #8ca3ba; font-size: 12px;">筛选等级：</span>
-        <button class="filter-btn active" onclick="filterLevel('all')">全部</button>
-        <button class="filter-btn" onclick="filterLevel('极其好')">💚 极其好</button>
-        <button class="filter-btn" onclick="filterLevel('非常好')">💛 非常好</button>
-        <button class="filter-btn" onclick="filterLevel('较好')">🔵 较好</button>
+      <!-- 妖币潜力部分 -->
+      <div class="section">
+        <div class="section-title">💎 有妖币潜力</div>
+        <div class="stats">
+          <div class="card">
+            <div class="label">发现妖币</div>
+            <div class="value" id="stat-yao">0</div>
+          </div>
+          <div class="card">
+            <div class="label">🔴 高风险观察</div>
+            <div class="value" id="stat-yao-high">0</div>
+          </div>
+          <div class="card">
+            <div class="label">🟡 等待回调</div>
+            <div class="value" id="stat-yao-wait">0</div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <div id="yao-empty" class="empty-state">暂未发现符合条件的妖币</div>
+          <table id="yao-table" style="display:none;">
+            <thead>
+              <tr>
+                <th>合约</th>
+                <th>价格</th>
+                <th>市值</th>
+                <th>OI/Mcap</th>
+                <th>Funding</th>
+                <th>24h%</th>
+                <th>入场建议</th>
+              </tr>
+            </thead>
+            <tbody id="yao-tbody"></tbody>
+          </table>
+        </div>
       </div>
 
-      <div class="stats">
-        <div class="card">
-          <div class="label">精选币种总数</div>
-          <div class="value" id="stat-total">-</div>
+      <!-- 建议买入部分 -->
+      <div class="section">
+        <div class="section-title">🚀 建议买入</div>
+        <div class="stats">
+          <div class="card">
+            <div class="label">推荐币种</div>
+            <div class="value" id="stat-buy">0</div>
+          </div>
+          <div class="card">
+            <div class="label">平均评分</div>
+            <div class="value" id="stat-avg-score">-</div>
+          </div>
+          <div class="card">
+            <div class="label">最高评分</div>
+            <div class="value" id="stat-max-score">-</div>
+          </div>
         </div>
-        <div class="card">
-          <div class="label">💚 极其好</div>
-          <div class="value" id="stat-best">-</div>
+        <div class="table-wrap">
+          <div id="buy-empty" class="empty-state">暂未发现符合条件的建议买入币种</div>
+          <table id="buy-table" style="display:none;">
+            <thead>
+              <tr>
+                <th>合约</th>
+                <th>价格</th>
+                <th>市值</th>
+                <th>Vol/Mcap</th>
+                <th>OI/Mcap</th>
+                <th>Funding</th>
+                <th>24h%</th>
+                <th>质量评分</th>
+              </tr>
+            </thead>
+            <tbody id="buy-tbody"></tbody>
+          </table>
         </div>
-        <div class="card">
-          <div class="label">💛 非常好</div>
-          <div class="value" id="stat-vgood">-</div>
-        </div>
-        <div class="card">
-          <div class="label">🔵 较好</div>
-          <div class="value" id="stat-good">-</div>
-        </div>
-        <div class="card">
-          <div class="label">平均评分</div>
-          <div class="value" id="stat-avg">-</div>
-        </div>
-      </div>
-
-      <div class="table-wrap">
-        <div id="status" class="status">加载中...</div>
-        <table id="table" style="display:none;">
-          <thead>
-            <tr>
-              <th>合约</th>
-              <th>价格</th>
-              <th>市值</th>
-              <th>Vol/Mcap</th>
-              <th>OI/Mcap</th>
-              <th>Funding</th>
-              <th>24h%</th>
-              <th>评级</th>
-              <th>评分</th>
-            </tr>
-          </thead>
-          <tbody id="tbody"></tbody>
-        </table>
       </div>
     </div>
 
     <!-- 详情页 -->
     <div id="detail" class="tab-content">
       <div class="detail-box">
-        <div id="detail-empty" class="status">请先在列表页点击一个币种</div>
+        <div id="detail-empty" class="empty-state">请先在列表页点击一个币种</div>
         <div id="detail-content"></div>
       </div>
     </div>
   </div>
 
   <script>
-    let allRows = [];
-    let filteredRows = [];
+    let allRows = {
+      yao: [],
+      buy: []
+    };
     let selectedRow = null;
     let oiMap = {};
     let isLoading = false;
-    let currentFilter = 'all';
 
     function switchTab(tab, el) {
       document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
@@ -402,13 +442,6 @@
       document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active'));
       document.getElementById('detail').classList.add('active');
       document.querySelectorAll('.tab-btn')[1].classList.add('active');
-    }
-
-    function filterLevel(level) {
-      currentFilter = level;
-      document.querySelectorAll('.filter-btn').forEach(x => x.classList.remove('active'));
-      event.target.classList.add('active');
-      renderTable();
     }
 
     function colorClass(v) {
@@ -437,8 +470,8 @@
 
     async function fetchOpenInterest(symbols) {
       const map = {};
-      const topSymbols = symbols.slice(0, 100);
-      const chunk = 25;
+      const topSymbols = symbols.slice(0, 150);
+      const chunk = 30;
       
       for (let i = 0; i < topSymbols.length; i += chunk) {
         const batch = topSymbols.slice(i, i + chunk);
@@ -450,56 +483,71 @@
           }
         });
         await Promise.all(promises);
-        await new Promise(r => setTimeout(r, 100));
+        await new Promise(r => setTimeout(r, 80));
       }
       return map;
     }
 
-    // 强化的综合评分算法
-    function calcQualityLevel(row) {
+    // 妖币检测 - 极其严格
+    function detectYaoCoin(row) {
       const oi = row.oiMcap || 0;
       const vol = row.volMcap || 0;
       const fund = row.funding || 0;
       const price = row.priceChange || 0;
       const mcap = row.mcap || 0;
 
-      let score = 0;
+      // 妖币的严格条件
+      const isLowMcap = mcap && mcap < 5e7; // 市值 < 5000 万
+      const isLowOI = oi >= 1 && oi <= 5; // OI/Mcap 1-5%（极低热度）
+      const isActiveVol = vol >= 5 && vol <= 15; // Vol/Mcap 5-15%（活跃但不过热）
+      const isBalancedFund = fund >= -0.03 && fund <= 0.01; // Funding 接近 0
+      const isBeaten = price < -10; // 近期被砸破
 
-      // OI/Mcap 评分（0-25分）
-      if (oi >= 3 && oi <= 8) score += 25;
-      else if (oi >= 2 && oi <= 12) score += 20;
-      else if (oi >= 1 && oi <= 15) score += 15;
-      else score += 5;
+      // 同时满足 5 个条件
+      const yaoScore = [isLowMcap, isLowOI, isActiveVol, isBalancedFund, isBeaten].filter(x => x).length;
 
-      // Vol/Mcap 评分（0-25分）
-      if (vol >= 8 && vol <= 20) score += 25;
-      else if (vol >= 5 && vol <= 25) score += 20;
-      else if (vol >= 3 && vol <= 30) score += 15;
-      else score += 5;
+      if (yaoScore >= 5) {
+        // 判断入场方式
+        let riskLevel = '';
+        if (price < -20) riskLevel = '🔴 高风险观察'; // 跌太多，等反弹
+        else if (price < -10 && price >= -15) riskLevel = '🟡 等待回调'; // 继续观察
+        else riskLevel = '🟢 现在可入'; // 只有在特定条件才现在可入
 
-      // Funding 评分（0-25分）
-      if (fund >= -0.01 && fund <= 0.02) score += 25;
-      else if (fund >= -0.015 && fund <= 0.03) score += 20;
-      else if (fund >= -0.02 && fund <= 0.04) score += 15;
-      else if (Math.abs(fund) <= 0.05) score += 10;
-      else score += 3;
+        return { isYao: true, riskLevel, yaoScore };
+      }
 
-      // 价格动量评分（0-25分）
-      if (price >= -2 && price <= 5) score += 25;
-      else if (price >= -5 && price <= 8) score += 20;
-      else if (price >= -8 && price <= 15) score += 15;
-      else if (price >= -15 && price <= 30) score += 10;
-      else score += 3;
+      return { isYao: false };
+    }
 
-      // 市值稳定性加分（0-5分）
-      if (mcap > 1e8) score += 3;
-      if (mcap > 5e8) score += 2;
+    // 建议买入检测 - 所有指标必须完美对标
+    function detectBuyCoin(row) {
+      const oi = row.oiMcap || 0;
+      const vol = row.volMcap || 0;
+      const fund = row.funding || 0;
+      const price = row.priceChange || 0;
+      const mcap = row.mcap || 0;
 
-      // 综合判定
-      if (score >= 95) return { level: '极其好', score };
-      else if (score >= 80) return { level: '非常好', score };
-      else if (score >= 65) return { level: '较好', score };
-      else return { level: '一般', score };
+      // 建议买入的标准：所有指标都必须完美对标
+      const perfectOI = oi >= 3 && oi <= 8; // OI/Mcap 3-8%
+      const perfectVol = vol >= 8 && vol <= 20; // Vol/Mcap 8-20%
+      const perfectFund = fund >= -0.01 && fund <= 0.02; // Funding 极平衡
+      const perfectPrice = price >= -2 && price <= 5; // 温和上涨或小回调
+      const goodMcap = mcap && mcap > 1e8; // 市值 > 1 亿
+
+      // ALL 条件必须满足
+      const isBuyReady = perfectOI && perfectVol && perfectFund && perfectPrice && goodMcap;
+
+      if (isBuyReady) {
+        let buyScore = 100;
+        if (price > 5) buyScore -= (price - 5) * 3;
+        if (oi > 8) buyScore -= (oi - 8) * 3;
+        if (vol > 20) buyScore -= (vol - 20) * 2;
+        if (fund > 0.02) buyScore -= Math.abs(fund - 0.02) * 50;
+
+        return { isBuy: true, buyScore: Math.max(75, buyScore) };
+      }
+
+      return { isBuy: false };
     }
 
     function showDetail(row) {
@@ -507,47 +555,32 @@
       document.getElementById('detail-empty').style.display = 'none';
 
       const coin = row.symbol.replace('USDT', '');
-      const levelEmoji = { '极其好': '💚', '非常好': '💛', '较好': '🔵', '一般': '⚪' };
+      const typeEmoji = row.level === '妖币' ? '💎' : '🚀';
+      const levelName = row.level === '妖币' ? `有妖币潜力 (${row.riskLevel})` : '建议买入';
 
-      // 生成分析理由
-      let analysis = [];
-      let warnings = [];
-
-      if (row.oiMcap >= 3 && row.oiMcap <= 8) {
-        analysis.push('✅ OI热度适中（3-8%），风险可控');
-      } else if (row.oiMcap > 15) {
-        warnings.push('⚠️ OI过热（>15%），容易暴涨暴跌');
-      }
-
-      if (row.volMcap >= 8 && row.volMcap <= 20) {
-        analysis.push('✅ 成交活跃（8-20%），有真实买卖');
-      } else if (row.volMcap > 25) {
-        warnings.push('⚠️ 成交过度活跃，可能是顶部特征');
-      }
-
-      if (row.funding >= -0.01 && row.funding <= 0.02) {
-        analysis.push('✅ 多空平衡（Funding接近0），底部风险低');
-      } else if (row.funding > 0.05) {
-        warnings.push('⚠️ Funding过高（>0.05%），多头挤压严重');
-      }
-
-      if (row.priceChange >= -2 && row.priceChange <= 5) {
-        analysis.push('✅ 温和上涨或小回调，缓升特征');
-      } else if (row.priceChange < -15) {
-        analysis.push('💡 大幅下跌，可能是底部机会');
-      } else if (row.priceChange > 30) {
-        warnings.push('⚠️ 涨幅过大（>30%），需警惕回调');
-      }
-
-      if (row.mcap > 1e8) {
-        analysis.push('✅ 市值充足（>1亿），流动性好');
+      // 生成分析
+      let reasons = [];
+      if (row.level === '妖币') {
+        reasons.push(`💰 市值极低：$${fmtNum(row.mcap, 0)} (< 5000万)`);
+        reasons.push(`🔥 OI热度极低：${row.oiMcap.toFixed(1)}% (1-5%)`);
+        reasons.push(`🌊 成交活跃但不过热：${row.volMcap.toFixed(1)}% (5-15%)`);
+        reasons.push(`⚖️ Funding 完全平衡：${row.funding.toFixed(4)}%`);
+        if (row.priceChange < -10) reasons.push(`📉 被砸破：${row.priceChange.toFixed(1)}%`);
+        reasons.push(`⚠️ 高波动，高收益潜力`);
+      } else {
+        reasons.push(`✅ OI热度完美：${row.oiMcap.toFixed(1)}% (3-8%)`);
+        reasons.push(`✅ 成交活跃：${row.volMcap.toFixed(1)}% (8-20%)`);
+        reasons.push(`✅ Funding完美平衡：${row.funding.toFixed(4)}% (-0.01~0.02%)`);
+        reasons.push(`✅ 价格温和：${row.priceChange.toFixed(1)}% (-2~5%)`);
+        reasons.push(`✅ 市值充足：$${fmtNum(row.mcap, 0)} (> 1亿)`);
+        reasons.push(`📊 所有指标都对标，技术面成熟`);
       }
 
       const html = `
         <div class="detail-title">
           ${row.symbol}
-          <span class="tag level-${row.level}">${levelEmoji[row.level]} ${row.level}</span>
-          <span style="color: #10c4f5; font-size: 16px; margin-left: auto; font-weight: bold;">${row.detailScore.toFixed(1)}/100</span>
+          <span class="tag level-${row.level}">${typeEmoji} ${levelName}</span>
+          ${row.level === '妖币' ? `<span class="tag risk-${row.riskLevel.replace('🔴 ', '').replace('🟡 ', '').replace('🟢 ', '')}">${row.riskLevel}</span>` : `<span style="color: #10c4f5; font-weight: bold; margin-left: auto;">${row.buyScore.toFixed(1)}/100</span>`}
         </div>
 
         <div class="link-group">
@@ -590,138 +623,164 @@
               <span class="row-label">24h成交</span>
               <span class="row-value">$${fmtNum(row.quoteVol, 2)}</span>
             </div>
-            <div class="row">
-              <span class="row-label">OI价值</span>
-              <span class="row-value">$${fmtNum(row.oiValue, 2)}</span>
-            </div>
           </div>
 
           <div class="detail-card">
             <h3>📈 合约数据</h3>
             <div class="row">
-              <span class="row-label">OI持仓</span>
+              <span class="row-label">OI 持仓</span>
               <span class="row-value">${fmtNum(row.oi, 2)}</span>
             </div>
             <div class="row">
               <span class="row-label">OI/Mcap</span>
-              <span class="row-value ${colorClass(row.oiMcap)}">${row.oiMcap ? row.oiMcap.toFixed(2) + '%' : '-'}</span>
+              <span class="row-value">${row.oiMcap ? row.oiMcap.toFixed(2) + '%' : '-'}</span>
             </div>
             <div class="row">
               <span class="row-label">Vol/Mcap</span>
-              <span class="row-value ${colorClass(row.volMcap)}">${row.volMcap ? row.volMcap.toFixed(2) + '%' : '-'}</span>
+              <span class="row-value">${row.volMcap ? row.volMcap.toFixed(2) + '%' : '-'}</span>
             </div>
             <div class="row">
               <span class="row-label">Funding Rate</span>
               <span class="row-value ${colorClass(row.funding)}">${row.funding.toFixed(4)}%</span>
-            </div>
-            <div class="row">
-              <span class="row-label">Funding 评估</span>
-              <span class="row-value">${
-                row.funding >= -0.01 && row.funding <= 0.02 ? '✅ 平衡' :
-                row.funding > 0.05 ? '⚠️ 多头挤压' :
-                row.funding < -0.05 ? '⚠️ 空头挤压' :
-                '⚖️ 一般'
-              }</span>
             </div>
           </div>
 
           <div class="detail-card">
             <h3>🎯 质量评估</h3>
             <div class="row">
-              <span class="row-label">综合评级</span>
-              <span class="row-value">${levelEmoji[row.level]} ${row.level}</span>
+              <span class="row-label">等级</span>
+              <span class="row-value">${levelName}</span>
             </div>
             <div class="row">
               <span class="row-label">OI热度</span>
               <span class="row-value">${
+                row.oiMcap < 2 ? '❄️ 极低' :
                 row.oiMcap >= 3 && row.oiMcap <= 8 ? '✅ 适中' :
                 row.oiMcap > 15 ? '🔥 过热' :
-                row.oiMcap < 2 ? '❄️ 冷清' :
                 '⚖️ 一般'
               }</span>
             </div>
             <div class="row">
               <span class="row-label">成交热度</span>
               <span class="row-value">${
+                row.volMcap < 5 ? '❄️ 低' :
                 row.volMcap >= 8 && row.volMcap <= 20 ? '✅ 活跃' :
                 row.volMcap > 25 ? '🔥 很热' :
-                row.volMcap < 5 ? '🥶 清淡' :
                 '⚖️ 一般'
               }</span>
             </div>
             <div class="row">
-              <span class="row-label">价格动量</span>
+              <span class="row-label">多空状态</span>
               <span class="row-value">${
-                row.priceChange >= 0 && row.priceChange <= 5 ? '📈 缓升' :
-                row.priceChange > 10 ? '🚀 快速上升' :
-                row.priceChange < -10 ? '📉 快速下跌' :
-                '⚖️ 盘整'
-              }</span>
-            </div>
-            <div class="row">
-              <span class="row-label">市值规模</span>
-              <span class="row-value">${
-                row.mcap > 5e8 ? '大盘' :
-                row.mcap > 1e8 ? '中盘' :
-                '小盘'
+                row.funding >= -0.01 && row.funding <= 0.02 ? '✅ 完美平衡' :
+                row.funding > 0.05 ? '⚠️ 多头挤压' :
+                '⚖️ 一般'
               }</span>
             </div>
           </div>
         </div>
 
-        ${analysis.length > 0 ? `
-          <div class="analysis-box">
-            <h3>📋 为什么选择这个币：</h3>
-            ${analysis.map(a => `<div class="analysis-item">${a}</div>`).join('')}
-          </div>
-        ` : ''}
+        <div class="reason-box">
+          <h3>💡 ${row.level === '妖币' ? '为什么是妖币潜力' : '为什么建议买入'}：</h3>
+          ${reasons.map(r => `<div style="margin-bottom: 6px;">${r}</div>`).join('')}
+        </div>
 
-        ${warnings.length > 0 ? `
-          <div class="warning-box">
-            <strong>⚠️ 需要关注的风险：</strong><br>
-            ${warnings.map(w => `<div style="margin-top: 4px;">${w}</div>`).join('')}
+        ${row.level === '妖币' ? `
+          <div class="notice-box">
+            <strong>📌 妖币操作建议：</strong><br>
+            <div style="margin-top: 8px;">
+              ${row.riskLevel === '🔴 高风险观察' ? '• 下跌超20%，极度恐慌。等待反弹迹象再进，或者耐心等待更低价格。' : ''}
+              ${row.riskLevel === '🟡 等待回调' ? '• 下跌10-15%，风险和机会并存。建议继续观察，等待更明显的反弹信号。' : ''}
+              ${row.riskLevel === '🟢 现在可入' ? '• 风险和回报比较平衡，技术面对标。可以小额试单，分批建仓。' : ''}
+              <br><br>
+              • 务必查看 CoinGlass 清算热力图，确认有无明显支撑位<br>
+              • 查看持仓数据，确认是否有大户护盘<br>
+              • 妖币高风险高收益，做好止损准备
+            </div>
           </div>
-        ` : ''}
+        ` : `
+          <div class="notice-box">
+            <strong>📌 建议买入操作：</strong><br>
+            <div style="margin-top: 8px;">
+              • 所有技术指标都对标，当前是相对安全的建仓机会<br>
+              • 但仍需查看 CoinGlass 数据，确认清算分布和持仓情况<br>
+              • 建议分批建仓，不要一次性全仓<br>
+              • 设置合理止损（建议 -3%~-5%）
+            </div>
+          </div>
+        `}
       `;
       document.getElementById('detail-content').innerHTML = html;
       activateDetailTab();
     }
 
-    function renderTable() {
-      const tbody = document.getElementById('tbody');
-      tbody.innerHTML = '';
-
-      let displayRows = allRows;
-      if (currentFilter !== 'all') {
-        displayRows = allRows.filter(r => r.level === currentFilter);
+    function renderTables() {
+      // 妖币表格
+      const yaoTbody = document.getElementById('yao-tbody');
+      yaoTbody.innerHTML = '';
+      if (allRows.yao.length === 0) {
+        document.getElementById('yao-table').style.display = 'none';
+        document.getElementById('yao-empty').style.display = 'block';
+      } else {
+        allRows.yao.forEach(row => {
+          const tr = document.createElement('tr');
+          const riskClass = row.riskLevel.replace('🔴 ', '').replace('🟡 ', '').replace('🟢 ', '');
+          tr.innerHTML = `
+            <td class="symbol">${row.symbol}</td>
+            <td>$${fmtNum(row.price, 6)}</td>
+            <td>$${fmtNum(row.mcap, 2)}</td>
+            <td class="${colorClass(row.oiMcap)}">${row.oiMcap ? row.oiMcap.toFixed(1) + '%' : '-'}</td>
+            <td class="${colorClass(row.funding)}">${row.funding.toFixed(3)}%</td>
+            <td class="${colorClass(row.priceChange)}">${row.priceChange.toFixed(1)}%</td>
+            <td><span class="tag risk-${riskClass}">${row.riskLevel}</span></td>
+          `;
+tr.addEventListener('click', () => showDetail(row));
+          yaoTbody.appendChild(tr);
+        });
+        document.getElementById('yao-table').style.display = 'table';
+        document.getElementById('yao-empty').style.display = 'none';
       }
+      
+      // 统计妖币
+      document.getElementById('stat-yao').innerText = allRows.yao.length;
+      document.getElementById('stat-yao-high').innerText = allRows.yao.filter(x => x.riskLevel.includes('高风险')).length;
+      document.getElementById('stat-yao-wait').innerText = allRows.yao.filter(x => x.riskLevel.includes('等待')).length;
 
-      if (displayRows.length === 0) {
-        document.getElementById('table').style.display = 'none';
-        document.getElementById('status').style.display = 'block';
-        document.getElementById('status').innerText = `暂无 ${currentFilter} 级别的币种`;
-        return;
+      // 建议买入表格
+      const buyTbody = document.getElementById('buy-tbody');
+      buyTbody.innerHTML = '';
+      if (allRows.buy.length === 0) {
+        document.getElementById('buy-table').style.display = 'none';
+        document.getElementById('buy-empty').style.display = 'block';
+        document.getElementById('stat-buy').innerText = '0';
+        document.getElementById('stat-avg-score').innerText = '-';
+        document.getElementById('stat-max-score').innerText = '-';
+      } else {
+        allRows.buy.forEach(row => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="symbol">${row.symbol}</td>
+            <td>$${fmtNum(row.price, 6)}</td>
+            <td>$${fmtNum(row.mcap, 2)}</td>
+            <td class="${colorClass(row.volMcap)}">${row.volMcap ? row.volMcap.toFixed(1) + '%' : '-'}</td>
+            <td class="${colorClass(row.oiMcap)}">${row.oiMcap ? row.oiMcap.toFixed(1) + '%' : '-'}</td>
+            <td class="${colorClass(row.funding)}">${row.funding.toFixed(3)}%</td>
+            <td class="${colorClass(row.priceChange)}">${row.priceChange.toFixed(1)}%</td>
+            <td style="color: #10c4f5; font-weight: bold;">${row.buyScore.toFixed(1)}</td>
+          `;
+          tr.addEventListener('click', () => showDetail(row));
+          buyTbody.appendChild(tr);
+        });
+        document.getElementById('buy-table').style.display = 'table';
+        document.getElementById('buy-empty').style.display = 'none';
+        
+        // 统计建议买入
+        document.getElementById('stat-buy').innerText = allRows.buy.length;
+        const avgScore = allRows.buy.reduce((s, x) => s + x.buyScore, 0) / allRows.buy.length;
+        const maxScore = Math.max(...allRows.buy.map(x => x.buyScore));
+        document.getElementById('stat-avg-score').innerText = avgScore.toFixed(1);
+        document.getElementById('stat-max-score').innerText = maxScore.toFixed(1);
       }
-
-      displayRows.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="symbol">${row.symbol}</td>
-          <td>$${fmtNum(row.price, 6)}</td>
-          <td>$${fmtNum(row.mcap, 2)}</td>
-          <td class="${colorClass(row.volMcap)}">${row.volMcap ? row.volMcap.toFixed(1) + '%' : '-'}</td>
-          <td class="${colorClass(row.oiMcap)}">${row.oiMcap ? row.oiMcap.toFixed(1) + '%' : '-'}</td>
-          <td class="${colorClass(row.funding)}">${row.funding.toFixed(3)}%</td>
-          <td class="${colorClass(row.priceChange)}">${row.priceChange.toFixed(1)}%</td>
-          <td><span class="tag level-${row.level}">${row.level}</span></td>
-          <td style="color: #10c4f5; font-weight: bold;">${row.detailScore.toFixed(1)}</td>
-        `;
-        tr.addEventListener('click', () => showDetail(row));
-        tbody.appendChild(tr);
-      });
-
-      document.getElementById('table').style.display = 'table';
-      document.getElementById('status').style.display = 'none';
     }
 
     async function loadData() {
@@ -731,13 +790,6 @@
       const btn = document.getElementById('refresh-btn');
       btn.disabled = true;
       btn.innerText = '⏳ 加载中...';
-
-      const status = document.getElementById('status');
-      const table = document.getElementById('table');
-
-      status.style.display = 'block';
-      status.innerText = '加载中...';
-      table.style.display = 'none';
 
       try {
         const [exchangeInfo, ticker24h, premiumIndex, gecko] = await Promise.all([
@@ -752,9 +804,8 @@
         const symbols = exchangeInfo.symbols
           .filter(s => s.contractType === 'PERPETUAL' && s.quoteAsset === 'USDT' && s.status === 'TRADING')
           .map(s => s.symbol)
-          .slice(0, 200);
+          .slice(0, 250);
 
-        status.innerText = '加载合约数据...';
         oiMap = await fetchOpenInterest(symbols);
 
         const tickerMap = Object.fromEntries(ticker24h.map(x => [x.symbol, x]));
@@ -764,7 +815,8 @@
           mcapMap[(x.symbol || '').toUpperCase() + 'USDT'] = x.market_cap;
         });
 
-        const candidates = [];
+        // 重置分类
+        allRows = { yao: [], buy: [] };
 
         for (const symbol of symbols) {
           const t = tickerMap[symbol];
@@ -782,7 +834,7 @@
           const mcap = mcapMap[symbol] || null;
 
           let volMcap = null;
-           let oiMcap = null;
+          let oiMcap = null;
           if (mcap && mcap > 0) {
             volMcap = quoteVol / mcap * 100;
             oiMcap = oiValue / mcap * 100;
@@ -793,40 +845,35 @@
             oi, oiValue, volMcap, oiMcap
           };
 
-          // 计算质量等级
-          const quality = calcQualityLevel(row);
-          row.level = quality.level;
-          row.detailScore = quality.score;
+          // 检测妖币（极其严格）
+          const yaoCheck = detectYaoCoin(row);
+          if (yaoCheck.isYao) {
+            row.level = '妖币';
+            row.riskLevel = yaoCheck.riskLevel;
+            row.yaoScore = yaoCheck.yaoScore;
+            allRows.yao.push(row);
+            continue; // 妖币不进入其他分类
+          }
 
-          // 只保留质量好的币（过滤掉 "一般" 级别）
-          if (row.level !== '一般') {
-            candidates.push(row);
+          // 检测建议买入（所有指标必须完美）
+          const buyCheck = detectBuyCoin(row);
+          if (buyCheck.isBuy) {
+            row.level = '建议';
+            row.buyScore = buyCheck.buyScore;
+            allRows.buy.push(row);
           }
         }
 
-        // 按评分排序
-        candidates.sort((a, b) => b.detailScore - a.detailScore);
-        allRows = candidates;
+        // 排序
+        allRows.yao.sort((a, b) => b.yaoScore - a.yaoScore);
+        allRows.buy.sort((a, b) => b.buyScore - a.buyScore);
 
-        // 更新统计数据
-        document.getElementById('stat-total').innerText = candidates.length;
-        document.getElementById('stat-best').innerText = 
-          candidates.filter(x => x.level === '极其好').length;
-        document.getElementById('stat-vgood').innerText = 
-          candidates.filter(x => x.level === '非常好').length;
-        document.getElementById('stat-good').innerText = 
-          candidates.filter(x => x.level === '较好').length;
-        const avgScore = candidates.length ? candidates.reduce((s, x) => s + x.detailScore, 0) / candidates.length : 0;
-        document.getElementById('stat-avg').innerText = avgScore.toFixed(1);
-
-        renderTable();
+        renderTables();
         document.getElementById('last-update').innerText = '最后更新：' + new Date().toLocaleString();
 
       } catch (e) {
         console.error(e);
-        status.style.display = 'block';
-        status.innerText = '❌ 加载失败：' + e.message;
-        table.style.display = 'none';
+        alert('❌ 加载失败：' + e.message);
       } finally {
         isLoading = false;
         btn.disabled = false;
