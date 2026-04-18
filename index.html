@@ -93,6 +93,7 @@
     .section-title.excellent { background: rgba(59,130,246,.12); border-left-color: #3b82f6; color: #bfdbfe; }
     .section-title.yao-buy { background: rgba(245,158,11,.12); border-left-color: var(--orange); color: #fef3c7; }
     .section-title.yao-watch { background: rgba(239,68,68,.12); border-left-color: #ef4444; color: #fecaca; }
+    .section-title.watching { background: rgba(168,85,247,.12); border-left-color: var(--purple); color: #e9d5ff; }
     .section-count { font-size: 12px; color: var(--sub); font-weight: 400; }
 
     .grid {
@@ -113,6 +114,7 @@
       cursor: pointer;
       transition: .3s;
       overflow: hidden;
+      position: relative;
     }
     .coin-card:hover {
       transform: translateY(-4px);
@@ -122,6 +124,30 @@
     .coin-card.excellent { border-color: rgba(59,130,246,.6); }
     .coin-card.yao-buy { border-color: rgba(245,158,11,.6); }
     .coin-card.yao-watch { border-color: rgba(239,68,68,.6); }
+    .coin-card.watching { border-color: rgba(168,85,247,.6); }
+
+    .watch-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(168,85,247,.8);
+      color: #e9d5ff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .trend-protection {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: rgba(34,197,94,.8);
+      color: #d1fae5;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+    }
 
     .card-header {
       display: flex;
@@ -129,6 +155,7 @@
       align-items: flex-start;
       margin-bottom: 10px;
       gap: 8px;
+      margin-top: 20px;
     }
     .coin-name {
       font-size: 20px;
@@ -254,15 +281,6 @@
     }
     .back-btn:hover {
       background: rgba(59,130,246,.3);
-    }
-
-    .chart-container {
-      height: 400px;
-      margin-bottom: 20px;
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      background: rgba(0,0,0,.3);
     }
 
     .detail-metrics {
@@ -409,7 +427,7 @@
     <div class="header">
       <div>
         <h1>⚡ 妖币捕手 Pro</h1>
-        <div class="header-info">威科夫分析 · 聪明钱追踪 · 实时突破点捕捉 · 右侧交易</div>
+        <div class="header-info">威科夫分析 · 关注状态管理 · 趋势保护 · 实时突破点捕捉</div>
       </div>
       <div style="display: flex; gap: 10px; align-items: center;">
         <span style="background: rgba(59,130,246,.1); border: 1px solid rgba(59,130,246,.2); color: var(--sub); padding: 6px 10px; border-radius: 6px; font-size: 11px;">
@@ -417,6 +435,9 @@
         </span>
         <span style="background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.2); color: var(--green); padding: 6px 10px; border-radius: 6px; font-size: 11px;">
           <span id="buy-count">0</span> 直接买入
+        </span>
+        <span style="background: rgba(168,85,247,.1); border: 1px solid rgba(168,85,247,.2); color: var(--purple); padding: 6px 10px; border-radius: 6px; font-size: 11px;">
+          <span id="watch-count">0</span> 关注中
         </span>
       </div>
     </div>
@@ -457,12 +478,16 @@ const CONFIG = {
     'NEAR','APT','ENA','TRB','INJ','ARB','OP','STRK','MANTA','PIXEL'
   ],
   refreshMs: 60000,
-  binanceUrl: 'https://api.binance.com/api/v3'
+  binanceUrl: 'https://api.binance.com/api/v3',
+  watchDurationMs: 300000, // 5分钟
+  trendProtectionDurationMs: 600000 // 10分钟
 };
 
 let allCoins = {};
 let klineCache = {};
 let signalHistory = {};
+let watchingCoins = {}; // 关注中的币
+let trendProtectionCoins = {}; // 趋势保护中的币
 let currentPage = 'monitor';
 
 // ============ 工具函数 ============
@@ -508,6 +533,65 @@ function showNotification(msg, type = 'success') {
 function copyToClipboard(text) {
   navigator.clipboard.writeText(text);
   showNotification('✅ 已复制: ' + text);
+}
+
+// ============ 关注状态管理 ============
+
+function startWatching(symbol) {
+  if (!watchingCoins[symbol]) {
+    watchingCoins[symbol] = {
+      startTime: Date.now(),
+      lastGoodSignal: Date.now(),
+      qualifiedTime: null
+    };
+    console.log(`🔍 开始关注 ${symbol}`);
+  }
+}
+
+function isQualifiedForRecommend(symbol) {
+  const watching = watchingCoins[symbol];
+  if (!watching) return false;
+
+  const elapsed = Date.now() - watching.startTime;
+  // 关注满5分钟且最近30秒内有良好信号
+  return elapsed >= CONFIG.watchDurationMs && (Date.now() - watching.lastGoodSignal) < 30000;
+}
+
+function startTrendProtection(symbol) {
+  if (!trendProtectionCoins[symbol]) {
+    trendProtectionCoins[symbol] = {
+      startTime: Date.now(),
+      lastGoodPrice: allCoins[symbol]?.data.price
+    };
+    console.log(`🛡️ 趋势保护 ${symbol}`);
+    showNotification(`🛡️ ${symbol} 已推荐，趋势保护中`);
+  }
+}
+
+function isTrendProtected(symbol) {
+  const protection = trendProtectionCoins[symbol];
+  if (!protection) return false;
+
+  const elapsed = Date.now() - protection.startTime;
+  if (elapsed > CONFIG.trendProtectionDurationMs) {
+    delete trendProtectionCoins[symbol];
+    return false;
+  }
+
+  const coin = allCoins[symbol];
+  if (!coin) return false;
+
+  // 趋势破坏：价格跌破支撑（24h低点），或RSI跌出超买
+  const breakSupport = coin.data.price < coin.data.low24h * 0.98;
+  const trendBreak = coin.data.rsi_1h < 40 && coin.data.mainDirection !== 'LONG';
+
+  if (breakSupport || trendBreak) {
+    delete trendProtectionCoins[symbol];
+    console.log(`💔 ${symbol} 趋势破坏，取消保护`);
+    return false;
+  }
+
+  return true;
 }
 
 // ============ 数据获取 ============
@@ -730,17 +814,27 @@ function determineLevel(symbol, coin_data, signal_data) {
   const riskLevel = assessRisk(coin_data);
   const isYao = coin_data.price < 0.01;
 
+  // 趋势保护中 - 继续显示
+  if (isTrendProtected(symbol)) {
+    return allCoins[symbol]?.level || null;
+  }
+
   // 妖币判断
   if (isYao) {
     if (signal_data.strength >= 60 && riskLevel !== 'high' && signal_data.direction === 'LONG') {
-      return 'yao-buy';
+      startWatching(symbol);
+      if (isQualifiedForRecommend(symbol)) {
+        startTrendProtection(symbol);
+        return 'yao-buy';
+      }
+      return 'watching';
     }
     if (signal_data.strength >= 40 && (riskLevel === 'high' || signal_data.strength < 60)) {
       return 'yao-watch';
     }
   }
 
-  // 普通币判断 - 直接买入 (改成 >= 65，不要求 signalCount)
+  // 普通币判断 - 直接买入
   if (
     signal_data.strength >= 65 &&
     riskLevel !== 'high' &&
@@ -748,16 +842,26 @@ function determineLevel(symbol, coin_data, signal_data) {
     coin_data.change_4h > 0 &&
     signal_data.direction === 'LONG'
   ) {
-    return 'buy';
+    startWatching(symbol);
+    if (isQualifiedForRecommend(symbol)) {
+      startTrendProtection(symbol);
+      return 'buy';
+    }
+    return 'watching';
   }
 
-  // 优秀币 (改成 >= 45)
+  // 优秀币
   if (
     signal_data.strength >= 45 &&
     riskLevel !== 'high' &&
     coin_data.change_1h > -2
   ) {
-    return 'excellent';
+    startWatching(symbol);
+    if (isQualifiedForRecommend(symbol)) {
+      startTrendProtection(symbol);
+      return 'excellent';
+    }
+    return 'watching';
   }
 
   return null;
@@ -831,7 +935,7 @@ async function analyzeCoin(symbol) {
     const coinData = {
       symbol,
       price: ticker.price,
-      change24h:ticker.change24h,
+      change24h: ticker.change24h,
       volume24h: ticker.volume24h,
       high24h: ticker.high24h,
       low24h: ticker.low24h,
@@ -894,10 +998,11 @@ async function renderMonitor() {
     return;
   }
 
-  const buyCoins = coins.filter(c => c.level === 'buy').sort((a, b) => b.data.signalStrength - a.data.signalStrength).slice(0, 10);
-  const excellentCoins = coins.filter(c => c.level === 'excellent').sort((a, b) => b.data.signalStrength - a.data.signalStrength).slice(0, 10);
-  const yaoBuyCoins = coins.filter(c => c.level === 'yao-buy').sort((a, b) => b.data.signalStrength - a.data.signalStrength).slice(0, 10);
+  const buyCoins = coins.filter(c => c.level === 'buy' || (c.level === 'watching' && isTrendProtected(c.data.symbol))).sort((a, b) => b.data.signalStrength - a.data.signalStrength).slice(0, 10);
+  const excellentCoins = coins.filter(c => c.level === 'excellent' || (c.level === 'watching' && isTrendProtected(c.data.symbol) && c.level !== 'buy')).sort((a, b) => b.data.signalStrength - a.data.signalStrength).slice(0, 10);
+  const yaoBuyCoins = coins.filter(c => c.level === 'yao-buy' || (c.level === 'watching' && isTrendProtected(c.data.symbol) && c.level === 'yao-buy')).sort((a, b) => b.data.signalStrength - a.data.signalStrength).slice(0, 10);
   const yaoWatchCoins = coins.filter(c => c.level === 'yao-watch').sort((a, b) => b.data.signalStrength - a.data.signalStrength).slice(0, 10);
+  const watchingCoins_list = coins.filter(c => c.level === 'watching' && !isTrendProtected(c.data.symbol)).sort((a, b) => b.data.signalStrength - a.data.signalStrength).slice(0, 10);
 
   let html = '';
 
@@ -933,6 +1038,14 @@ async function renderMonitor() {
     html += `<div class="grid">${yaoWatchCoins.map(c => renderCoinCard(c, 'yao-watch')).join('')}</div>`;
   }
 
+  if (watchingCoins_list.length) {
+    html += `<div class="section-title watching">
+      🔍 关注中 (${watchingCoins_list.length})
+      <span class="section-count">观察中 · 需持续5分钟确认</span>
+    </div>`;
+    html += `<div class="grid">${watchingCoins_list.map(c => renderCoinCard(c, 'watching')).join('')}</div>`;
+  }
+
   if (html === '') {
     html = `<div class="error-box">
       ℹ️ 数据已加载，但暂无符合条件的推荐币种
@@ -942,6 +1055,7 @@ async function renderMonitor() {
 
   document.getElementById('monitor-content').innerHTML = html;
   document.getElementById('buy-count').textContent = buyCoins.length;
+  document.getElementById('watch-count').textContent = Object.keys(watchingCoins).length;
   updateTime();
 }
 
@@ -951,8 +1065,32 @@ function renderCoinCard(coin, level) {
   const riskClass = coin.riskLevel === 'high' ? 'risk-high' : 
                     coin.riskLevel === 'mid' ? 'risk-mid' : 'risk-low';
 
+  const watching = watchingCoins[c.symbol];
+  const isProtected = isTrendProtected(c.symbol);
+  const isQualified = isQualifiedForRecommend(c.symbol);
+
+  let watchStatus = '';
+  if (watching) {
+    const elapsed = Date.now() - watching.startTime;
+    const remaining = Math.max(0, CONFIG.watchDurationMs - elapsed);
+    const seconds = Math.ceil(remaining / 1000);
+    watchStatus = `<div class="watch-badge">⏱️ ${seconds}s</div>`;
+  }
+
+  let trendStatus = '';
+  if (isProtected) {
+    const protection = trendProtectionCoins[c.symbol];
+    const elapsed = Date.now() - protection.startTime;
+    const remaining = Math.max(0, CONFIG.trendProtectionDurationMs - elapsed);
+    const minutes = Math.ceil(remaining / 60000);
+    trendStatus = `<div class="trend-protection">🛡️ ${minutes}分钟</div>`;
+  }
+
   let html = `
     <div class="coin-card ${level}" onclick="viewDetail('${c.symbol}')">
+      ${watchStatus}
+      ${trendStatus}
+      
       <div class="card-header">
         <div>
           <div class="coin-name">${c.symbol}</div>
@@ -999,8 +1137,8 @@ function renderCoinCard(coin, level) {
       </div>
 
       <div class="analysis-text">
-        <strong>${getAnalysisTitle(c, coin.riskLevel)}</strong>
-        <br>${getAnalysisText(c, coin.riskLevel)}
+        <strong>${getAnalysisTitle(c, coin.riskLevel, level)}</strong>
+        <br>${getAnalysisText(c, coin.riskLevel, level)}
       </div>
 
       <div class="quick-links">
@@ -1033,7 +1171,19 @@ function getTrendEmoji(direction) {
   return '⚪';
 }
 
-function getAnalysisTitle(c, riskLevel) {
+function getAnalysisTitle(c, riskLevel, level) {
+  if (level === 'watching') {
+    const watching = watchingCoins[c.symbol];
+    const elapsed = Date.now() - watching.startTime;
+    const remaining = Math.max(0, CONFIG.watchDurationMs - elapsed);
+    const seconds = Math.ceil(remaining / 1000);
+    return `🔍 持续关注中 (${seconds}s)`;
+  }
+
+  if (level === 'buy' && isTrendProtected(c.symbol)) {
+    return '🛡️ 趋势保护中';
+  }
+
   if (riskLevel === 'high') {
     if (c.rsi_1h > 75) return '⚠️ RSI极高，小心回调';
     if (c.rsi_1h < 25) return '⚠️ RSI极低，反弹风险';
@@ -1054,9 +1204,19 @@ function getAnalysisTitle(c, riskLevel) {
   return '⚪ 信号待定';
 }
 
-function getAnalysisText(c, riskLevel) {
+function getAnalysisText(c, riskLevel, level) {
   let text = '';
-  
+
+  if (level === 'watching') {
+    const watching = watchingCoins[c.symbol];
+    if (watching) {
+      const elapsed = Date.now() - watching.startTime;
+      const progress = Math.min(100, (elapsed / CONFIG.watchDurationMs) * 100);
+      text = `关注进度: ${Math.round(progress)}% · 需持续5分钟信号确认`;
+    }
+    return text;
+  }
+
   if (c.change_1h > 2 && c.change_4h > 3) {
     text += '🔥 强势拉升中。';
   } else if (c.change_1h < -2) {
@@ -1095,8 +1255,39 @@ function renderDetail(symbol) {
   }
 
   const c = coin.data;
+  const watching = watchingCoins[symbol];
+  const isProtected = isTrendProtected(symbol);
+
+  let watchInfo = '';
+  if (watching) {
+    const elapsed = Date.now() - watching.startTime;
+    const remaining = Math.max(0, CONFIG.watchDurationMs - elapsed);
+    const seconds = Math.ceil(remaining / 1000);
+    const isQual = isQualifiedForRecommend(symbol);
+    watchInfo = `
+      <div style="background: rgba(168,85,247,.12); border: 1px solid rgba(168,85,247,.3); border-radius: 12px; padding: 12px; margin-bottom: 12px;">
+        <strong style="color: var(--purple);">🔍 关注状态</strong>
+        <br>还需持续: ${seconds}秒 · 质量: ${isQual ? '✅ 符合' : '⏳ 待确认'}
+      </div>
+    `;
+  }
+
+  if (isProtected) {
+    const protection = trendProtectionCoins[symbol];
+    const elapsed = Date.now() - protection.startTime;
+    const remaining = Math.max(0, CONFIG.trendProtectionDurationMs - elapsed);
+    const minutes = Math.ceil(remaining / 60000);
+    watchInfo = `
+      <div style="background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.3); border-radius: 12px; padding: 12px; margin-bottom: 12px;">
+        <strong style="color: var(--green);">🛡️ 趋势保护</strong>
+        <br>保护剩余: ${minutes}分钟 · 趋势破坏自动下线
+      </div>
+    `;
+  }
 
   let html = `
+    ${watchInfo}
+    
     <h2 style="color: var(--cyan); margin-bottom: 20px; font-size: 28px;">${symbol} - 详细分析</h2>
     
     <div class="detail-metrics">
@@ -1234,6 +1425,9 @@ function getTradeAdvice(c, riskLevel, level) {
   }
   if (level === 'yao-watch') {
     return `🟠 妖币观察。妖币特征明显但有风险。等待回调或动能恢复再介入。`;
+  }
+  if (level === 'watching') {
+    return `🔍 关注中。信号已出现但还需确认，继续观察5分钟后会自动推荐。`;
   }
   return `⚪ 继续观察。`;
 }
