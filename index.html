@@ -4,306 +4,694 @@
   <meta charset="UTF-8" />
   <meta name="google" content="notranslate" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>币安交易管理系统</title>
+  <title>⚡ 币安交易系统 Pro Max - 终极版</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    :root {
+      --primary: #10c4f5;
+      --primary-dark: #0d9ecf;
+      --primary-light: #4dd9ff;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --bg-main: #061018;
+      --bg-card: #0a1628;
+      --bg-hover: #0d1f35;
+      --text-primary: #e5eefb;
+      --text-secondary: #8ca3ba;
+      --border: rgba(16, 196, 245, 0.25);
+      --border-light: rgba(16, 196, 245, 0.12);
+    }
+
     body {
-      background: linear-gradient(135deg, #061018 0%, #0b1730 100%);
-      color: #e5eefb;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-      padding: 16px;
+      background: linear-gradient(135deg, var(--bg-main) 0%, #0b1730 100%);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      padding: 12px;
       font-size: 13px;
+      overflow-x: hidden;
     }
-    .container { max-width: 1600px; margin: 0 auto; }
-    h1 {
-      text-align: center;
-      color: #10c4f5;
-      margin-bottom: 4px;
-      font-size: 28px;
+
+    .container {
+      max-width: 1800px;
+      margin: 0 auto;
     }
-    .subtitle {
-      text-align: center;
-      color: #8ca3ba;
-      font-size: 11px;
-      margin-bottom: 14px;
+
+    /* ===== 顶部区域 ===== */
+    .header {
+      background: linear-gradient(135deg, rgba(16, 196, 245, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      backdrop-filter: blur(10px);
     }
-    .toolbar {
+
+    .header-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 12px;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 12px;
     }
-    .time-info {
-      color: #8ca3ba;
-      font-size: 11px;
+
+    h1 {
+      font-size: 26px;
+      background: linear-gradient(135deg, var(--primary) 0%, #00d4ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .header-stats {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .stat-item {
       display: flex;
       align-items: center;
       gap: 6px;
+      padding: 6px 12px;
+      background: rgba(16, 196, 245, 0.08);
+      border-radius: 6px;
+      border: 1px solid rgba(16, 196, 245, 0.2);
+      font-size: 12px;
     }
-    .refresh-status {
+
+    .stat-label {
+      color: var(--text-secondary);
+    }
+
+    .stat-value {
+      color: var(--primary);
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .time-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(16, 196, 245, 0.1);
+      border-radius: 6px;
+      border: 1px solid rgba(16, 196, 245, 0.2);
+      font-size: 11px;
+    }
+
+    .refresh-dot {
       display: inline-block;
-      width: 6px;
-      height: 6px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
-      background: #22c55e;
-      animation: pulse 2s infinite;
+      background: var(--success);
+      animation: pulse-dot 2s infinite;
     }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
     }
-    .refresh-status.loading {
-      background: #f59e0b;
-      animation: spin 1s linear infinite;
+
+    .refresh-dot.loading {
+      background: var(--warning);
+      animation: spin-dot 1s linear infinite;
     }
-    @keyframes spin {
+
+    @keyframes spin-dot {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
 
-    .tabs {
+    /* ===== 标签页 ===== */
+    .tabs-container {
       display: flex;
-      gap: 16px;
-      margin-bottom: 12px;
-      border-bottom: 1px solid rgba(16,196,245,.2);
+      gap: 0;
+      margin-bottom: 16px;
+      border-bottom: 2px solid var(--border);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
+
+    .tabs-container::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .tabs-container::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .tabs-container::-webkit-scrollbar-thumb {
+      background: rgba(16, 196, 245, 0.3);
+      border-radius: 2px;
+    }
+
     .tab-btn {
       background: none;
       border: none;
-      color: #8ca3ba;
-      padding: 8px 0;
+      color: var(--text-secondary);
+      padding: 12px 16px;
       cursor: pointer;
-      border-bottom: 2px solid transparent;
-      font-size: 12px;
-      transition: all 0.2s;
+      border-bottom: 3px solid transparent;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.3s;
+      white-space: nowrap;
+      position: relative;
+    }
+
+    .tab-btn:hover {
+      color: var(--primary);
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .tab-badge {
+      display: inline-block;
+      background: var(--danger);
+      color: white;
+      border-radius: 10px;
+      padding: 2px 6px;
+      font-size: 10px;
+      margin-left: 6px;
       font-weight: bold;
     }
-    .tab-btn.active {
-      color: #10c4f5;
-      border-bottom-color: #10c4f5;
-    }
-    .tab-btn:hover { color: #10c4f5; }
 
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
+    /* ===== 搜索框 ===== */
+    .search-section {
+      margin-bottom: 16px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
 
     .search-box {
-      width: 100%;
-      max-width: 350px;
+      flex: 1;
+      min-width: 250px;
       position: relative;
-      margin-bottom: 12px;
     }
+
     .search-input {
       width: 100%;
-      padding: 6px 10px;
-      background: rgba(10, 22, 40, .95);
-      border: 1px solid rgba(16,196,245,.3);
-      border-radius: 6px;
-      color: #e5eefb;
-      font-size: 12px;
-      transition: all 0.2s;
+      padding: 10px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 13px;
+      transition: all 0.3s;
     }
+
     .search-input:focus {
       outline: none;
-      border-color: #10c4f5;
-      box-shadow: 0 0 8px rgba(16,196,245,.2);
+      border-color: var(--primary);
+      box-shadow: 0 0 16px rgba(16, 196, 245, 0.3);
+      background: rgba(10, 22, 40, 0.95);
     }
+
     .search-dropdown {
       position: absolute;
-      top: 100%;
+      top: calc(100% + 4px);
       left: 0;
       right: 0;
-      background: rgba(10, 22, 40, .98);
-      border: 1px solid rgba(16,196,245,.3);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
       border-top: none;
-      border-radius: 0 0 6px 6px;
-      max-height: 280px;
+      border-radius: 0 0 8px 8px;
+      max-height: 320px;
       overflow-y: auto;
       z-index: 100;
       display: none;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     }
-    .search-dropdown.active { display: block; }
+
+    .search-dropdown.active {
+      display: block;
+      animation: slideDown 0.2s ease-out;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
     .search-item {
-      padding: 6px 10px;
+      padding: 10px 12px;
       cursor: pointer;
-      border-bottom: 1px solid rgba(16,196,245,.1);
+      border-bottom: 1px solid var(--border-light);
       transition: all 0.2s;
-      font-size: 11px;
     }
-    .search-item:hover { background: rgba(16,196,245,.15); }
-    .search-item-symbol { color: #10c4f5; font-weight: bold; }
-    .search-item-mcap { color: #8ca3ba; font-size: 10px; margin-top: 2px; }
 
-    .section { margin-bottom: 14px; }
-    .section-title {
-      font-size: 13px;
-      color: #10c4f5;
-      margin-bottom: 8px;
-      padding-bottom: 6px;
-      border-bottom: 2px solid rgba(16,196,245,.2);
+    .search-item:hover {
+      background: rgba(16, 196, 245, 0.15);
+    }
+
+    .search-item-symbol {
+      color: var(--primary);
       font-weight: bold;
+      font-size: 12px;
     }
 
+    .search-item-info {
+      color: var(--text-secondary);
+      font-size: 11px;
+      margin-top: 3px;
+    }
+
+    .filter-btn {
+      padding: 10px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.3s;
+    }
+
+    .filter-btn:hover {
+      border-color: var(--primary);
+      background: rgba(16, 196, 245, 0.1);
+    }
+
+    /* ===== 卡片网格 ===== */
     .coin-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
     }
+
+    @media (max-width: 1400px) {
+      .coin-grid {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      }
+    }
+
+    @media (max-width: 768px) {
+      .coin-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      }
+    }
+
     .coin-card {
-      background: rgba(10, 22, 40, .95);
-      border: 1px solid rgba(16,196,245,.25);
+      background: linear-gradient(135deg, rgba(10, 22, 40, 0.95) 0%, rgba(13, 31, 53, 0.6) 100%);
+      border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 12px;
+      padding: 14px;
       cursor: pointer;
-      transition: all 0.25s;
+      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      position: relative;
+      overflow: hidden;
     }
+
+    .coin-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(16, 196, 245, 0.1), transparent);
+      transition: left 0.5s;
+    }
+
+    .coin-card:hover::before {
+      left: 100%;
+    }
+
     .coin-card:hover {
-      border-color: rgba(16,196,245,.6);
-      box-shadow: 0 0 12px rgba(16,196,245,.15);
-      transform: translateY(-1px);
+      border-color: rgba(16, 196, 245, 0.6);
+      box-shadow: 0 8px 24px rgba(16, 196, 245, 0.2), inset 0 0 24px rgba(16, 196, 245, 0.05);
+      transform: translateY(-2px);
+    }
+
+    .coin-card.collecting {
+      border: 2px solid rgba(245, 158, 11, 0.8);
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(168, 85, 247, 0.08) 100%);
+    }
+
+    .coin-card.expired {
+      opacity: 0.6;
+      border-color: rgba(245, 158, 11, 0.2);
     }
 
     .coin-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 8px;
-    }
-    .coin-symbol {
-      font-size: 15px;
-      color: #10c4f5;
-      font-weight: bold;
-    }
-    .coin-tag {
-      display: inline-block;
-      padding: 3px 6px;
-      border-radius: 4px;
-      font-size: 9px;
-      font-weight: bold;
-      border: 1px solid;
-    }
-    .tag-yao {
-      background: rgba(168, 85, 247, .3);
-      color: #d8b4fe;
-      border-color: rgba(168, 85, 247, .5);
-    }
-    .tag-buy {
-      background: rgba(34, 197, 94, .3);
-      color: #22c55e;
-      border-color: rgba(34, 197, 94, .5);
-    }
-    .tag-watch {
-      background: rgba(59, 130, 246, .3);
-      color: #93c5fd;
-      border-color: rgba(59, 130, 246, .5);
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 2;
     }
 
-    .coin-stats {
+    .coin-title {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .coin-symbol {
+      font-size: 16px;
+      color: var(--primary);
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .coin-price {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .coin-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .action-btn {
+      background: none;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: var(--warning);
+      padding: 5px 8px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      min-height: 28px;
+    }
+
+    .action-btn:hover {
+      border-color: var(--warning);
+      background: rgba(245, 158, 11, 0.2);
+      transform: scale(1.1);
+    }
+
+    .action-btn.starred {
+      border-color: #fcd34d;
+      background: rgba(245, 158, 11, 0.3);
+      color: #fcd34d;
+    }
+
+    .action-btn.delete {
+      color: var(--danger);
+      border-color: rgba(239, 68, 68, 0.4);
+    }
+
+    .action-btn.delete:hover {
+      border-color: var(--danger);
+      background: rgba(239, 68, 68, 0.2);
+    }
+
+    /* ===== 标签 ===== */
+    .tags-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 3px 7px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: bold;
+      border: 1px solid;
+      white-space: nowrap;
+    }
+
+    .tag-yao {
+      background: rgba(168, 85, 247, 0.35);
+      color: #d8b4fe;
+      border-color: rgba(168, 85, 247, 0.6);
+    }
+
+    .tag-s {
+      background: rgba(34, 197, 94, 0.4);
+      color: #4ade80;
+      border-color: rgba(34, 197, 94, 0.7);
+    }
+
+    .tag-a {
+      background: rgba(34, 197, 94, 0.3);
+      color: #22c55e;
+      border-color: rgba(34, 197, 94, 0.6);
+    }
+
+    .tag-b {
+      background: rgba(59, 130, 246, 0.25);
+      color: #60a5fa;
+      border-color: rgba(59, 130, 246, 0.5);
+    }
+
+    .tag-c {
+      background: rgba(245, 158, 11, 0.25);
+      color: #fbbf24;
+      border-color: rgba(245, 158, 11, 0.5);
+    }
+
+    .tag-watch {
+      background: rgba(59, 130, 246, 0.3);
+      color: #93c5fd;
+      border-color: rgba(59, 130, 246, 0.6);
+    }
+
+    .tag-active {
+      background: rgba(34, 197, 94, 0.3);
+      color: var(--success);
+      border-color: rgba(34, 197, 94, 0.6);
+    }
+
+    .tag-expired {
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--warning);
+      border-color: rgba(245, 158, 11, 0.4);
+    }
+
+    /* ===== 统计信息 ===== */
+    .stats-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
       gap: 6px;
       margin-bottom: 8px;
       font-size: 11px;
     }
+
     .stat {
       display: flex;
       justify-content: space-between;
+      padding: 4px 6px;
+      background: rgba(16, 196, 245, 0.05);
+      border-radius: 4px;
+      border-left: 2px solid rgba(16, 196, 245, 0.3);
     }
-    .stat-label { color: #8ca3ba; }
-    .stat-value { color: #e5eefb; font-weight: bold; }
-    .green { color: #22c55e; }
-    .red { color: #ef4444; }
 
-    .coin-note {
-      background: rgba(34, 197, 94, .1);
-      border-left: 2px solid rgba(34, 197, 94, .4);
-      padding: 6px 8px;
+    .stat-label {
+      color: var(--text-secondary);
+    }
+
+    .stat-val {
+      color: var(--text-primary);
+      font-weight: bold;
+    }
+
+    .green { color: var(--success); }
+    .red { color: var(--danger); }
+    .yellow { color: var(--warning); }
+
+    /* ===== 信心度条 ===== */
+    .confidence-bar {
+      width: 100%;
+      height: 4px;
+      background: rgba(16, 196, 245, 0.1);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--danger), var(--warning), var(--success));
+      width: 0;
+      border-radius: 2px;
+      transition: width 0.5s ease-out;
+    }
+
+    /* ===== 提示框 ===== */
+    .advice-box {
+      background: rgba(34, 197, 94, 0.12);
+      border-left: 3px solid rgba(34, 197, 94, 0.5);
+      padding: 7px 8px;
       border-radius: 4px;
       font-size: 10px;
       color: #86efac;
-      margin-bottom: 8px;
-      line-height: 1.4;
+      margin-bottom: 6px;
+      line-height: 1.5;
+      position: relative;
+      z-index: 2;
     }
-    .coin-note.warn {
-      background: rgba(245, 158, 11, .1);
-      border-left-color: rgba(245, 158, 11, .4);
+
+    .advice-box.warn {
+      background: rgba(245, 158, 11, 0.12);
+      border-left-color: rgba(245, 158, 11, 0.5);
       color: #fcd34d;
     }
-    .coin-note.risk {
-      background: rgba(239, 68, 68, .1);
-      border-left-color: rgba(239, 68, 68, .4);
+
+    .advice-box.risk {
+      background: rgba(239, 68, 68, 0.12);
+      border-left-color: rgba(239, 68, 68, 0.5);
       color: #fca5a5;
     }
 
-    .coin-footer {
-      display: flex;
-      gap: 4px;
-      flex-wrap: wrap;
-      padding-top: 6px;
-      border-top: 1px solid rgba(16,196,245,.1);
+    .advice-box.info {
+      background: rgba(59, 130, 246, 0.12);
+      border-left-color: rgba(59, 130, 246, 0.5);
+      color: #93c5fd;
     }
-    .badge {
+
+    /* ===== 信号徽章 ===== */
+    .signals {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding-top: 6px;
+      border-top: 1px solid var(--border-light);
+      position: relative;
+      z-index: 2;
+    }
+
+    .signal-badge {
       display: inline-block;
       padding: 2px 5px;
       border-radius: 3px;
       font-size: 9px;
-      background: rgba(59, 130, 246, .2);
+      background: rgba(59, 130, 246, 0.25);
       color: #93c5fd;
-      border: 1px solid rgba(59, 130, 246, .4);
+      border: 1px solid rgba(59, 130, 246, 0.4);
       white-space: nowrap;
+      animation: fadeIn 0.3s ease-out;
     }
 
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    /* ===== 空状态 ===== */
     .empty-state {
       text-align: center;
-      color: #8ca3ba;
-      padding: 20px;
-      font-size: 12px;
+      color: var(--text-secondary);
+      padding: 40px 20px;
+      font-size: 14px;
+      line-height: 1.6;
     }
 
-    /* 详细面板 */
-    .detail-modal {
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.6;
+    }
+
+    /* ===== 模态框 ===== */
+    .modal {
       display: none;
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, .85);
+      background: rgba(0, 0, 0, 0.88);
       z-index: 1000;
       overflow-y: auto;
-      padding: 16px;
+      -webkit-overflow-scrolling: touch;
+      padding: 12px;
+      animation: fadeIn 0.3s ease-out;
     }
-    .detail-modal.active { display: block; }
-    .detail-content {
-      background: linear-gradient(135deg, #061018 0%, #0b1730 100%);
-      border: 1px solid rgba(16,196,245,.3);
+
+    .modal.active {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 20px;
+    }
+
+    .modal-content {
+      background: linear-gradient(135deg, rgba(6, 16, 24, 0.98) 0%, rgba(11, 23, 48, 0.98) 100%);
+      border: 1px solid rgba(16, 196, 245, 0.3);
       border-radius: 12px;
-      padding: 20px;
-      max-width: 850px;
-      margin: 16px auto;
+      padding: 24px;
+      max-width: 1000px;
+      width: 100%;
       position: relative;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+      animation: slideUp 0.3s ease-out;
     }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
     .close-btn {
       position: absolute;
-      top: 12px;
-      right: 12px;
+      top: 16px;
+      right: 16px;
       background: none;
       border: none;
-      color: #8ca3ba;
-      font-size: 22px;
+      color: var(--text-secondary);
+      font-size: 24px;
       cursor: pointer;
       transition: all 0.2s;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
     }
+
     .close-btn:hover {
-      color: #10c4f5;
+      color: var(--primary);
+      background: rgba(16, 196, 245, 0.1);
       transform: rotate(90deg);
     }
 
     .detail-title {
       font-size: 24px;
-      color: #10c4f5;
+      color: var(--primary);
       margin-bottom: 12px;
       display: flex;
       align-items: center;
@@ -313,201 +701,565 @@
 
     .detail-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
       gap: 10px;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
+
     .detail-item {
-      background: rgba(255,255,255,.03);
-      border: 1px solid rgba(16,196,245,.12);
+      background: rgba(16, 196, 245, 0.08);
+      border: 1px solid rgba(16, 196, 245, 0.2);
       border-radius: 6px;
-      padding: 8px;
+      padding: 10px;
     }
-    .detail-item-label { color: #8ca3ba; font-size: 10px; margin-bottom: 4px; }
-    .detail-item-value { color: #10c4f5; font-size: 14px; font-weight: bold; }
+
+    .detail-item-label {
+      color: var(--text-secondary);
+      font-size: 10px;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .detail-item-value {
+      color: var(--primary);
+      font-size: 14px;
+      font-weight: bold;
+    }
 
     .detail-box {
-      background: rgba(34,197,94,.1);
-      border: 1px solid rgba(34,197,94,.4);
+      background: rgba(34, 197, 94, 0.12);
+      border: 1px solid rgba(34, 197, 94, 0.3);
       border-radius: 8px;
-      padding: 10px;
-      margin-bottom: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
     }
-    .detail-box h3 {
-      color: #22c55e;
-      margin-bottom: 8px;
-      font-size: 12px;
-    }
-    .detail-box.warn {
-      background: rgba(245, 158, 11, .1);
-      border-color: rgba(245, 158, 11, .4);
-    }
-    .detail-box.warn h3 { color: #fcd34d; }
-    .detail-box.risk {
-      background: rgba(239, 68, 68, .1);
-      border-color: rgba(239, 68, 68, .4);
-    }
-    .detail-box.risk h3 { color: #fca5a5; }
 
-    .decision-row {
+    .detail-box h3 {
+      color: var(--success);
+      margin-bottom: 10px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .detail-box.warn {
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .detail-box.warn h3 {
+      color: var(--warning);
+    }
+
+    .detail-box.risk {
+      background: rgba(239, 68, 68, 0.12);
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .detail-box.risk h3 {
+      color: var(--danger);
+    }
+
+    .detail-box.tracking {
+      background: rgba(168, 85, 247, 0.12);
+      border-color: rgba(168, 85, 247, 0.3);
+    }
+
+    .detail-box.tracking h3 {
+      color: #d8b4fe;
+    }
+
+    .detail-row {
       display: flex;
       justify-content: space-between;
-      padding: 6px 0;
-      border-bottom: 1px solid rgba(255,255,255,.05);
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
       font-size: 11px;
     }
-    .decision-row:last-child { border-bottom: none; }
-    .decision-label { color: #8ca3ba; }
-    .decision-value { font-weight: bold; color: #e5eefb; }
 
-    .confidence-bar {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin: 8px 0;
+    .detail-row:last-child {
+      border-bottom: none;
     }
-    .confidence-fill {
-      height: 6px;
-      border-radius: 3px;
-      background: linear-gradient(90deg, #ef4444, #f59e0b, #22c55e);
-      flex: 1;
+
+    .detail-label {
+      color: var(--text-secondary);
     }
-    .confidence-text {
-      font-size: 10px;
-      color: #8ca3ba;
-      min-width: 40px;
+
+    .detail-value {
+      font-weight: bold;
+      color: var(--text-primary);
       text-align: right;
     }
 
-    @media (max-width: 1024px) {
-      .coin-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
-      .detail-grid { grid-template-columns: repeat(2, 1fr); }
+    .scenario-box {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 8px;
     }
+
+    .scenario-title {
+      color: #93c5fd;
+      font-size: 11px;
+      font-weight: bold;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .scenario-content {
+      font-size: 10px;
+      color: #dbeafe;
+      line-height: 1.6;
+    }
+
+    .scenario-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 9px;
+      background: rgba(59, 130, 246, 0.3);
+      color: #93c5fd;
+    }
+
+    /* ===== 自选卡片 ===== */
+    .collected-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 12px;
+    }
+
+    .collected-card {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(168, 85, 247, 0.05) 100%);
+      border: 2px solid rgba(168, 85, 247, 0.4);
+      border-radius: 10px;
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .collected-card:hover {
+      border-color: rgba(168, 85, 247, 0.8);
+      box-shadow: 0 8px 24px rgba(168, 85, 247, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .collected-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .collected-symbol {
+      font-size: 16px;
+      color: #d8b4fe;
+      font-weight: bold;
+    }
+
+    .collected-status {
+      font-size: 10px;
+      color: #c4b5fd;
+      padding: 3px 7px;
+      background: rgba(168, 85, 247, 0.3);
+      border-radius: 3px;
+    }
+
+    .collected-info {
+      font-size: 10px;
+      color: #c4b5fd;
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    .collected-price {
+      font-size: 13px;
+      color: #e9d5ff;
+      font-weight: bold;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .collected-analysis {
+      background: rgba(168, 85, 247, 0.25);
+      border-left: 2px solid rgba(168, 85, 247, 0.6);
+      padding: 7px 8px;
+      border-radius: 3px;
+      font-size: 10px;
+      color: #e9d5ff;
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    .collected-remove {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      padding: 5px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: bold;
+      width: 100%;
+      text-align: center;
+    }
+
+    .collected-remove:hover {
+      background: rgba(239, 68, 68, 0.35);
+      border-color: rgba(239, 68, 68, 0.6);
+    }
+
+    /* ===== 响应式 ===== */
+    @media (max-width: 1024px) {
+      .detail-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
     @media (max-width: 640px) {
-      .coin-grid { grid-template-columns: 1fr; }
-      .detail-grid { grid-template-columns: 1fr; }
-      h1 { font-size: 20px; }
-      .detail-title { font-size: 18px; }
+      h1 { font-size: 18px; }
+      .coin-grid {
+        grid-template-columns: 1fr;
+      }
+      .detail-title {
+        font-size: 18px;
+      }
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    /* ===== 加载动画 ===== */
+    @keyframes shimmer {
+      0% { background-position: -1000px 0; }
+      100% { background-position: 1000px 0; }
+    }
+
+    .loading-skeleton {
+      background: linear-gradient(90deg, rgba(16, 196, 245, 0.1), rgba(16, 196, 245, 0.2), rgba(16, 196, 245, 0.1));
+      background-size: 1000px 100%;
+      animation: shimmer 2s infinite;
+      border-radius: 6px;
+    }
+
+    /* ===== 通知 ===== */
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.95) 0%, rgba(22, 163, 74, 0.95) 100%);
+      color: white;
+      padding: 14px 18px;
+      border-radius: 8px;
+      border-left: 4px solid var(--success);
+      font-size: 12px;
+      z-index: 2000;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      animation: slideIn 0.3s ease-out, slideOut 0.3s ease-out 3.7s forwards;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideOut {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+    }
+
+    .notification.error {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(220, 38, 38, 0.95) 100%);
+      border-left-color: var(--danger);
+    }
+
+    .notification.warning {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.95) 0%, rgba(217, 119, 6, 0.95) 100%);
+      border-left-color: var(--warning);
     }
   </style>
 </head>
 <body translate="no">
   <div class="container">
-    <h1 translate="no">⚡ 币安交易系统 v10</h1>
-    <p class="subtitle">多维度联动检测 | 精准筹码分析 | 拉盘前夕发现</p>
-
-    <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('monitor', this)">📊 监控</button>
-      <button class="tab-btn" onclick="switchTab('search', this)">🔍 搜索</button>
-    </div>
-
-    <!-- 监控页 -->
-    <div id="monitor" class="tab-content active">
-      <div class="toolbar">
-        <div class="time-info">
-          <span class="refresh-status" id="refresh-dot"></span>
-          <span id="last-update">更新中...</span>
-          <span style="color: #8ca3ba;">| ⏱️ <span id="refresh-countdown">60</span>s</span>
+    <!-- ===== 顶部区域 ===== -->
+    <div class="header">
+      <div class="header-top">
+        <div>
+          <h1>⚡ 币安交易 Pro Max</h1>
+          <p style="color: var(--text-secondary); font-size: 11px; margin-top: 2px;">
+            多维度联动 | 妖币追踪 | 智能分析 | 自选管理 | 48h沉默机制
+          </p>
+        </div>
+        <div class="header-stats">
+          <div class="stat-item">
+            <span class="stat-label">妖币</span>
+            <span class="stat-value" id="stat-yao">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">建议</span>
+            <span class="stat-value" id="stat-buy">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">观察</span>
+            <span class="stat-value" id="stat-watch">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">自选</span>
+            <span class="stat-value" id="stat-collected">0</span>
+          </div>
         </div>
       </div>
 
-      <!-- 妖币 -->
-      <div class="section">
-        <div class="section-title">💎 妖币机会 (<span id="stat-yao">0</span>)</div>
-        <div class="coin-grid" id="yao-list"></div>
-      </div>
-
-      <!-- 建议买入 -->
-      <div class="section">
-        <div class="section-title">🚀 建议买入 (<span id="stat-buy">0</span>)</div>
-        <div class="coin-grid" id="buy-list"></div>
-      </div>
-
-      <!-- 观察名单 -->
-      <div class="section">
-        <div class="section-title">👀 观察中 (<span id="stat-watch">0</span>)</div>
-        <div class="coin-grid" id="watch-list"></div>
+      <div class="time-info">
+        <span class="refresh-dot" id="refresh-dot"></span>
+                <span id="last-update">⏳ 初始化中...</span>
+        <span style="color: var(--text-secondary);">|</span>
+        <span>下次刷新: <strong id="refresh-countdown">60</strong>s</span>
       </div>
     </div>
 
-    <!-- 搜索页 -->
-    <div id="search" class="tab-content">
+    <!-- ===== 搜索区域 ===== -->
+    <div class="search-section">
       <div class="search-box">
         <input 
           type="text" 
-          class="search-input" 
           id="search-input" 
-          placeholder="搜索币种..."
+          class="search-input" 
+          placeholder="🔍 搜索币种符号（如 BTC, ETH）..."
           oninput="handleSearch(this.value)"
         />
-        <div class="search-dropdown" id="search-dropdown"></div>
+        <div id="search-dropdown" class="search-dropdown"></div>
       </div>
-      <div id="search-result" class="empty-state">搜索一个币种查看详情</div>
+      <div id="search-result"></div>
+    </div>
+
+    <!-- ===== 标签页 ===== -->
+    <div class="tabs-container">
+      <button class="tab-btn active" onclick="switchTab('yao')">
+        💎 妖币机会
+        <span class="tab-badge" id="yao-badge">0</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('buy')">
+        ⭐ 建议池
+        <span class="tab-badge" id="buy-badge">0</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('watch')">
+        👀 观察名单
+        <span class="tab-badge" id="watch-badge">0</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('collected')">
+        🎯 自选管理
+        <span class="tab-badge" id="collected-badge">0</span>
+      </button>
+    </div>
+
+    <!-- ===== 妖币区域 ===== -->
+    <div id="yao-tab" class="tab-content">
+      <div id="yao-list" class="coin-grid">
+        <div class="empty-state">
+          <div class="empty-icon">🔍</div>
+          <div>暂未发现妖币机会</div>
+          <div style="color: var(--text-secondary); font-size: 11px; margin-top: 8px;">
+            系统正在扫描 300+ 交易对，请等待数据加载
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 建议区域 ===== -->
+    <div id="buy-tab" class="tab-content" style="display: none;">
+      <div id="buy-list" class="coin-grid">
+        <div class="empty-state">
+          <div class="empty-icon">💡</div>
+          <div>建议池暂无符合条件的币种</div>
+          <div style="color: var(--text-secondary); font-size: 11px; margin-top: 8px;">
+            需要 4+ 个信号同时触发，确定性高
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 观察区域 ===== -->
+    <div id="watch-tab" class="tab-content" style="display: none;">
+      <div id="watch-list" class="coin-grid">
+        <div class="empty-state">
+          <div class="empty-icon">⏳</div>
+          <div>暂无观察名单</div>
+          <div style="color: var(--text-secondary); font-size: 11px; margin-top: 8px;">
+            信号即将触发但未完全确认的币种会出现在这里
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 自选区域 ===== -->
+    <div id="collected-tab" class="tab-content" style="display: none;">
+      <div id="collected-list" class="collected-grid">
+        <div class="empty-state">
+          <div class="empty-icon">⭐</div>
+          <div>暂无自选币种</div>
+          <div style="color: var(--text-secondary); font-size: 11px; margin-top: 8px;">
+            点击卡片上的 ⭐ 按钮收藏喜欢的币种，实时跟踪价格变化
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- 详细面板 -->
-  <div class="detail-modal" id="detail-modal">
-    <div class="detail-content">
+  <!-- ===== 详情模态框 ===== -->
+  <div id="detail-modal" class="modal" onclick="if(event.target.id==='detail-modal') closeDetail()">
+    <div class="modal-content">
       <button class="close-btn" onclick="closeDetail()">✕</button>
       <div id="detail-body"></div>
     </div>
   </div>
 
   <script>
+    // ======================== 核心变量 ========================
     let allCoinsData = [];
     let allRows = { yao: [], buy: [], watch: [] };
+    let previousData = JSON.parse(localStorage.getItem('previousData') || '{}');
+    let twoStepsAgoData = JSON.parse(localStorage.getItem('twoStepsAgoData') || '{}');
+    let triggeredYaos = JSON.parse(localStorage.getItem('triggeredYaos') || '{}');
+    let collectedCoins = JSON.parse(localStorage.getItem('collectedCoins') || '{}');
     let oiMap = {};
     let isLoading = false;
-    let previousData = {};
-    let twoStepsAgoData = {};
     let autoRefreshInterval = null;
+    let currentTab = 'yao';
 
-    function switchTab(tab, el) {
-      document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active'));
-      document.getElementById(tab).classList.add('active');
-      el.classList.add('active');
+    // ======================== 工具函数 ========================
+    function fmtNum(num, decimal = 2) {
+      if (!num || isNaN(num)) return '0';
+      if (num >= 1e9) return (num / 1e9).toFixed(decimal) + 'B';
+      if (num >= 1e6) return (num / 1e6).toFixed(decimal) + 'M';
+      if (num >= 1e3) return (num / 1e3).toFixed(decimal) + 'K';
+      return num.toFixed(decimal);
     }
 
-    function fmtNum(n, d = 2) {
-      if (!n || isNaN(n)) return '-';
-      if (Math.abs(n) >= 1e9) return (n / 1e9).toFixed(1) + 'B';
-      if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(1) + 'M';
-      if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(1) + 'K';
-      return Number(n).toFixed(d);
+    function showNotification(message, type = 'success') {
+      const div = document.createElement('div');
+      div.className = `notification ${type}`;
+      div.textContent = message;
+      document.body.appendChild(div);
+      setTimeout(() => div.remove(), 4000);
     }
 
-    async function getJSON(url) {
-      try {
-        const res = await fetch(url);
-        if (!res.ok) return null;
-        return await res.json();
-      } catch (e) {
-        return null;
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.closest('.tab-btn').classList.add('active');
+
+      document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+      document.getElementById(`${tab}-tab`).style.display = 'block';
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function toggleCollect(symbol, event) {
+      event.stopPropagation();
+      const coin = allCoinsData.find(c => c.symbol === symbol);
+      if (!coin) return;
+
+      if (collectedCoins[symbol]) {
+        delete collectedCoins[symbol];
+        showNotification(`已移出自选: ${symbol}`, 'warning');
+      } else {
+        collectedCoins[symbol] = {
+          symbol,
+          collectTime: Date.now(),
+          collectPrice: coin.price,
+          level: coin.level || '未分类'
+        };
+        showNotification(`已收藏: ${symbol}`, 'success');
       }
+
+      localStorage.setItem('collectedCoins', JSON.stringify(collectedCoins));
+      document.getElementById('stat-collected').innerText = Object.keys(collectedCoins).length;
+
+      const starBtn = event.target.closest('.action-btn');
+      if (starBtn) {
+        starBtn.classList.toggle('starred');
+      }
+
+      renderCollectedList();
     }
 
-    async function fetchOpenInterest(symbols) {
-      const map = {};
-      for (let i = 0; i < symbols.length; i += 20) {
-        const batch = symbols.slice(i, i + 20);
-        const promises = batch.map(async symbol => {
-          const data = await getJSON(`https://fapi.binance.com/fapi/v1/openInterest?symbol=${symbol}`);
-          if (data?.openInterest) {
-            map[symbol] = parseFloat(data.openInterest);
-          }
+    // ======================== 妖币沉默机制 ========================
+    function addTriggeredYao(symbol, yaoData) {
+      if (!triggeredYaos[symbol]) {
+        triggeredYaos[symbol] = {
+          symbol,
+          triggeredTime: Date.now(),
+          status: yaoData.status,
+          action: yaoData.action,
+          yaoScore: yaoData.yaoScore,
+          confidence: yaoData.confidence,
+          signals: yaoData.signals,
+          reason: yaoData.reason
+        };
+        localStorage.setItem('triggeredYaos', JSON.stringify(triggeredYaos));
+        return true;
+      }
+      return false;
+    }
+
+    function isYaoExpired(symbol) {
+      const record = triggeredYaos[symbol];
+      if (!record) return true;
+      const elapsed = Date.now() - record.triggeredTime;
+      const silenceDuration = 48 * 60 * 60 * 1000;
+      return elapsed >= silenceDuration;
+    }
+
+    function deleteYao(symbol, event) {
+      if (event) event.stopPropagation();
+      delete triggeredYaos[symbol];
+      localStorage.setItem('triggeredYaos', JSON.stringify(triggeredYaos));
+      renderYaoList();
+      showNotification(`已删除妖币: ${symbol}`, 'warning');
+    }
+
+    function getYaoList() {
+      const result = [];
+      const now = Date.now();
+
+      Object.values(triggeredYaos).forEach(yao => {
+        const elapsed = now - yao.triggeredTime;
+        const silenceDuration = 48 * 60 * 60 * 1000;
+        const remainingTime = Math.max(0, Math.ceil((silenceDuration - elapsed) / 1000 / 60));
+
+        result.push({
+          ...yao,
+          isActive: elapsed < silenceDuration,
+          remainingMinutes: remainingTime,
+          expireStatus: elapsed < silenceDuration ? '监控中' : '已过期'
         });
-        await Promise.all(promises);
-        await new Promise(r => setTimeout(r, 50));
-      }
-      return map;
+      });
+
+      return result.sort((a, b) => b.triggeredTime - a.triggeredTime);
     }
 
-    /**
-     * 多维度综合分析框架
-     * 不只看单个指标，而是看指标间的逻辑关系
-     */
+    // ======================== 多维分析系统 ========================
     class CoinAnalyzer {
       constructor(row, previous, twoStepsAgo) {
         this.row = row;
@@ -517,194 +1269,142 @@
         this.score = 0;
       }
 
-      // 维度1：价格动态
       analyzePriceDynamics() {
         const priceChange = this.row.priceChange;
-        
-        // 检测：长期沉寂 + 最近无大跌
         if (priceChange > -15 && priceChange < 10) {
           this.evidences.push('价格平稳');
-          
-          // 如果是刚从底部反弹（前面跌过，现在恢复了）
           if (this.prev && this.row.price > this.prev.price) {
             this.evidences.push('短期反弹');
-            return 15; // 反弹是好信号
+            return 15;
           }
           return 8;
         }
-
-        // 如果在缓慢上升（没有暴跌过）
         if (priceChange > 0 && priceChange < 8) {
           this.evidences.push('缓慢上升');
           return 12;
         }
-
         return 0;
       }
 
-      // 维度2：成交量真实性检验
-      // 用来检测OI是否真实（OI高但成交低 = 假OI）
       analyzeVolumeAuthenticity() {
         if (!this.row.volMcap || !this.row.oiMcap) return 0;
-
-        // 检测：OI和成交的比例
-        // 正常：Vol/Mcap 是 OI/Mcap 的 1/3 ~ 1/5
-        // 异常：OI很高但成交很低 = 假OI
         const oiToVolRatio = this.row.oiMcap / (this.row.volMcap || 0.1);
 
-        // 比例太高 = OI虚假，减分
         if (oiToVolRatio > 2) {
           this.evidences.push('⚠️ OI可能虚假');
-          return -20; // 大幅减分！
+          return -20;
         }
-
-        // 比例合理 = OI真实
         if (this.row.volMcap > 8 && this.row.oiMcap > 2) {
-          this.evidences.push('成交成✓OI真');
+          this.evidences.push('成交✓OI真');
           return 18;
         }
-
-        // 成交活跃 + OI适中
         if (this.row.volMcap > 10 && this.row.oiMcap > 1.5) {
           this.evidences.push('成交活跃');
           return 15;
         }
-
         return 0;
       }
 
-      // 维度3：资金进场方向（Funding Rate三角验证）
       analyzeFundingPattern() {
         if (!this.prev) return 0;
-
         const fundingNow = this.row.funding;
         const fundingPrev = this.prev.funding;
         const fundingTrend = fundingNow - fundingPrev;
 
-        // 检测1：从负→正 = 空头转多头（空头被轧）
         if (fundingPrev < 0 && fundingNow > 0.003) {
           this.evidences.push('空头平仓');
-          return 20; // 强信号！
+          return 20;
         }
-
-        // 检测2：持续正向 + 逐步上升 = 多头在持续加仓
         if (fundingNow > 0.01 && fundingNow < 0.04 && fundingTrend > 0.002) {
           this.evidences.push('多头加仓中');
           return 16;
         }
-
-        // 检测3：funding太高 = 容易砸盘风险
         if (fundingNow > 0.05) {
           this.evidences.push('资费过高-风险');
           return -15;
         }
-
-        // 正向funding但稳定 = 资金在做多（好）
         if (fundingNow > 0.005 && fundingNow < 0.025) {
           this.evidences.push('资金做多');
           return 12;
         }
-
         return 0;
       }
 
-      // 维度4：OI增长率（需要时序数据验证）
       analyzeOIGrowth() {
         if (!this.prev || !this.row.oiMcap) return 0;
-
         const oiGrowth = (this.row.oiMcap - this.prev.oiMcap) / (this.prev.oiMcap || 0.1);
         const priceGrowth = (this.row.price - this.prev.price) / this.prev.price;
 
-        // 检测：OI增长 > 价格增长 = 资金在进，但价格还没跟上（底部信号！）
         if (oiGrowth > 0.15 && Math.abs(priceGrowth) < 0.05) {
           this.evidences.push('底部积累中');
-          return 22; // 最强信号之一
+          return 22;
         }
-
-        // OI保持稳定 + 价格缓涨 = 稳健上升
         if (oiGrowth > -0.05 && oiGrowth < 0.1 && priceGrowth > 0) {
           this.evidences.push('OI稳健');
           return 10;
         }
-
-        // OI大幅下降 = 资金出逃（减分！）
         if (oiGrowth < -0.2) {
           this.evidences.push('资金出逃');
           return -25;
         }
-
         return 0;
       }
 
-      // 维度5：地址活跃度（链上信号）
-      // 通过成交量变化反推
       analyzeAddressActivity() {
         if (!this.prev || !this.row.volMcap) return 0;
-
         const volGrowth = (this.row.volMcap - this.prev.volMcap) / (this.prev.volMcap || 0.1);
 
-        // 成交量突然爆升 + OI也升 = 大量地址在活跃
         if (volGrowth > 0.4 && this.row.oiMcap > 2) {
           this.evidences.push('地址活跃度↑');
           return 18;
         }
-
-        // 成交持续稳定 = 地址保持活跃
         if (Math.abs(volGrowth) < 0.3 && this.row.volMcap > 8) {
           this.evidences.push('地址活跃✓');
           return 12;
         }
-
         return 0;
       }
 
-      // 维度6：市值规模（拉盘潜力）
       analyzeMarketCap() {
         const mcap = this.row.mcap;
         if (!mcap) return 0;
-
-        // 理想的妖币市值：1000万 ~ 3亿
-        // 理想的建议币市值：3000万 ~ 10亿
         if (mcap > 1e7 && mcap < 3e8) {
-          this.evidences.push('市值合适');
-          return 10; // 有拉盘空间
-        }
-
-        if (mcap > 3e8 && mcap < 1e9) {
-          this.evidences.push('市值偏大');
+          this.evidences.push('市值适中');
           return 6;
         }
-
-        if (mcap > 1e9) {
-          this.evidences.push('市值太大');
-          return -5; // 拉盘空间小
+        if (mcap >= 3e8 && mcap < 1.5e9) {
+          this.evidences.push('市值偏大');
+          return 2;
         }
-
+        if (mcap < 1e7) {
+          this.evidences.push('市值偏小');
+          return -2;
+        }
+        if (mcap >= 1.5e9) {
+          this.evidences.push('市值较大');
+          return -2;
+        }
         return 0;
       }
 
-      // 维度7：时序验证（2次数据对比）
       analyzeTimeSequence() {
         if (!this.prev || !this.twoStepsAgo) return 0;
 
-        // 检测趋势：是否连续向好
-        const oiTrend = (this.row.oiMcap > this.prev.oiMcap) && 
-                        (this.prev.oiMcap > this.twoStepsAgo.oiMcap);
-        const volTrend = (this.row.volMcap > this.prev.volMcap) && 
-                        (this.prev.volMcap > this.twoStepsAgo.volMcap);
-        const fundingTrend = (this.row.funding > this.prev.funding) && 
-                            (this.prev.funding > this.twoStepsAgo.funding);
+        const oiTrend = (this.row.oiMcap > this.prev.oiMcap) &&
+          (this.prev.oiMcap > this.twoStepsAgo.oiMcap);
+        const volTrend = (this.row.volMcap > this.prev.volMcap) &&
+          (this.prev.volMcap > this.twoStepsAgo.volMcap);
+        const fundingTrend = (this.row.funding > this.prev.funding) &&
+          (this.prev.funding > this.twoStepsAgo.funding);
 
         let trends = 0;
         if (oiTrend) { this.evidences.push('OI连升'); trends++; }
         if (volTrend) { this.evidences.push('成交连升'); trends++; }
         if (fundingTrend) { this.evidences.push('资费连升'); trends++; }
 
-        // 多条指标连续向好 = 非常强的信号
-        return trends * 8; // 每条趋势 +8分
+        return trends * 8;
       }
 
-      // 最终综合分数
       getScore() {
         const dimensions = [
           this.analyzePriceDynamics(),
@@ -715,46 +1415,42 @@
           this.analyzeMarketCap(),
           this.analyzeTimeSequence()
         ];
-
         this.score = Math.max(0, Math.min(100, dimensions.reduce((a, b) => a + b, 0)));
         return this.score;
       }
 
-      // 获取检测信心度（用来显示在UI上）
       getConfidence() {
-        // 信心度 = 证据数量
-        // 证据越多 = 信号越清晰 = 信心越高
         const evidenceCount = this.evidences.length;
         return Math.min(100, evidenceCount * 12);
       }
     }
 
+    // ======================== 检测函数 ========================
     function detectYaoCoin(row, prev, twoStepsAgo) {
       const analyzer = new CoinAnalyzer(row, prev, twoStepsAgo);
       const score = analyzer.getScore();
       const confidence = analyzer.getConfidence();
-      
-      // 妖币标准：分数 >= 75 + 证据 >= 5个 + 市值 < 3亿
-      const hasNegativeEvidence = analyzer.evidences.some(e => e.includes('⚠️') || e.includes('风险'));
+      const negativeCount = analyzer.evidences.filter(e => e.includes('⚠️') || e.includes('风险')).length;
 
-      if (
-        score >= 75 &&
-        analyzer.evidences.length >= 5 &&
-        !hasNegativeEvidence &&
-        row.mcap < 3e8
-      ) {
+      if (score >= 70 && analyzer.evidences.length >= 4 && negativeCount <= 1) {
         let status = '';
-        if (row.priceChange < -15) {
-          status = '🔴 底部蓄势';
-        } else if (row.priceChange > 3) {
-          status = '🟡 温和上升';
+        let action = '';
+
+        if (score >= 82 && confidence >= 70) {
+          status = '🟢 强妖嫌疑';
+          action = '可小仓试水 1-2%';
+        } else if (score >= 75) {
+          status = '🟡 中妖嫌疑';
+          action = '观察为主';
         } else {
-          status = '🟢 筹码激活';
+          status = '🔵 早期苗头';
+          action = '加入自选';
         }
 
         return {
           isYao: true,
           status,
+          action,
           yaoScore: score,
           confidence,
           signals: analyzer.evidences,
@@ -769,21 +1465,38 @@
       const analyzer = new CoinAnalyzer(row, prev, twoStepsAgo);
       const score = analyzer.getScore();
       const confidence = analyzer.getConfidence();
+      const negativeCount = analyzer.evidences.filter(e => e.includes('⚠️') || e.includes('风险')).length;
 
-      const hasNegativeEvidence = analyzer.evidences.some(e => e.includes('⚠️') || e.includes('风险'));
+      if (score >= 64 && analyzer.evidences.length >= 4 && negativeCount <= 1 &&
+        row.priceChange > -8 && row.priceChange < 18) {
 
-      // 建议币标准：分数 >= 72 + 证据 >= 4个 + 市值 3亿~ 10亿 + 价格稳健
-      if (
-        score >= 72 &&
-        analyzer.evidences.length >= 4 &&
-        !hasNegativeEvidence &&
-        row.mcap > 3e7 &&
-        row.mcap < 1e9 &&
-        row.priceChange > -5 &&
-        row.priceChange < 15
-      ) {
+        let grade = '';
+        let position = '';
+        let leverage = '';
+
+        if (score >= 82 && confidence >= 70) {
+          grade = 'S';
+          position = '账户 3-5%';
+          leverage = '1-3倍杠杆';
+        } else if (score >= 75 && confidence >= 60) {
+          grade = 'A';
+          position = '账户 2-3%';
+          leverage = '1-2倍杠杆';
+        } else if (score >= 70 && confidence >= 50) {
+          grade = 'B';
+          position = '账户 1.5-2%';
+          leverage = '1倍（现货）';
+        } else {
+          grade = 'C';
+          position = '账户 1%';
+          leverage = '现货观察';
+        }
+
         return {
           isBuy: true,
+          grade,
+          position,
+          leverage,
           buyScore: score,
           confidence,
           signals: analyzer.evidences,
@@ -798,138 +1511,566 @@
       const analyzer = new CoinAnalyzer(row, prev, twoStepsAgo);
       const score = analyzer.getScore();
 
-      // 观察标准：分数 >= 60 但低于建议 + 证据 >= 3个
-      if (score >= 60 && score < 72 && analyzer.evidences.length >= 3) {
+      if (score >= 60 && score < 64 && analyzer.evidences.length >= 3) {
         return {
           isWatch: true,
           watchScore: score,
           signals: analyzer.evidences,
-          reason: '信号不足，继续观察'
+          reason: '信号积累中，继续观察'
         };
       }
 
       return { isWatch: false };
     }
 
-    function getTradingAdvice(row, type) {
-      if (type === 'yao') {
-        if (row.priceChange < -15) {
-          return '⏸️ 观察为主，等待底部信号更明确再进';
-        } else if (row.priceChange < 3) {
-          return '💰 可小仓 1-2% 试水，严格止损';
-        } else {
-          return '🔥 筹码激活，可 2-3% 试水，拉盘前夕';
-        }
-      } else if (type === 'buy') {
-        return '✅ 现货推荐，分批建仓 1-2%';
-      } else {
-        return '📌 继续观察，等更确定信号';
+    // ======================== 场景分析 ========================
+    function analyzeScenarios(coin, prev, twoStepsAgo) {
+      const scenarios = [];
+      if (!prev) return scenarios;
+
+      const priceChange = coin.priceChange;
+      const oiChange = prev.oiMcap ? ((coin.oiMcap - prev.oiMcap) / prev.oiMcap * 100) : 0;
+      const volChange = prev.volMcap ? ((coin.volMcap - prev.volMcap) / prev.volMcap * 100) : 0;
+      const fundingChange = coin.funding - prev.funding;
+
+      // 情景1：真突破
+      if (priceChange > 3 && oiChange > 8 && volChange > 15 && fundingChange > 0.001) {
+        scenarios.push({
+          name: '真突破开始',
+          probability: '可能性: 70-90%',
+          description: '价格、OI、成交、资费四维齐升。主力发动真实上行。',
+          action: '🟢 应对：加仓50-80%，设止损-2%，目标预案1/2/3',
+          confidence: 'VERY_HIGH'
+        });
       }
+
+      // 情景2：吸筹诱空
+      if (oiChange > 10 && priceChange < -2 && volChange > 20 && coin.funding > 0.005) {
+        scenarios.push({
+          name: '吸筹诱空',
+          probability: '可能性: 60-80%',
+          description: 'OI持续增长，价格却下跌。典型砸底吸筹。',
+          action: '🟢 应对：加仓30-50%，防止追高，等待反弹',
+          confidence: 'HIGH'
+        });
+      }
+
+      // 情景3：假突破
+      if (coin.funding > 0.04 && priceChange > 12 && oiChange < 5) {
+        scenarios.push({
+          name: '假突破风险',
+          probability: '可能性: 50-70%',
+          description: '资费极高，价格快升但OI增长缓慢。典型诱多出货。',
+          action: '🔴 应对：立即减仓40-60%，设止损-2.5%',
+          confidence: 'MEDIUM'
+        });
+      }
+
+      // 情景4：底部积累
+      if (oiChange > 8 && oiChange < 20 && Math.abs(priceChange) < 3 && fundingChange < 0.005) {
+        scenarios.push({
+          name: '底部积累阶段',
+          probability: '可能性: 65-80%',
+          description: 'OI温和增长，价格缓涨缓跌。主力耐心吸筹。',
+          action: '🟢 应对：分批建仓，耐心等待突破确认',
+          confidence: 'MEDIUM_HIGH'
+        });
+      }
+
+      // 情景5：资金流出
+      if (oiChange < -15 && priceChange < -2) {
+        scenarios.push({
+          name: '资金流出',
+          probability: '可能性: 70-85%',
+          description: 'OI快速下降，价格下跌。主力可能离场。',
+          action: '🔴 应对：立即减仓60-80%，保留10-20%观察底部',
+          confidence: 'HIGH'
+        });
+      }
+
+      // 情景6：顶部诱多
+      if (priceChange > 12 && oiChange < 5 && fundingChange > 0.015 && coin.funding > 0.035) {
+        scenarios.push({
+          name: '顶部诱多',
+          probability: '可能性: 55-75%',
+          description: '价格快速上升但OI增长缓慢，资费极高。顶部分歧明显。',
+          action: '⚠️ 应对：立即减仓50-70%，设止损-2.5%',
+          confidence: 'MEDIUM'
+        });
+      }
+
+      // 情景7：空头反弹
+      if (priceChange < -5 && oiChange > 10 && volChange > 20 && fundingChange < -0.01) {
+        scenarios.push({
+          name: '空头反弹',
+          probability: '可能性: 60-75%',
+          description: '下跌中成交和OI增加，资费由正变负。空头开始反抗。',
+          action: '⚠️ 应对：减仓30-40%，移动止损到成本价',
+          confidence: 'MEDIUM'
+        });
+      }
+
+      // 情景8：底部蓄力
+      if (twoStepsAgo && priceChange > -3 && priceChange < 3 && oiChange > 10 && oiChange < 25) {
+        const prevChange = (prev.price - twoStepsAgo.price) / twoStepsAgo.price * 100;
+        if (prevChange < -5 && priceChange > prevChange) {
+          scenarios.push({
+            name: '底部蓄力',
+            probability: '可能性: 65-80%',
+            description: '下跌后温和反弹，OI持续增长。典型底部蓄力形态。',
+            action: '🟢 应对：继续建仓30-50%，耐心等待突破',
+            confidence: 'MEDIUM_HIGH'
+          });
+        }
+      }
+
+      return scenarios;
+    }
+
+    // ======================== 自选追踪 ========================
+    function analyzeCollectedCoin(symbol, coin, prev) {
+      if (!collectedCoins[symbol] || !prev) return null;
+
+      const collected = collectedCoins[symbol];
+      const collectPrice = collected.collectPrice;
+      const currentPrice = coin.price;
+      const priceChangeFromCollect = ((currentPrice - collectPrice) / collectPrice) * 100;
+      const priceChange24h = (coin.price - prev.price) / prev.price * 100;
+      const oiChange = prev.oiMcap ? ((coin.oiMcap - prev.oiMcap) / prev.oiMcap * 100) : 0;
+      const fundingChange = coin.funding - prev.funding;
+
+      let currentStatus = 'monitoring';
+      let advice = '';
+      let risk = '';
+
+      if (priceChangeFromCollect > 8) {
+        currentStatus = '盈利中';
+        if (coin.funding > 0.04 || priceChange24h > 15) {
+          advice = '🔥 目标到达: 建议卖出25-30%，锁定收益';
+          if (priceChange24h > 15) advice += '（出现过热信号）';
+        } else if (oiChange > 15) {
+          advice = '📈 继续持有并加仓，可能要进一步拉升';
+        } else {
+          advice = '✅ 保持持有，观察下一个TP';
+        }
+      } else if (priceChangeFromCollect > 3 && priceChangeFromCollect <= 8) {
+        currentStatus = '小幅盈利';
+        if (priceChange24h < -2) {
+          advice = '⚠️ 开始回调: 建议减仓20-30%，保护利润';
+          risk = '注意: 可能是诱空，防止跌破支撑后重新上升';
+        } else {
+          advice = '📌 耐心持有，继续观察突破';
+        }
+      } else if (priceChangeFromCollect >= -3 && priceChangeFromCollect <= 3) {
+        currentStatus = '持平';
+        if (oiChange > 15 && fundingChange > 0.002) {
+          advice = '🟢 信号强化: 建议加仓20-40%';
+        } else if (priceChange24h < -2 && oiChange < 5) {
+          advice = '⚠️ 信号减弱: 建议减仓10-20%，观察底部';
+          risk = '检查是否底部诱空还是真正下跌';
+        } else {
+          advice = '📌 继续持有，等待突破';
+        }
+      } else if (priceChangeFromCollect > -5 && priceChangeFromCollect < -3) {
+        currentStatus = '小幅亏损';
+        if (oiChange > 10 && fundingChange > 0.001) {
+          advice = '🟡 信号仍在积累: 考虑加仓10-20%（平摊成本）';
+          risk = '但不要盲目加仓，要看成交量是否真实';
+        } else {
+          advice = '⚠️ 建议减仓30-50%，保护资金，观察反弹';
+        }
+      } else if (priceChangeFromCollect <= -5) {
+        currentStatus = '亏损';
+        if (priceChangeFromCollect <= -10) {
+          advice = '🔴 立即止损，减仓80-100%';
+          risk = '多维指标破坏，继续持有风险大';
+        } else if (oiChange > 15) {
+          advice = '⚠️ 尽管下跌，但OI在增长：可能底部，考虑加仓5-10%（小额）';
+          risk = '需确认不是假突破向下';
+        } else {
+          advice = '⚠️ 建议减仓50-70%，等待真实底部信号';
+        }
+      }
+
+      return {
+        status: currentStatus,
+        priceChangeFromCollect: priceChangeFromCollect.toFixed(2),
+        priceChange24h: priceChange24h.toFixed(2),
+        oiChange: oiChange.toFixed(2),
+        advice,
+        risk
+      };
+    }
+
+    // ======================== 渲染函数 ========================
+    function renderCollectedList() {
+      const container = document.getElementById('collected-list');
+      const symbols = Object.keys(collectedCoins);
+
+      if (symbols.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">⭐</div><div>暂无自选币种</div></div>';
+        return;
+      }
+
+      let html = '';
+      symbols.forEach(symbol => {
+        const coin = allCoinsData.find(c => c.symbol === symbol);
+        const collected = collectedCoins[symbol];
+
+        if (coin) {
+          const analysis = analyzeCollectedCoin(symbol, coin, previousData[symbol]);
+          const priceChange = ((coin.price - collected.collectPrice) / collected.collectPrice) * 100;
+          const priceChangeClass = priceChange > 0 ? 'green' : 'red';
+
+          let analysisHtml = '';
+          if (analysis) {
+            analysisHtml = `
+              <div class="collected-analysis">
+                📊 ${analysis.status}<br/>
+                ${analysis.advice}<br/>
+                ${analysis.risk ? `<span style="color: #fbbf24;">⚠️ ${analysis.risk}</span>` : ''}
+              </div>
+            `;
+          }
+
+          html += `
+            <div class="collected-card" onclick="showDetail('${symbol}', 'collected')">
+              <div class="collected-header">
+                <span class="collected-symbol" translate="no">${symbol}</span>
+                <span class="collected-status">${collected.level}</span>
+              </div>
+              <div class="collected-info">
+                收藏于: ${new Date(collected.collectTime).toLocaleTimeString()}<br/>
+                收藏价: $${collected.collectPrice.toFixed(6)}
+              </div>
+              <div class="collected-price">
+                现价: $${coin.price.toFixed(6)}
+                <span class="${priceChangeClass}">${priceChange > 0 ? '+' : ''}${priceChange.toFixed(2)}%</span>
+              </div>
+              ${analysisHtml}
+              <button class="collected-remove" onclick="deleteCollected('${symbol}', event)">
+                ✕ 删除自选
+              </button>
+            </div>
+          `;
+        }
+      });
+
+      container.innerHTML = html;
+    }
+
+    function deleteCollected(symbol, event) {
+      event.stopPropagation();
+      delete collectedCoins[symbol];
+      localStorage.setItem('collectedCoins', JSON.stringify(collectedCoins));
+      document.getElementById('stat-collected').innerText = Object.keys(collectedCoins).length;
+      renderCollectedList();
+      showNotification(`已删除自选: ${symbol}`, 'warning');
     }
 
     function renderCoinCard(row, type) {
       const score = row.yaoScore || row.buyScore || row.watchScore || 0;
       const confidence = row.confidence || 0;
-      const advice = getTradingAdvice(row, type);
-      
-      const tagClass = type === 'yao' ? 'tag-yao' : type === 'buy' ? 'tag-buy' : 'tag-watch';
-      const tagText = type === 'yao' ? '💎 妖币' : type === 'buy' ? '🚀 买入' : '👀 观察';
-      const status = row.status || '';
-      const noteClass = type === 'yao' ? 'coin-note warn' : 'coin-note';
+      const isCollected = collectedCoins[row.symbol];
 
-      return `
-        <div class="coin-card" onclick="showDetail('${row.symbol}', '${type}')">
-          <div class="coin-header">
-            <span class="coin-symbol" translate="no">${row.symbol}</span>
-            <span class="coin-tag ${tagClass}" translate="no">${tagText}</span>
+      let tagClass, tagText, posClass, posText;
+
+      if (type === 'yao') {
+        const remainingTime = row.remainingMinutes;
+        const timeTag = row.isActive 
+          ? `<span class="tag tag-active">⏱️ ${remainingTime}分钟</span>`
+          : `<span class="tag tag-expired">⏸️ 已过期</span>`;
+
+        return `
+          <div class="coin-card ${isCollected ? 'collecting' : ''} ${row.isActive ? '' : 'expired'}" 
+               onclick="showDetail('${row.symbol}', 'yao')">
+            <div class="coin-header">
+              <div class="coin-title">
+                <span class="coin-symbol" translate="no">${row.symbol}</span>
+                <span class="coin-price">$${fmtNum(row.price, 6)}</span>
+              </div>
+              <div class="coin-actions">
+                <button class="action-btn ${isCollected ? 'starred' : ''}" 
+                        onclick="toggleCollect('${row.symbol}', event)" 
+                        title="收藏">⭐</button>
+                <button class="action-btn delete" 
+                        onclick="deleteYao('${row.symbol}', event)" 
+                        title="删除">✕</button>
+              </div>
+            </div>
+
+            <div class="tags-row">
+              <span class="tag tag-yao">💎 妖币</span>
+              ${timeTag}
+              <span class="tag tag-s">${row.status}</span>
+            </div>
+
+            <div class="advice-box warn">
+              ${row.action || '合约试水'}
+            </div>
+
+            <div class="stats-grid">
+              <div class="stat">
+                <span class="stat-label">评分</span>
+                <span class="stat-val">${score.toFixed(0)}</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">信心</span>
+                <span class="stat-val">${confidence.toFixed(0)}%</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">资费</span>
+                <span class="stat-val ${row.funding > 0 ? 'green' : 'red'}">${row.funding.toFixed(4)}%</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">24h</span>
+                <span class="stat-val ${row.priceChange > 0 ? 'green' : 'red'}">${row.priceChange.toFixed(2)}%</span>
+              </div>
+            </div>
+
+            <div class="confidence-bar">
+              <div class="confidence-fill" style="width: ${confidence}%"></div>
+            </div>
+
+            <div class="signals">
+              ${row.signals.slice(0, 4).map(s => `<span class="signal-badge">${s}</span>`).join('')}
+            </div>
           </div>
+        `;
+      }
 
-          ${status ? `<div class="coin-note warn" translate="no">⚠️ ${status}</div>` : ''}
+      if (type === 'buy') {
+        const gradeColor = {
+          'S': 'tag-s',
+          'A': 'tag-a',
+          'B': 'tag-b',
+          'C': 'tag-c'
+        };
 
-          <div class="coin-stats">
-            <div class="stat">
-              <span class="stat-label">现价</span>
-              <span class="stat-value">$${fmtNum(row.price, 6)}</span>
+        return `
+          <div class="coin-card ${isCollected ? 'collecting' : ''}" 
+               onclick="showDetail('${row.symbol}', 'buy')">
+            <div class="coin-header">
+              <div class="coin-title">
+                <span class="coin-symbol" translate="no">${row.symbol}</span>
+                <span class="coin-price">$${fmtNum(row.price, 6)}</span>
+              </div>
+              <div class="coin-actions">
+                <button class="action-btn ${isCollected ? 'starred' : ''}" 
+                        onclick="toggleCollect('${row.symbol}', event)" 
+                        title="收藏">⭐</button>
+              </div>
             </div>
-            <div class="stat">
-              <span class="stat-label">24h</span>
-              <span class="stat-value ${row.priceChange > 0 ? 'green' : 'red'}">${row.priceChange.toFixed(1)}%</span>
+
+            <div class="tags-row">
+              <span class="tag ${gradeColor[row.grade] || 'tag-c'}">⭐ ${row.grade}级</span>
+              <span class="tag tag-watch">💼 ${row.position}</span>
             </div>
-            <div class="stat">
-              <span class="stat-label">市值</span>
-              <span class="stat-value">$${fmtNum(row.mcap, 0)}</span>
+
+            <div class="advice-box">
+              ${row.leverage}
             </div>
-            <div class="stat">
-              <span class="stat-label">综评</span>
-              <span class="stat-value">${score.toFixed(0)}</span>
+
+            <div class="stats-grid">
+              <div class="stat">
+                <span class="stat-label">评分</span>
+                <span class="stat-val">${score.toFixed(0)}</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">信心</span>
+                <span class="stat-val">${confidence.toFixed(0)}%</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">市值</span>
+                <span class="stat-val">${fmtNum(row.mcap, 2)}</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">OI/Mcap</span>
+                <span class="stat-val">${row.oiMcap ? row.oiMcap.toFixed(2) : '-'}%</span>
+              </div>
             </div>
-            <div class="stat">
-              <span class="stat-label">OI/M</span>
-              <span class="stat-value">${row.oiMcap ? row.oiMcap.toFixed(1) : '-'}%</span>
+
+            <div class="confidence-bar">
+              <div class="confidence-fill" style="width: ${confidence}%"></div>
             </div>
-            <div class="stat">
-              <span class="stat-label">资费</span>
-              <span class="stat-value ${row.funding > 0 ? 'green' : 'red'}">${row.funding.toFixed(4)}%</span>
+
+            <div class="signals">
+              ${row.signals.slice(0, 4).map(s => `<span class="signal-badge">${s}</span>`).join('')}
             </div>
           </div>
+        `;
+      }
 
-          <div class="confidence-bar">
-            <div class="confidence-fill" style="width: ${confidence}%"></div>
-            <span class="confidence-text">${confidence.toFixed(0)}%</span>
+      if (type === 'watch') {
+        return `
+          <div class="coin-card ${isCollected ? 'collecting' : ''}" 
+               onclick="showDetail('${row.symbol}', 'watch')">
+            <div class="coin-header">
+              <div class="coin-title">
+                <span class="coin-symbol" translate="no">${row.symbol}</span>
+                <span class="coin-price">$${fmtNum(row.price, 6)}</span>
+              </div>
+              <div class="coin-actions">
+                <button class="action-btn ${isCollected ? 'starred' : ''}" 
+                        onclick="toggleCollect('${row.symbol}', event)" 
+                        title="收藏">⭐</button>
+              </div>
+            </div>
+
+            <div class="tags-row">
+              <span class="tag tag-watch">👀 观察中</span>
+            </div>
+
+            <div class="advice-box info">
+              信号即将触发，继续关注
+            </div>
+
+            <div class="stats-grid">
+              <div class="stat">
+                <span class="stat-label">评分</span>
+                <span class="stat-val">${score.toFixed(0)}</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">24h</span>
+                <span class="stat-val ${row.priceChange > 0 ? 'green' : 'red'}">${row.priceChange.toFixed(2)}%</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">成交</span>
+                <span class="stat-val">${row.volMcap ? row.volMcap.toFixed(2) : '-'}%</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">OI</span>
+                <span class="stat-val">${row.oiMcap ? row.oiMcap.toFixed(2) : '-'}%</span>
+              </div>
+            </div>
+
+            <div class="signals">
+              ${row.signals.slice(0, 4).map(s => `<span class="signal-badge">${s}</span>`).join('')}
+            </div>
           </div>
-
-          <div class="coin-note">${advice}</div>
-
-          <div class="coin-footer">
-            ${row.signals.slice(0, 3).map(s => `<span class="badge" translate="no">${s}</span>`).join('')}
-          </div>
-        </div>
-      `;
+        `;
+      }
     }
 
     function renderYaoList() {
       const container = document.getElementById('yao-list');
-      if (allRows.yao.length === 0) {
-        container.innerHTML = '<div class="empty-state">暂未发现妖币机会</div>';
+      const yaoList = getYaoList();
+
+      // 加入当前检测的妖币
+      allRows.yao.forEach(row => {
+        if (!yaoList.find(y => y.symbol === row.symbol)) {
+          row.isActive = true;
+          row.remainingMinutes = 48 * 60;
+          yaoList.push(row);
+        }
+      });
+
+      yaoList.sort((a, b) => (b.yaoScore || 0) - (a.yaoScore || 0));
+
+      if (yaoList.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><div>暂未发现妖币机会</div></div>';
         return;
       }
-      container.innerHTML = allRows.yao.map(r => renderCoinCard(r, 'yao')).join('');
+
+      container.innerHTML = yaoList.map(row => renderCoinCard(row, 'yao')).join('');
     }
 
     function renderBuyList() {
       const container = document.getElementById('buy-list');
       if (allRows.buy.length === 0) {
-        container.innerHTML = '<div class="empty-state">暂未发现推荐机会</div>';
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">💡</div><div>建议池暂无符合条件的币种</div></div>';
         return;
       }
-      container.innerHTML = allRows.buy.map(r => renderCoinCard(r, 'buy')).join('');
+      container.innerHTML = allRows.buy.map(row => renderCoinCard(row, 'buy')).join('');
     }
 
     function renderWatchList() {
       const container = document.getElementById('watch-list');
       if (allRows.watch.length === 0) {
-        container.innerHTML = '<div class="empty-state">暂无观察名单</div>';
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><div>暂无观察名单</div></div>';
         return;
       }
-      container.innerHTML = allRows.watch.map(r => renderCoinCard(r, 'watch')).join('');
+      container.innerHTML = allRows.watch.map(row => renderCoinCard(row, 'watch')).join('');
     }
 
+    function updateBadges() {
+      document.getElementById('yao-badge').innerText = allRows.yao.length;
+      document.getElementById('buy-badge').innerText = allRows.buy.length;
+      document.getElementById('watch-badge').innerText = allRows.watch.length;
+      document.getElementById('collected-badge').innerText = Object.keys(collectedCoins).length;
+      document.getElementById('stat-collected').innerText = Object.keys(collectedCoins).length;
+    }
+
+    // ======================== 止损止盈计算 ========================
+    function calculateTPSL(price, type = 'yao') {
+      if (type === 'yao') {
+        return {
+          sl: (price * 0.97).toFixed(6),
+          tp1: (price * 1.05).toFixed(6),
+          tp2: (price * 1.10).toFixed(6),
+          tp3: (price * 1.20).toFixed(6),
+          tp1_percent: 5,
+          tp2_percent: 10,
+          tp3_percent: 20
+        };
+      } else {
+        return {
+          sl: (price * 0.97).toFixed(6),
+          tp1: (price * 1.03).toFixed(6),
+          tp2: (price * 1.08).toFixed(6),
+          tp3: (price * 1.15).toFixed(6),
+          tp1_percent: 3,
+          tp2_percent: 8,
+          tp3_percent: 15
+        };
+      }
+    }
+
+    function calculateAddPositions(price, type = 'yao') {
+      if (type === 'yao') {
+        return {
+          add1: (price * 0.95).toFixed(6),
+          add2: (price * 0.90).toFixed(6),
+          add1_percent: -5,
+          add2_percent: -10
+        };
+      } else {
+        return {
+          add1: (price * 0.97).toFixed(6),
+          add2: (price * 0.94).toFixed(6),
+          add1_percent: -3,
+          add2_percent: -6
+        };
+      }
+    }
+
+    // ======================== 详情模态框 ========================
     function showDetail(symbol, type) {
       let coin = allCoinsData.find(c => c.symbol === symbol);
+      
+      if (!coin) {
+        if (triggeredYaos[symbol]) {
+          coin = { symbol, ...triggeredYaos[symbol] };
+        } else if (collectedCoins[symbol]) {
+          showNotification('数据暂未加载，请稍候', 'warning');
+          return;
+        }
+      }
+
       if (!coin) return;
 
+      const prev = previousData[symbol];
+      const twoStepsAgo = twoStepsAgoData[symbol];
       const score = coin.yaoScore || coin.buyScore || coin.watchScore || 0;
       const confidence = coin.confidence || 0;
-      const tp = calculateTP(coin, type === 'yao');
-      const add = calculateAdd(coin, type === 'yao');
+      const tp = calculateTPSL(coin.price, type);
+      const add = calculateAddPositions(coin.price, type);
 
-      const html = `
-        <div class="detail-title" translate="no">
-          ${coin.symbol}
-          <span class="coin-tag ${type === 'yao' ? 'tag-yao' : type === 'buy' ? 'tag-buy' : 'tag-watch'}">
-            ${type === 'yao' ? '💎 妖币' : type === 'buy' ? '🚀 买入' : '👀 观察'}
-          </span>
-          ${coin.status ? `<span class="coin-tag tag-yao">${coin.status}</span>` : ''}
+      let html = `
+        <div class="detail-title">
+          <span translate="no">${symbol}</span>
+          <span style="font-size: 14px;">$${coin.price.toFixed(6)}</span>
+          <span class="green">+${coin.priceChange?.toFixed(2) || 0}%</span>
         </div>
 
         <div class="detail-grid">
@@ -943,139 +2084,137 @@
           </div>
           <div class="detail-item">
             <div class="detail-item-label">24h涨跌</div>
-            <div class="detail-item-value ${coin.priceChange > 0 ? 'green' : 'red'}">
-              ${coin.priceChange.toFixed(2)}%
-            </div>
+            <div class="detail-item-value ${coin.priceChange > 0 ? 'green' : 'red'}">${coin.priceChange?.toFixed(2) || 0}%</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-item-label">成交体量</div>
+            <div class="detail-item-value">${coin.volMcap ? coin.volMcap.toFixed(2) : '-'}%</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-item-label">持仓量</div>
+            <div class="detail-item-value">${coin.oiMcap ? coin.oiMcap.toFixed(2) : '-'}%</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-item-label">资金费率</div>
+            <div class="detail-item-value ${coin.funding > 0 ? 'green' : 'red'}">${coin.funding?.toFixed(4) || 0}%</div>
           </div>
           <div class="detail-item">
             <div class="detail-item-label">综合评分</div>
-            <div class="detail-item-value">${score.toFixed(1)}/100</div>
+            <div class="detail-item-value">${score.toFixed(0)}/100</div>
           </div>
           <div class="detail-item">
             <div class="detail-item-label">信心度</div>
             <div class="detail-item-value">${confidence.toFixed(0)}%</div>
           </div>
-          <div class="detail-item">
-            <div class="detail-item-label">OI/Mcap</div>
-            <div class="detail-item-value">${coin.oiMcap ? coin.oiMcap.toFixed(2) : '-'}%</div>
+        </div>
+
+        <div class="detail-box">
+          <h3>📊 多维度分析</h3>
+          <div class="detail-row">
+            <span class="detail-label">检测信号</span>
+            <span class="detail-value">${coin.signals?.length || 0}个</span>
           </div>
-          <div class="detail-item">
-            <div class="detail-item-label">Vol/Mcap</div>
-            <div class="detail-item-value">${coin.volMcap ? coin.volMcap.toFixed(2) : '-'}%</div>
+          <div class="detail-row">
+            <span class="detail-label">信号清单</span>
+            <span class="detail-value" style="text-align: right; max-width: 60%; word-break: break-word;">
+              ${coin.signals?.join(' | ') || '-'}
+            </span>
           </div>
-          <div class="detail-item">
-            <div class="detail-item-label">Funding</div>
-            <div class="detail-item-value ${coin.funding > 0 ? 'green' : 'red'}">
-              ${coin.funding.toFixed(4)}%
+          <div class="detail-row">
+            <span class="detail-label">核心原因</span>
+            <span class="detail-value" style="text-align: right; max-width: 60%; word-break: break-word;">
+              ${coin.reason || '-'}
+            </span>
+          </div>
+        </div>
+
+        ${(() => {
+          const scenarios = analyzeScenarios(coin, prev, twoStepsAgo);
+          if (scenarios.length === 0) return '';
+          return `
+            <div class="detail-box tracking">
+              <h3>🎯 场景分析</h3>
+              ${scenarios.map(s => `
+                <div class="scenario-box">
+                  <div class="scenario-title">
+                    ${s.name}
+                    <span class="scenario-badge">${s.probability}</span>
+                  </div>
+                  <div class="scenario-content">
+                    <div style="margin-bottom: 6px;">${s.description}</div>
+                    <div style="color: ${s.confidence === 'VERY_HIGH' ? '#4ade80' : s.confidence === 'HIGH' ? '#60a5fa' : '#fbbf24'};">
+                      ${s.action}
+                    </div>
+                  </div>
+                </div>
+              `).join('')}
             </div>
-          </div>
-        </div>
+          `;
+        })()}
 
         <div class="detail-box">
-          <h3>📋 多维度分析</h3>
-          <div class="decision-row">
-            <span class="decision-label">检测证据</span>
-            <span class="decision-value">${coin.signals.length}个信号触发</span>
+          <h3>🎯 止损止盈方案</h3>
+          <div class="detail-row">
+            <span class="detail-label">入场价</span>
+            <span class="detail-value">$${coin.price.toFixed(6)}</span>
           </div>
-          <div class="decision-row">
-            <span class="decision-label">信号清单</span>
-            <span class="decision-value">${coin.signals.join(' | ')}</span>
+          <div class="detail-row">
+            <span class="detail-label">🔴 止损</span>
+            <span class="detail-value red">$${tp.sl} (-3%)</span>
           </div>
-          <div class="decision-row">
-            <span class="decision-label">核心原因</span>
-            <span class="decision-value">${coin.reason}</span>
+          <div class="detail-row">
+            <span class="detail-label">🟢 TP1</span>
+            <span class="detail-value green">$${tp.tp1} (+${tp.tp1_percent}%) - 卖${type === 'yao' ? '25%' : '30%'}</span>
           </div>
-          <div class="confidence-bar" style="margin-top: 8px;">
-            <div class="confidence-fill" style="width: ${confidence}%"></div>
-            <span class="confidence-text">${confidence.toFixed(0)}% 信心</span>
+          <div class="detail-row">
+            <span class="detail-label">🟢 TP2</span>
+            <span class="detail-value green">$${tp.tp2} (+${tp.tp2_percent}%) - 卖${type === 'yao' ? '25%' : '30%'}</span>
           </div>
-        </div>
-
-        <div class="detail-box">
-          <h3>💡 交易建议</h3>
-          <div class="decision-row">
-            <span class="decision-label">推荐方式</span>
-            <span class="decision-value">${type === 'yao' ? '合约试水' : '现货建仓'}</span>
-          </div>
-          <div class="decision-row">
-            <span class="decision-label">仓位</span>
-            <span class="decision-value">${type === 'yao' ? '账户 1-3%' : '账户 1-2%'}</span>
-          </div>
-          <div class="decision-row">
-            <span class="decision-label">策略</span>
-            <span class="decision-value">${getTradingAdvice(coin, type)}</span>
-          </div>
-        </div>
-
-        <div class="detail-box">
-          <h3>🎯 止损止盈</h3>
-          <div class="decision-row">
-            <span class="decision-label">入场</span>
-            <span class="decision-value">$${coin.price.toFixed(6)}</span>
-          </div>
-          <div class="decision-row">
-            <span class="decision-label">止损</span>
-            <span class="decision-value" style="color: #ef4444;">$${tp.sl} (-3%)</span>
-          </div>
-          <div class="decision-row">
-            <span class="decision-label">TP1</span>
-            <span class="decision-value" style="color: #22c55e;">$${tp.tp1} (${type === 'yao' ? '+5%' : '+3%'}) - 卖${type === 'yao' ? '25%' : '30%'}</span>
-          </div>
-          <div class="decision-row">
-            <span class="decision-label">TP2</span>
-            <span class="decision-value" style="color: #22c55e;">$${tp.tp2} (${type === 'yao' ? '+10%' : '+8%'}) - 卖${type === 'yao' ? '25%' : '30%'}</span>
-          </div>
-          <div class="decision-row">
-            <span class="decision-label">TP3</span>
-            <span class="decision-value" style="color: #22c55e;">$${tp.tp3} (${type === 'yao' ? '+20%' : '+15%'}) - 卖${type === 'yao' ? '50%' : '40%'}</span>
+          <div class="detail-row">
+            <span class="detail-label">🟢 TP3</span>
+            <span class="detail-value green">$${tp.tp3} (+${tp.tp3_percent}%) - 卖${type === 'yao' ? '50%' : '40%'}</span>
           </div>
         </div>
 
         <div class="detail-box">
           <h3>📈 加仓计划</h3>
-          <div class="decision-row">
-            <span class="decision-label">回调加仓1</span>
-            <span class="decision-value">$${add.add1}</span>
+          <div class="detail-row">
+            <span class="detail-label">回调加仓1</span>
+            <span class="detail-value yellow">$${add.add1} (${add.add1_percent}%)</span>
           </div>
-          <div class="decision-row">
-            <span class="decision-label">回调加仓2</span>
-            <span class="decision-value">$${add.add2}</span>
+          <div class="detail-row">
+            <span class="detail-label">回调加仓2</span>
+            <span class="detail-value yellow">$${add.add2} (${add.add2_percent}%)</span>
           </div>
-          <div class="decision-row">
-            <span class="decision-label">加仓策略</span>
-            <span class="decision-value">每次加仓 ${type === 'yao' ? '25%' : '30%'} 仓位</span>
-          </div>
-        </div>
-
-        <div class="detail-box">
-          <h3>🔍 关键指标详解</h3>
-          <div class="decision-row">
-            <span class="decision-label">OI/Vol比</span>
-            <span class="decision-value">${coin.oiMcap && coin.volMcap ? (coin.oiMcap / coin.volMcap).toFixed(2) : '-'}</span>
-          </div>
-          <div class="decision-row">
-            <span class="decision-label">成交真实性</span>
-            <span class="decision-value ${coin.oiMcap && coin.volMcap && (coin.oiMcap / coin.volMcap) < 2 ? 'green' : 'red'}>
-              ${coin.oiMcap && coin.volMcap && (coin.oiMcap / coin.volMcap) < 2 ? '✓真实' : '⚠️ 可能虚假'}
-            </span>
-          </div>
-          <div class="decision-row">
-            <span class="decision-label">资金方向</span>
-            <span class="decision-value ${coin.funding > 0 ? 'green' : 'red'}">
-              ${coin.funding > 0.01 ? '🔴 多头加码' : coin.funding > 0 ? '🟡 温和做多' : '🟢 空头优势'}
-            </span>
+          <div class="detail-row">
+            <span class="detail-label">加仓比例</span>
+            <span class="detail-value">每次 ${type === 'yao' ? '25%' : '30%'} 仓位</span>
           </div>
         </div>
 
-        <div class="detail-box ${type === 'yao' ? 'risk' : 'warn'}">
-          <h3>${type === 'yao' ? '⚠️ 妖币风险提示' : '💡 交易提示'}</h3>
-          <div class="decision-row">
-            <span class="decision-label">必读</span>
-            <span class="decision-value" style="font-size: 10px; line-height: 1.6;">
-              ${type === 'yao' 
-                ? '妖币基于多维度信号触发，但仍存风险。必须严格止损 -3%，不要抱希望。按计划执行，拉盘前期介入收益最大。信心度越高越可信。' 
-                : '建议币已通过7维度分析，相对稳健。推荐现货分批建仓。分三次进场，每次1/3仓位，降低风险。'}
-            </span>
+        <div class="detail-box ${type === 'yao' ? 'risk' : type === 'collected' ? 'tracking' : 'warn'}">
+          <h3>${type === 'yao' ? '⚠️ 风险提示' : type === 'collected' ? '💡 自选追踪' : '💡 交易建议'}</h3>
+          <div style="font-size: 11px; color: inherit; line-height: 1.6;">
+            ${type === 'yao' ? `
+              ✓ 妖币基于多维度信号触发<br/>
+              ✓ 强嫌疑可小仓试水(1-2%)，中嫌疑观察为主<br/>
+              ✓ 必须严格止损 -3%<br/>
+              ✓ 拉盘前期介入收益最大<br/>
+              ✓ 不要抄底高位<br/>
+              ✓ 48小时沉默机制防止重复检测
+            ` : type === 'collected' ? `
+              ✓ 实时追踪收藏价与现价<br/>
+              ✓ OI增长+价格下跌 = 吸筹信号<br/>
+              ✓ 资费过高(>4%) = 出货风险<br/>
+              ✓ 分批加仓、分批减仓<br/>
+              ✓ 情景分析仅供参考，结合实盘判断
+            ` : `
+              ✓ ${coin.grade ? `${coin.grade}级币` : '暂未评级'}<br/>
+              ✓ ${coin.leverage || '现货为主'}<br/>
+              ✓ 分批建仓，不追高<br/>
+              ✓ 按情景分析调整策略<br/>
+              ✓ 止损止盈严格执行
+            `}
           </div>
         </div>
       `;
@@ -1088,63 +2227,34 @@
       document.getElementById('detail-modal').classList.remove('active');
     }
 
-    function calculateTP(row, isYao) {
-      const p = row.price;
-      if (isYao) {
-        return {
-          sl: (p * 0.97).toFixed(6),
-          tp1: (p * 1.05).toFixed(6),
-          tp2: (p * 1.10).toFixed(6),
-          tp3: (p * 1.20).toFixed(6)
-        };
-      } else {
-        return {
-          sl: (p * 0.97).toFixed(6),
-          tp1: (p * 1.03).toFixed(6),
-          tp2: (p * 1.08).toFixed(6),
-          tp3: (p * 1.15).toFixed(6)
-        };
-      }
-    }
-
-    function calculateAdd(row, isYao) {
-      const p = row.price;
-      if (isYao) {
-        return {
-          add1: (p * 0.95).toFixed(6),
-          add2: (p * 0.90).toFixed(6)
-        };
-      } else {
-        return {
-          add1: (p * 0.97).toFixed(6),
-          add2: (p * 0.94).toFixed(6)
-        };
-      }
-    }
-
+    // ======================== 搜索功能 ========================
     function handleSearch(query) {
       const dropdown = document.getElementById('search-dropdown');
-      
+
       if (!query.trim()) {
         dropdown.classList.remove('active');
         return;
       }
 
-      const filtered = allCoinsData.filter(coin => 
-        coin.symbol.toUpperCase().includes(query.toUpperCase())
-      ).slice(0, 20);
+      const filtered = allCoinsData
+        .filter(coin => coin.symbol.toUpperCase().includes(query.toUpperCase()))
+        .slice(0, 20);
 
       if (filtered.length === 0) {
         dropdown.classList.remove('active');
         return;
       }
 
-      dropdown.innerHTML = filtered.map(coin => `
-        <div class="search-item" onclick="searchSelect('${coin.symbol}')">
-          <div class="search-item-symbol" translate="no">${coin.symbol}</div>
-          <div class="search-item-mcap">市值: $${fmtNum(coin.mcap, 2)}</div>
-        </div>
-      `).join('');
+      dropdown.innerHTML = filtered
+        .map(coin => `
+          <div class="search-item" onclick="searchSelect('${coin.symbol}')">
+            <div class="search-item-symbol" translate="no">${coin.symbol}</div>
+            <div class="search-item-info">
+              市值: $${fmtNum(coin.mcap, 2)} | 24h: ${coin.priceChange?.toFixed(2) || 0}%
+            </div>
+          </div>
+        `)
+        .join('');
 
       dropdown.classList.add('active');
     }
@@ -1152,49 +2262,59 @@
     function searchSelect(symbol) {
       document.getElementById('search-input').value = symbol;
       document.getElementById('search-dropdown').classList.remove('active');
-      
+
       const coin = allCoinsData.find(c => c.symbol === symbol);
-      if (!coin) {
-        document.getElementById('search-result').innerHTML = '<div class="empty-state">未找到</div>';
-        return;
-      }
+      if (!coin) return;
 
-      const yaoCheck = detectYaoCoin(coin, previousData[symbol], twoStepsAgoData[symbol]);
-      const buyCheck = detectBuyCoin(coin, previousData[symbol], twoStepsAgoData[symbol]);
-      const watchCheck = detectWatch(coin, previousData[symbol], twoStepsAgoData[symbol]);
+      const prev = previousData[symbol];
+      const twoStepsAgo = twoStepsAgoData[symbol];
 
-      let type = '';
-      if (yaoCheck.isYao) {
-        type = 'yao';
-        coin.status = yaoCheck.status;
-        coin.yaoScore = yaoCheck.yaoScore;
-        coin.confidence = yaoCheck.confidence;
-        coin.signals = yaoCheck.signals;
-        coin.reason = yaoCheck.reason;
-      } else if (buyCheck.isBuy) {
-        type = 'buy';
-        coin.buyScore = buyCheck.buyScore;
-        coin.confidence = buyCheck.confidence;
-        coin.signals = buyCheck.signals;
-        coin.reason = buyCheck.reason;
-      } else if (watchCheck.isWatch) {
-        type = 'watch';
-        coin.watchScore = watchCheck.watchScore;
-        coin.signals = watchCheck.signals;
-        coin.reason = watchCheck.reason;
-      } else {
-        document.getElementById('search-result').innerHTML = `
-          <div class="empty-state">
-            💭 暂不符合推荐标准<br/>
-            信号不足或指标不匹配
-          </div>
-        `;
-        return;
-      }
+      let type = 'buy';
+      if (coin.level === '妖币') type = 'yao';
+      else if (coin.level === '观察') type = 'watch';
 
       showDetail(symbol, type);
     }
 
+    // ======================== API 交互 ========================
+    async function getJSON(url) {
+      try {
+        const response = await fetch(url, {
+          headers: { 'Accept-Encoding': 'gzip, deflate' }
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return await response.json();
+      } catch (error) {
+        console.error(`获取 ${url} 失败:`, error);
+        return null;
+      }
+    }
+
+    async function fetchOpenInterest(symbols) {
+      const oiMap = {};
+      const chunkSize = 50;
+
+      for (let i = 0; i < symbols.length; i += chunkSize) {
+        const chunk = symbols.slice(i, i + chunkSize);
+        const promises = chunk.map(async symbol => {
+          try {
+            const data = await getJSON(
+              `https://fapi.binance.com/fapi/v1/openInterest?symbol=${symbol}`
+            );
+            if (data && data.openInterest) {
+              oiMap[symbol] = parseFloat(data.openInterest);
+            }
+          } catch (e) {
+            console.error(`获取 ${symbol} OI 失败`);
+          }
+        });
+        await Promise.all(promises);
+      }
+
+      return oiMap;
+    }
+
+    // ======================== 数据加载 ========================
     async function loadData() {
       if (isLoading) return;
 
@@ -1209,7 +2329,9 @@
           getJSON('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1')
         ]);
 
-        if (!exchangeInfo || !ticker24h || !premiumIndex) throw new Error('数据获取失败');
+        if (!exchangeInfo || !ticker24h || !premiumIndex) {
+          throw new Error('数据获取失败');
+        }
 
         const symbols = exchangeInfo.symbols
           .filter(s => s.contractType === 'PERPETUAL' && s.quoteAsset === 'USDT' && s.status === 'TRADING')
@@ -1221,8 +2343,10 @@
         const tickerMap = Object.fromEntries(ticker24h.map(x => [x.symbol, x]));
         const premiumMap = Object.fromEntries(premiumIndex.map(x => [x.symbol, x]));
         const mcapMap = {};
+
         gecko.forEach(x => {
-          mcapMap[(x.symbol || '').toUpperCase() + 'USDT'] = x.market_cap;
+          const symbol = (x.symbol || '').toUpperCase();
+          mcapMap[symbol + 'USDT'] = x.market_cap || 0;
         });
 
         allRows = { yao: [], buy: [], watch: [] };
@@ -1231,6 +2355,7 @@
         for (const symbol of symbols) {
           const t = tickerMap[symbol];
           const p = premiumMap[symbol];
+
           if (!t || !p) continue;
 
           const price = parseFloat(p.markPrice || t.lastPrice || 0);
@@ -1245,26 +2370,68 @@
 
           let volMcap = null;
           let oiMcap = null;
+
           if (mcap && mcap > 0) {
-            volMcap = quoteVol / mcap * 100;
-            oiMcap = oiValue / mcap * 100;
+            volMcap = (quoteVol / mcap) * 100;
+            oiMcap = (oiValue / mcap) * 100;
           }
 
           const row = {
-            symbol, price, mcap, quoteVol, funding, priceChange,
-            oi, oiValue, volMcap, oiMcap
+            symbol,
+            price,
+            mcap,
+            quoteVol,
+            funding,
+            priceChange,
+            oi,
+            oiValue,
+            volMcap,
+            oiMcap
           };
 
           allCoinsData.push(row);
 
-          // 使用时序数据进行三维度分析
           const prev = previousData[symbol];
           const twoStepsAgo = twoStepsAgoData[symbol];
 
-          // 优先判建议，再判妖币，最后判观察
+          // 检测妖币（考虑沉默机制）
+          if (triggeredYaos[symbol] && !isYaoExpired(symbol)) {
+            // 在沉默期内，直接使用已触发的妖币
+            const existingYao = triggeredYaos[symbol];
+            row.level = '妖币';
+            row.status = existingYao.status;
+            row.action = existingYao.action;
+            row.yaoScore = existingYao.yaoScore;
+            row.confidence = existingYao.confidence;
+            row.signals = existingYao.signals;
+            row.reason = existingYao.reason;
+            allRows.yao.push(row);
+            continue;
+          }
+
+          if (!triggeredYaos[symbol] || isYaoExpired(symbol)) {
+            const yaoCheck = detectYaoCoin(row, prev, twoStepsAgo);
+            if (yaoCheck.isYao) {
+              addTriggeredYao(symbol, yaoCheck);
+              row.level = '妖币';
+              row.status = yaoCheck.status;
+              row.action = yaoCheck.action;
+              row.yaoScore = yaoCheck.yaoScore;
+              row.confidence = yaoCheck.confidence;
+              row.signals = yaoCheck.signals;
+              row.reason = yaoCheck.reason;
+              allRows.yao.push(row);
+              continue;
+            }
+          }
+
+          // 检测建议币
           const buyCheck = detectBuyCoin(row, prev, twoStepsAgo);
           if (buyCheck.isBuy) {
             row.level = '建议';
+            row.grade = buyCheck.grade;
+            row.position = buyCheck.position;
+            row.leverage = buyCheck.leverage;
             row.buyScore = buyCheck.buyScore;
             row.confidence = buyCheck.confidence;
             row.signals = buyCheck.signals;
@@ -1273,18 +2440,7 @@
             continue;
           }
 
-          const yaoCheck = detectYaoCoin(row, prev, twoStepsAgo);
-          if (yaoCheck.isYao) {
-            row.level = '妖币';
-            row.status = yaoCheck.status;
-            row.yaoScore = yaoCheck.yaoScore;
-            row.confidence = yaoCheck.confidence;
-            row.signals = yaoCheck.signals;
-            row.reason = yaoCheck.reason;
-            allRows.yao.push(row);
-            continue;
-          }
-
+          // 检测观察币
           const watchCheck = detectWatch(row, prev, twoStepsAgo);
           if (watchCheck.isWatch) {
             row.level = '观察';
@@ -1295,15 +2451,30 @@
           }
         }
 
-        // 排序
-        allRows.yao.sort((a, b) => b.yaoScore - a.yaoScore);
-        allRows.buy.sort((a, b) => b.buyScore - a.buyScore);
-        allRows.watch.sort((a, b) => b.watchScore - a.watchScore);
+        // 加入已过期的妖币（用户未删除）
+        Object.values(triggeredYaos).forEach(yao => {
+          if (!allCoinsData.find(c => c.symbol === yao.symbol)) {
+            const now = Date.now();
+            const elapsed = now - yao.triggeredTime;
+            const silenceDuration = 48 * 60 * 60 * 1000;
+            allRows.yao.unshift({
+              ...yao,
+              level: '妖币',
+              isActive: elapsed < silenceDuration,
+              remainingMinutes: Math.max(0, Math.ceil((silenceDuration - elapsed) / 1000 / 60))
+            });
+          }
+        });
 
-        // 保存历史（两层历史数据）
-        const newTwoStepsAgo = previousData;
+        // 排序
+        allRows.yao.sort((a, b) => (b.yaoScore || 0) - (a.yaoScore || 0));
+        allRows.buy.sort((a, b) => (b.buyScore || 0) - (a.buyScore || 0));
+        allRows.watch.sort((a, b) => (b.watchScore || 0) - (a.watchScore || 0));
+
+        // 保存历史数据
+        const newTwoStepsAgo = { ...previousData };
         const newPreviousData = {};
-        
+
         [...allRows.yao, ...allRows.buy, ...allRows.watch].forEach(row => {
           newPreviousData[row.symbol] = {
             price: row.price,
@@ -1316,19 +2487,21 @@
         twoStepsAgoData = newTwoStepsAgo;
         previousData = newPreviousData;
 
+        localStorage.setItem('previousData', JSON.stringify(previousData));
+        localStorage.setItem('twoStepsAgoData', JSON.stringify(twoStepsAgoData));
+
+        // 渲染
         renderYaoList();
         renderBuyList();
         renderWatchList();
+        renderCollectedList();
+        updateBadges();
 
-        // 统计
-        document.getElementById('stat-yao').innerText = allRows.yao.length;
-        document.getElementById('stat-buy').innerText = allRows.buy.length;
-        document.getElementById('stat-watch').innerText = allRows.watch.length;
+        document.getElementById('last-update').innerText = 
+          '✅ ' + new Date().toLocaleTimeString();
 
-        document.getElementById('last-update').innerText = '✅ ' + new Date().toLocaleTimeString();
-
-      } catch (e) {
-        console.error(e);
+      } catch (error) {
+        console.error('加载数据失败:', error);
         document.getElementById('last-update').innerText = '❌ 获取失败';
       } finally {
         isLoading = false;
@@ -1336,9 +2509,10 @@
       }
     }
 
+    // ======================== 自动刷新 ========================
     function startAutoRefresh() {
       let countdown = 60;
-      
+
       loadData();
 
       autoRefreshInterval = setInterval(() => {
@@ -1352,6 +2526,7 @@
       }, 1000);
     }
 
+    // ======================== 初始化 ========================
     startAutoRefresh();
 
     document.getElementById('search-input').addEventListener('blur', () => {
@@ -1368,6 +2543,10 @@
 
     window.addEventListener('beforeunload', () => {
       if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+      localStorage.setItem('previousData', JSON.stringify(previousData));
+      localStorage.setItem('twoStepsAgoData', JSON.stringify(twoStepsAgoData));
+      localStorage.setItem('triggeredYaos', JSON.stringify(triggeredYaos));
+      localStorage.setItem('collectedCoins', JSON.stringify(collectedCoins));
     });
   </script>
 </body>
