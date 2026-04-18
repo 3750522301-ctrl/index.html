@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>币安永续交易管理系统 v8</title>
+  <title>币安永续交易管理系统 v8.5</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -200,6 +200,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      flex-wrap: wrap;
     }
     .panel-grid {
       display: grid;
@@ -261,6 +262,93 @@
     .decision-item-value {
       font-weight: bold;
       color: #e5eefb;
+    }
+    .trading-type-badge {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: bold;
+      border: 1px solid;
+      margin-right: 8px;
+    }
+    .badge-spot {
+      background: rgba(34, 197, 94, .2);
+      color: #22c55e;
+      border-color: rgba(34, 197, 94, .5);
+    }
+    .badge-futures {
+      background: rgba(59, 130, 246, .2);
+      color: #93c5fd;
+      border-color: rgba(59, 130, 246, .5);
+    }
+    .leverage-box {
+      background: rgba(168, 85, 247, .15);
+      border: 2px solid rgba(168, 85, 247, .5);
+      border-radius: 12px;
+      padding: 16px;
+      margin: 16px 0;
+    }
+    .leverage-box h3 {
+      color: #d8b4fe;
+      margin-bottom: 12px;
+      font-size: 15px;
+    }
+    .leverage-item {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding: 10px;
+      background: rgba(168, 85, 247, .08);
+      border-radius: 8px;
+    }
+    .leverage-item:last-child { margin-bottom: 0; }
+    .leverage-label {
+      color: #d8b4fe;
+      font-size: 12px;
+    }
+    .leverage-value {
+      color: #e5eefb;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    .profit-loss-box {
+      background: rgba(16, 196, 245, .15);
+      border: 2px solid rgba(16, 196, 245, .5);
+      border-radius: 12px;
+      padding: 16px;
+      margin: 16px 0;
+    }
+    .profit-loss-box h3 {
+      color: #7dd3fc;
+      margin-bottom: 12px;
+      font-size: 15px;
+    }
+    .profit-loss-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .profit-loss-item {
+      background: rgba(16, 196, 245, .08);
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .profit-loss-label {
+      color: #7dd3fc;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+    .profit-loss-value {
+      font-weight: bold;
+      font-size: 16px;
+    }
+    .profit {
+      color: #22c55e;
+    }
+    .loss {
+      color: #ef4444;
     }
     .squeeze-indicator {
       display: inline-block;
@@ -368,6 +456,7 @@
     @media (max-width: 1200px) {
       .panel-grid { grid-template-columns: repeat(2, 1fr); }
       .stats { grid-template-columns: repeat(2, 1fr); }
+      .profit-loss-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 640px) {
       .panel-grid { grid-template-columns: 1fr; }
@@ -376,11 +465,11 @@
   </style>
 </head>
 <body>
-  <div class="version-tag">v8 交易管理系统</div>
+  <div class="version-tag">v8.5 现货/合约杠杆</div>
 
   <div class="container">
-    <h1>⚡ 币安永续交易管理系统</h1>
-    <p class="subtitle">实时监控 | 交易决策 | 止盈止损管理</p>
+    <h1>⚡ 币安交易管理系统</h1>
+    <p class="subtitle">实时监控 | 现货/合约 | 杠杆管理 | 止盈止损</p>
 
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('monitor', this)">📊 精选监控</button>
@@ -408,12 +497,12 @@
             <div class="value" id="stat-yao">0</div>
           </div>
           <div class="card">
-            <div class="label">拉盘中</div>
-            <div class="value green" id="stat-yao-up">0</div>
+            <div class="label">推荐合约</div>
+            <div class="value green" id="stat-yao-futures">0</div>
           </div>
           <div class="card">
-            <div class="label">等待回调</div>
-            <div class="value" id="stat-yao-wait">0</div>
+            <div class="label">强动量</div>
+            <div class="value" id="stat-yao-momentum">0</div>
           </div>
         </div>
         <div id="yao-list"></div>
@@ -428,12 +517,12 @@
             <div class="value" id="stat-buy">0</div>
           </div>
           <div class="card">
-            <div class="label">平均共振分</div>
-            <div class="value" id="stat-avg-score">-</div>
+            <div class="label">现货推荐</div>
+            <div class="value green" id="stat-buy-spot">0</div>
           </div>
           <div class="card">
-            <div class="label">高质量推荐</div>
-            <div class="value green" id="stat-high-quality">0</div>
+            <div class="label">高质量 (>85分)</div>
+            <div class="value" id="stat-high-quality">0</div>
           </div>
         </div>
         <div id="buy-list"></div>
@@ -515,7 +604,100 @@
       return map;
     }
 
-    // 挤压空头检测 - 新增
+    // 新增：交易类型和杠杆建议
+    function getTradingRecommendation(row, isYaoCoin = false, score = 0) {
+      if (isYaoCoin) {
+        // 妖币：推荐合约
+        const priceChange = row.priceChange;
+        
+        if (priceChange < -30) {
+          // 下跌过多，高风险
+          return {
+            type: 'futures',
+            typeName: '合约',
+            leverage: 1,
+            reason: '高风险下跌，用 1 倍杠杆降低风险',
+            warning: '⚠️ 建议只持仓 20-30%，随时准备离场'
+          };
+        } else if (priceChange < -15) {
+          // 中等下跌
+          return {
+            type: 'futures',
+            typeName: '合约',
+            leverage: 2,
+            reason: '下跌到底部，用 2 倍杠杆放大收益',
+            warning: '📌 设置好止损和止盈，严格执行'
+          };
+        } else {
+          // 下跌不多，可以激进
+          return {
+            type: 'futures',
+            typeName: '合约',
+            leverage: 3,
+            reason: '即将拉盘，用 3 倍杠杆最大化收益',
+            warning: '🔥 最激进策略，要有足够本金'
+          };
+        }
+      } else {
+        // 建议买入：根据共振分选择
+        if (score >= 85) {
+          // 高质量信号
+          return {
+            type: 'spot',
+            typeName: '现货',
+            leverage: 1,
+            reason: '高质量信号，现货安全持有',
+            warning: '💰 可以长期持有，不用设置止损'
+          };
+        } else if (score >= 75) {
+          // 良好信号
+          return {
+            type: 'futures',
+            typeName: '合约 (低杠杆)',
+            leverage: 1,
+            reason: '良好信号，用 1 倍合约更灵活',
+            warning: '⚙️ 可以随时调整，需要止损'
+          };
+        } else {
+          // 一般信号
+          return {
+            type: 'futures',
+            typeName: '合约 (1倍)',
+            leverage: 1,
+            reason: '一般信号，用 1 倍合约试单',
+            warning: '🧪 小额试单，收集更多数据'
+          };
+        }
+      }
+    }
+
+    // 新增：计算杠杆下的盈亏
+    function calculateLeveragePnL(entryPrice, takeProfit, stopLoss, leverage, initialCapital = 100) {
+      const tp1Change = ((takeProfit.tp1 - entryPrice) / entryPrice) * 100;
+      const tp2Change = ((takeProfit.tp2 - entryPrice) / entryPrice) * 100;
+      const tp3Change = ((takeProfit.tp3 - entryPrice) / entryPrice) * 100;
+      const slChange = ((stopLoss - entryPrice) / entryPrice) * 100;
+
+      // 杠杆下的收益
+      const tp1Profit = tp1Change * leverage;
+      const tp2Profit = tp2Change * leverage;
+      const tp3Profit = tp3Change * leverage;
+      const slLoss = slChange * leverage;
+
+      // 实际金额（以 100 美元为例）
+      const tp1Amount = initialCapital * (1 + tp1Profit / 100);
+      const tp2Amount = initialCapital * (1 + tp2Profit / 100);
+      const tp3Amount = initialCapital * (1 + tp3Profit / 100);
+      const slAmount = initialCapital * (1 + slLoss / 100);
+
+      return {
+        tp1: { change: tp1Profit.toFixed(2), amount: tp1Amount.toFixed(2) },
+        tp2: { change: tp2Profit.toFixed(2), amount: tp2Amount.toFixed(2) },
+        tp3: { change: tp3Profit.toFixed(2), amount: tp3Amount.toFixed(2) },
+        sl: { change: slLoss.toFixed(2), amount: slAmount.toFixed(2) }
+      };
+    }
+
     function detectSqueeze(row, previous) {
       if (!previous) return { squeeze: 'unknown', strength: 0 };
 
@@ -523,12 +705,10 @@
       const priceIncrease = (row.price - previous.price) / previous.price;
       const fundingIncrease = row.funding - previous.funding;
 
-      // OI 增加 + 价格上升 + Funding 上升 = 挤压空头
       if (oiIncrease > 0.03 && priceIncrease > 0.01 && fundingIncrease > 0) {
         return { squeeze: 'up', strength: Math.min(100, oiIncrease * 100 + priceIncrease * 100) };
       }
 
-      // OI 增加 + 价格下降 = 假挤压
       if (oiIncrease > 0.05 && priceIncrease < -0.02) {
         return { squeeze: 'down', strength: Math.min(100, oiIncrease * 100) };
       }
@@ -536,49 +716,42 @@
       return { squeeze: 'none', strength: 0 };
     }
 
-    // 动量判断 - 新增
     function detectMomentum(row, previous) {
       if (!previous) return { momentum: 'unknown', strength: 0 };
 
       const priceVelocity = (row.price - previous.price) / previous.price * 100;
       const oiVelocity = (row.oiMcap - previous.oiMcap) / previous.oiMcap * 100;
 
-      // 价格变化 > 1% + OI 增加 = 强动量
       if (Math.abs(priceVelocity) > 1 && oiVelocity > 2) {
         return { momentum: 'strong', strength: Math.min(100, Math.abs(priceVelocity) * 10) };
       }
 
-      // 价格变化 > 0.5% = 中动量
       if (Math.abs(priceVelocity) > 0.5) {
         return { momentum: 'medium', strength: Math.abs(priceVelocity) * 5 };
       }
 
-      // 价格基本无变化 = 无动量
       return { momentum: 'none', strength: 0 };
     }
 
-    // 计算止损止盈 - 新增
     function calculateTakeProfit(row, isYaoCoin = false) {
       const entryPrice = row.price;
       
       if (isYaoCoin) {
-        // 妖币：更激进的止盈
         return {
-          stopLoss: (entryPrice * 0.97).toFixed(6), // -3%
-          tp1: (entryPrice * 1.05).toFixed(6),      // +5%
-          tp2: (entryPrice * 1.10).toFixed(6),      // +10%
-          tp3: (entryPrice * 1.20).toFixed(6),      // +20%
+          stopLoss: (entryPrice * 0.97).toFixed(6),
+          tp1: (entryPrice * 1.05).toFixed(6),
+          tp2: (entryPrice * 1.10).toFixed(6),
+          tp3: (entryPrice * 1.20).toFixed(6),
           tp1Ratio: '30%',
           tp2Ratio: '40%',
           tp3Ratio: '30%'
         };
       } else {
-        // 正常币：保守的止盈
         return {
-          stopLoss: (entryPrice * 0.97).toFixed(6), // -3%
-          tp1: (entryPrice * 1.03).toFixed(6),      // +3%
-          tp2: (entryPrice * 1.08).toFixed(6),      // +8%
-          tp3: (entryPrice * 1.15).toFixed(6),      // +15%
+          stopLoss: (entryPrice * 0.97).toFixed(6),
+          tp1: (entryPrice * 1.03).toFixed(6),
+          tp2: (entryPrice * 1.08).toFixed(6),
+          tp3: (entryPrice * 1.15).toFixed(6),
           tp1Ratio: '40%',
           tp2Ratio: '40%',
           tp3Ratio: '20%'
@@ -586,26 +759,24 @@
       }
     }
 
-    // 计算加仓价格 - 新增
     function calculateAdditionalBuy(row, isYaoCoin = false) {
       const entryPrice = row.price;
       
       if (isYaoCoin) {
         return {
-          add1: (entryPrice * 0.95).toFixed(6),  // -5% 加仓
-          add2: (entryPrice * 0.90).toFixed(6),  // -10% 加仓
+          add1: (entryPrice * 0.95).toFixed(6),
+          add2: (entryPrice * 0.90).toFixed(6),
           ratio: '平均 5% 回调加仓'
         };
       } else {
         return {
-          add1: (entryPrice * 0.97).toFixed(6),  // -3% 加仓
-          add2: (entryPrice * 0.94).toFixed(6),  // -6% 加仓
+          add1: (entryPrice * 0.97).toFixed(6),
+          add2: (entryPrice * 0.94).toFixed(6),
           ratio: '平均 5% 回调加仓'
         };
       }
     }
 
-    // 风险等级判断 - 新增
     function assessRiskLevel(row, isYaoCoin = false) {
       const score = row.yaoScore || row.buyScore || 0;
       const priceChange = Math.abs(row.priceChange);
@@ -621,16 +792,15 @@
         return { level: 'low', action: '✅ 风险可控，可以分批止盈（30%-40%-30%）', color: 'success' };
       } else {
         if (score > 85) {
-          return { level: 'low', action: '✅ 高质量信号，可以 1% 仓位试单，分批止盈（40%-40%-20%）', color: 'success' };
+          return { level: 'low', action: '✅ 高质量信号，现货持有，可分批止盈（40%-40%-20%）', color: 'success' };
         }
         if (score > 75) {
-          return { level: 'low', action: '✅ 良好信号，可以 0.5% 仓位试单，设置 -3% 止损', color: 'success' };
+          return { level: 'low', action: '✅ 良好信号，可以 1 倍合约，设置 -3% 止损', color: 'success' };
         }
-        return { level: 'medium', action: '⚡ 一般信号，建议观察一阵，或者 0.3% 小额试单', color: 'warning' };
+        return { level: 'medium', action: '⚡ 一般信号，建议观察或 0.3% 小额试单', color: 'warning' };
       }
     }
 
-    // 共振评分系统
     function calculateResonanceScore(row, previous) {
       let score = 0;
       let signals = [];
@@ -647,7 +817,7 @@
       score += priceSignal;
 
       let oiSignal = 0;
-      if (row.oiMcap && row.oiMcap > 1 && row.oiMcap < 15) {
+      if (row.oiMcap && row.oiMcap >1 && row.oiMcap < 15) {
         oiSignal += 15;
         signals.push('OI活跃');
       }
@@ -692,7 +862,6 @@
       };
     }
 
-    // 妖币检测
     function detectYaoCoinV2(row, previous) {
       const resonance = calculateResonanceScore(row, previous);
       
@@ -731,7 +900,6 @@
       return { isYao: false };
     }
 
-    // 建议买入检测
     function detectBuyCoinV2(row, previous) {
       const resonance = calculateResonanceScore(row, previous);
 
@@ -766,11 +934,14 @@
 
     function renderTradingPanel(row) {
       const isYaoCoin = row.level === '妖币';
+      const score = row.yaoScore || row.buyScore || 0;
       const tp = calculateTakeProfit(row, isYaoCoin);
       const add = calculateAdditionalBuy(row, isYaoCoin);
       const riskAssess = assessRiskLevel(row, isYaoCoin);
       const squeeze = detectSqueeze(row, previousData[row.symbol]);
       const momentum = detectMomentum(row, previousData[row.symbol]);
+      const trading = getTradingRecommendation(row, isYaoCoin, score);
+      const pnl = calculateLeveragePnL(parseFloat(row.price), tp, parseFloat(tp.stopLoss), trading.leverage, 100);
 
       const squeezeBadge = squeeze.squeeze === 'up' ? 
         '<span class="squeeze-indicator squeeze-up">🔥 挤压空头中</span>' :
@@ -784,11 +955,9 @@
         '<span class="momentum-indicator momentum-weak">⚡ 中动量</span>' :
         '<span class="momentum-indicator momentum-none">❄️ 无动量</span>';
 
-      const riskBadge = `<span class="risk-level risk-${riskAssess.level}">${riskAssess.action}</span>`;
-
-      const baselineText = isYaoCoin ? 
-        `<strong>底层估值</strong>：市值 $${fmtNum(row.mcap, 2)}，相对较低，有上升空间` :
-        `<strong>现在可买</strong>：多个指标共振，当前入场风险可控`;
+      const tradingTypeBadge = trading.type === 'spot' ?
+        '<span class="trading-type-badge badge-spot">💰 现货</span>' :
+        `<span class="trading-type-badge badge-futures">📈 合约 ${trading.leverage}倍</span>`;
 
       const html = `
         <div class="panel-title">
@@ -797,6 +966,7 @@
             ${isYaoCoin ? '💎 妖币' : '🚀 建议买入'}
           </span>
           ${isYaoCoin ? `<span class="tag">${row.riskLevel}</span>` : ''}
+          ${tradingTypeBadge}
         </div>
 
         <div class="panel-grid">
@@ -814,7 +984,7 @@
           </div>
           <div class="panel-item">
             <div class="panel-item-label">共振分</div>
-            <div class="panel-item-value">${(row.yaoScore || row.buyScore).toFixed(1)}/100</div>
+            <div class="panel-item-value">${score.toFixed(1)}/100</div>
           </div>
           <div class="panel-item">
             <div class="panel-item-label">OI/Mcap</div>
@@ -849,27 +1019,41 @@
             <span class="decision-item-label">操作建议</span>
             <span class="decision-item-value">${riskAssess.action}</span>
           </div>
-          ${riskAssess.level === 'high' ? `
-            <div class="decision-item">
-              <span class="decision-item-label">💡 提示</span>
-              <span class="decision-item-value">价格下跌过多或OI过高，建议观望，等待稳定后再入场</span>
-            </div>
-          ` : ''}
+        </div>
+
+        <div class="leverage-box">
+          <h3>📊 交易类型与杠杆</h3>
+          <div class="leverage-item">
+            <div class="leverage-label">推荐交易方式</div>
+            <div class="leverage-value">${trading.typeName}</div>
+          </div>
+          <div class="leverage-item">
+            <div class="leverage-label">杠杆倍数</div>
+            <div class="leverage-value">${trading.leverage}倍</div>
+          </div>
+          <div class="leverage-item">
+            <div class="leverage-label">选择原因</div>
+            <div class="leverage-value" style="color: #d8b4fe; font-size: 13px;">${trading.reason}</div>
+          </div>
+          <div class="leverage-item">
+            <div class="leverage-label">⚠️ 重要提示</div>
+            <div class="leverage-value" style="color: #fca5a5; font-size: 13px;">${trading.warning}</div>
+          </div>
         </div>
 
         <div class="trading-decision">
           <h3>💰 入场决策</h3>
           <div class="decision-item">
             <span class="decision-item-label">入场价</span>
-            <span class="decision-item-value">$${fmtNum(row.price, 6)} <span style="color: #8ca3ba; font-size: 12px;">${isYaoCoin ? '(妖币，高风险)' : '(多指标共振)'}</span></span>
+            <span class="decision-item-value">$${fmtNum(row.price, 6)}</span>
           </div>
           <div class="decision-item">
             <span class="decision-item-label">仓位建议</span>
-            <span class="decision-item-value">${isYaoCoin ? '20-30% (高风险)' : (row.buyScore >= 85 ? '1% (高质量)' : row.buyScore >= 75 ? '0.5% (良好)' : '0.3% (一般)')}</span>
+            <span class="decision-item-value">${isYaoCoin ? '账户的 20-30%' : '账户的 1-2%'}</span>
           </div>
           <div class="decision-item">
-            <span class="decision-item-label">底层估值</span>
-            <span class="decision-item-value">${baselineText}</span>
+            <span class="decision-item-label">本金参考</span>
+            <span class="decision-item-value">建议 100+ USDT 起</span>
           </div>
         </div>
 
@@ -881,15 +1065,48 @@
           </div>
           <div class="decision-item">
             <span class="decision-item-label">第一止盈 TP1</span>
-            <span class="decision-item-value" style="color: #22c55e;">$${tp.tp1} (+${isYaoCoin ? '5' : '3'}%) 卖出 ${tp.tp1Ratio}</span>
+            <span class="decision-item-value" style="color: #22c55e;">$${tp.tp1} (+${isYaoCoin ? '5' : '3'}%) 卖 ${tp.tp1Ratio}</span>
           </div>
           <div class="decision-item">
             <span class="decision-item-label">第二止盈 TP2</span>
-            <span class="decision-item-value" style="color: #22c55e;">$${tp.tp2} (+${isYaoCoin ? '10' : '8'}%) 卖出 ${tp.tp2Ratio}</span>
+            <span class="decision-item-value" style="color: #22c55e;">$${tp.tp2} (+${isYaoCoin ? '10' : '8'}%) 卖 ${tp.tp2Ratio}</span>
           </div>
           <div class="decision-item">
             <span class="decision-item-label">第三止盈 TP3</span>
-            <span class="decision-item-value" style="color: #22c55e;">$${tp.tp3} (+${isYaoCoin ? '20' : '15'}%) 卖出 ${tp.tp3Ratio}</span>
+            <span class="decision-item-value" style="color: #22c55e;">$${tp.tp3} (+${isYaoCoin ? '20' : '15'}%) 卖 ${tp.tp3Ratio}</span>
+          </div>
+        </div>
+
+        <div class="profit-loss-box">
+          <h3>💵 杠杆下的盈亏计算 (100 USDT 本金)</h3>
+          <div class="profit-loss-grid">
+            <div class="profit-loss-item">
+              <div class="profit-loss-label">止损 (-3%)</div>
+              <div class="profit-loss-value loss">
+                ${pnl.sl.change}% → $${pnl.sl.amount}
+              </div>
+            </div>
+            <div class="profit-loss-item">
+              <div class="profit-loss-label">TP1 (+${isYaoCoin ? '5' : '3'}%)</div>
+              <div class="profit-loss-value profit">
+                ${pnl.tp1.change}% → $${pnl.tp1.amount}
+              </div>
+            </div>
+            <div class="profit-loss-item">
+              <div class="profit-loss-label">TP2 (+${isYaoCoin ? '10' : '8'}%)</div>
+              <div class="profit-loss-value profit">
+                ${pnl.tp2.change}% → $${pnl.tp2.amount}
+              </div>
+            </div>
+            <div class="profit-loss-item">
+              <div class="profit-loss-label">TP3 (+${isYaoCoin ? '20' : '15'}%)</div>
+              <div class="profit-loss-value profit">
+                ${pnl.tp3.change}% → $${pnl.tp3.amount}
+              </div>
+            </div>
+          </div>
+          <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(16,196,245,.3); color: #7dd3fc; font-size: 12px;">
+            💡 <strong>杠杆说明</strong>：${trading.leverage}倍杠杆下，收益和损失都会放大 ${trading.leverage} 倍。如果本金是 1000 USDT，则所有数字乘以 10。
           </div>
         </div>
 
@@ -915,7 +1132,7 @@
             <span class="decision-item-label">空头挤压</span>
             <span class="decision-item-value">
               ${squeeze.squeeze === 'up' ? '🔥 挤压中 - 还有上升空间，继续持有' : 
-                squeeze.squeeze === 'down' ? '⚠️ 假挤压 - 谨慎，可能是反弹后继续下跌' : 
+                squeeze.squeeze === 'down' ? '⚠️ 假挤压 - 谨慎，可能继续下跌' : 
                 '➡️ 无明显挤压 - 关注变化'}
             </span>
           </div>
@@ -933,23 +1150,26 @@
           <h3>📋 交易执行清单</h3>
           <div style="margin-bottom: 10px;">
             <strong>✓ 入场前检查：</strong><br>
-            • 确认入场价位和仓位大小<br>
-            • 在止损价下单（${isYaoCoin ? '$' + tp.stopLoss : '$' + tp.stopLoss}）<br>
+            • 确认交易方式：${trading.typeName}<br>
+            • 确认杠杆倍数：${trading.leverage}倍<br>
+            • 计算持仓金额（账户资金的 ${isYaoCoin ? '20-30%' : '1-2%'}）<br>
+            • 在止损价 $${tp.stopLoss} 下单<br>
             • 设置 3 个止盈单（TP1、TP2、TP3）<br>
-            • 记录入场时间和理由<br>
           </div>
           <div style="margin-bottom: 10px;">
             <strong>✓ 持仓中监控：</strong><br>
-            • 每 5 分钟检查一次价格和挤压情况<br>
-            ${isYaoCoin ? '• 如果有 -5% 回调，可以在 ' + add.add1 + ' 加仓<br>' : ''}
-            • 如果挤压变成假挤压，立即减仓或离场<br>
-            • 如果动量消失 2 小时以上，考虑离场<br>
+            • 每 ${isYaoCoin ? '3-5' : '5-10'} 分钟检查一次<br>
+            ${isYaoCoin ? '• 如果有回调到 ' + add.add1 + '，可以加仓<br>' : ''}
+            • 监控挤压情况，如果变成假挤压立即减仓<br>
+            • 如果动量消失 ${isYaoCoin ? '1-2' : '2-3'} 小时，考虑部分离场<br>
+            • 移动止损到成本价或盈利位<br>
           </div>
           <div>
             <strong>✓ 止盈执行：</strong><br>
-            • 到达 TP1 自动卖出 ${tp.tp1Ratio}，移动止损到成本价<br>
-            • 到达 TP2 自动卖出 ${tp.tp2Ratio}，继续持有剩余部分<br>
-            • 到达 TP3 全部卖出或继续持有看 ${isYaoCoin ? '30' : '20'}% 以上收益
+            • TP1 自动卖 ${tp.tp1Ratio}，移动止损到成本价<br>
+            • TP2 自动卖 ${tp.tp2Ratio}，继续持有剩余部分<br>
+            • TP3 全部卖出或继续看 ${isYaoCoin ? '30+%' : '20+%'} 收益<br>
+            ${trading.type === 'spot' ? '• 现货可以长期持有，不需要太急着止盈' : '• 合约要严格执行止盈，避免回吐'}
           </div>
         </div>
       `;
@@ -997,7 +1217,6 @@
       container.innerHTML = html;
     }
 
-    // 搜索功能
     function handleSearch(query) {
       const dropdown = document.getElementById('search-dropdown');
       
@@ -1036,12 +1255,10 @@
         return;
       }
 
-      // 计算指标
       const resonance = calculateResonanceScore(coin, previousData[symbol]);
       coin.signals = resonance.signals;
       coin.breakdown = resonance.breakdown;
 
-      // 判断是否是妖币或建议买入
       const yaoCheck = detectYaoCoinV2(coin, previousData[symbol]);
       const buyCheck = detectBuyCoinV2(coin, previousData[symbol]);
 
@@ -1084,8 +1301,8 @@
                 <div class="panel-item-value">${coin.oiMcap ? coin.oiMcap.toFixed(2) + '%' : '-'}</div>
               </div>
             </div>
-            <div class="notice-box" style="background: rgba(100,116,139,.1); border-color: rgba(100,116,139,.3); color: #cbd5e1; margin-top: 16px;">
-              <h3 style="color: #94a3b8;">ℹ️ 信息</h3>
+            <div class="notice-box" style="background: rgba(100,116,139,.1); border-color: rgba(100,116,139,.3); color: #cbd5e1; margin-top: 16px; border-radius: 12px; padding: 16px; border: 1px solid;">
+              <h3 style="color: #94a3b8; margin-bottom: 8px;">ℹ️ 信息</h3>
               这个币种目前不符合妖币或建议买入的标准，但你可以继续关注它。
             </div>
           ` : `
@@ -1160,7 +1377,7 @@
           allCoinsData.push(row);
 
           const yaoCheck = detectYaoCoinV2(row, previousData[symbol]);
-          if (yaoCheck.isYa) {
+          if (yaoCheck.isYao) {
             row.level = '妖币';
             row.riskLevel = yaoCheck.riskLevel;
             row.yaoScore = yaoCheck.yaoScore;
@@ -1197,14 +1414,13 @@
         renderBuyList();
 
         document.getElementById('stat-yao').innerText = allRows.yao.length;
-        document.getElementById('stat-yao-up').innerText = allRows.yao.filter(x => x.priceChange > 0).length;
-        document.getElementById('stat-yao-wait').innerText = allRows.yao.filter(x => x.riskLevel.includes('等待')).length;
+        document.getElementById('stat-yao-futures').innerText = allRows.yao.length; // 妖币都推荐合约
+        document.getElementById('stat-yao-momentum').innerText = allRows.yao.filter(x => x.priceChange > -15).length;
 
         document.getElementById('stat-buy').innerText = allRows.buy.length;
+        document.getElementById('stat-buy-spot').innerText = allRows.buy.filter(x => x.buyScore >= 85).length; // 高分推荐现货
         if (allRows.buy.length > 0) {
-          const avgScore = allRows.buy.reduce((s, x) => s + x.buyScore, 0) / allRows.buy.length;
-          document.getElementById('stat-avg-score').innerText = avgScore.toFixed(1);
-          document.getElementById('stat-high-quality').innerText = allRows.buy.filter(x => x.buyScore >= 80).length;
+          document.getElementById('stat-high-quality').innerText = allRows.buy.filter(x => x.buyScore >= 85).length;
         }
 
         document.getElementById('last-update').innerText = '最后更新：' + new Date().toLocaleTimeString();
@@ -1241,7 +1457,6 @@
       }
     });
 
-    // 搜索框失焦隐藏
     document.getElementById('search-input').addEventListener('blur', () => {
       setTimeout(() => {
         document.getElementById('search-dropdown').classList.remove('active');
