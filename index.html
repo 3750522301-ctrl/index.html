@@ -855,9 +855,9 @@
       futuresUrl: 'https://fapi.binance.com/fapi/v1',
       futuresDataUrl: 'https://fapi.binance.com/futures/data',
       coingeckoApi: 'https://api.coingecko.com/api/v3',
-      concurrentLimit: 8,
-      requestTimeout: 8000,
-      maxCoinsToMonitor: 500,
+      concurrentLimit: 4,
+      requestTimeout: 12000,
+      maxCoinsToMonitor: 300,
       quickScanMode: true,
       quickScanLimit: 50,
       fullScanLimit: 150
@@ -1244,6 +1244,201 @@
       }
     }
 
+    // ============ 拥挤度风险计算 ============
+    function calculateCrowdingRisk(longShortRatio, oiMcapRatio, rsi, direction) {
+      let score = 50;
+      let reasons = [];
+      let level = 'low';
+      let side = null;
+
+      if (longShortRatio > 2) {
+        score += 20;
+        reasons.push('多头严重拥挤');
+        side = 'long_crowded';
+      } else if (longShortRatio > 1.5) {
+        score += 10;
+        reasons.push('多头拥挤');
+        side = 'long_crowded';
+      }
+
+      if (longShortRatio < 0.5) {
+        score += 20;
+        reasons.push('空头严重拥挤');
+        side = 'short_crowded';
+      } else if (longShortRatio < 0.8) {
+        score += 10;
+        reasons.push('空头拥挤');
+        side = 'short_crowded';
+      }
+
+      if (oiMcapRatio > 50) {
+        score += 15;
+        reasons.push('OI/MCAP 极高（> 50%）');
+      } else if (oiMcapRatio > 30) {
+        score += 10;
+        reasons.push('OI/MCAP 较高（> 30%）');
+      }
+
+      if (rsi > 85 || rsi < 15) {
+        score += 15;
+        reasons.push('RSI 极端水平');
+      }
+
+      if (direction === 'up' && longShortRatio > 1.8) {
+        score += 10;
+        reasons.push('上升中多头过度拥挤');
+      }
+      if (direction === 'down' && longShortRatio < 0.6) {
+        score += 10;
+        reasons.push('下跌中空头过度拥挤');
+      }
+
+      if (score >= 80) {
+        level = 'high';
+      } else if (score >= 60) {
+        level = 'mid';
+      } else {
+        level = 'low';
+      }
+
+      return {
+        score: Math.min(100, score),
+        level,
+        side,
+        reasons
+      };
+    }
+
+    // ============ 搜索用专用分析函数 ============
+    async function analyzeCoinForSearch(symbol) {
+      try {
+        const [kline1h, stats24h] = await Promise.all([
+          getKlineData(symbol, '1h', 100),
+          get24hStats(symbol)
+        ]);
+
+        if (!stats24h || !kline1h || kline1h.length === 0) {
+          return null;
+        }
+
+        const [kline5m, kline4h, kline1d, futuresData] = await Promise.all([
+          getKlineData(symbol, '5m', 50).catch(() => []),
+          getKlineData(symbol, '4h', 100).catch(() => []),
+          getKlineData(symbol, '1d', 100).catch(() => []),
+          getFuturesData(symbol).catch(() => ({
+            openInterest: 0,
+            fundingRate: 0,
+            globalLongShortRatio: 1
+          }))
+        ]);
+
+        const safePrices = arr => arr && arr.length ? arr.map(k => k.close) : [stats24h.price];
+
+        const prices5m = safePrices(kline5m);
+        const prices1h = safePrices(kline1h);
+        const prices4h = safePrices(kline4h);
+        const prices1d = safePrices(kline1d);
+
+        const rsi5m = calcRSI(prices5m, 14);
+        const rsi1h = calcRSI(prices1h, 14);
+        const rsi4h = calcRSI(prices4h, 14);
+        const rsi1d = calcRSI(prices1d, 14);
+
+        const macd1h = calcMACD(prices1h);
+        const macd4h = calcMACD(prices4h);
+
+        const volumes5m = kline5m.length ? kline5m.map(k => k.volume) : [0];
+        const volumes1h = kline1h.length ? kline1h.map(k => k.volume) : [0];
+
+        const cvd5m = calcCVD(volumes5m, true);
+        const cvd1h = calcCVD(volumes1h, true);
+
+        const calcChange = prices => prices.length > 1
+          ? ((prices[prices.length - 1] - prices[0]) / prices[0]) * 100
+          : 0;
+
+        const change5m = calcChange(prices5m);
+        const change1h = calcChange(prices1h);
+        const change4h = calcChange(prices4h);
+        const change1d = calcChange(prices1d);
+
+        const mainDirection = change1h > 0 ? 'up' : 'down';
+
+        const phase5m = rsi5m > 70 ? 'overbought' : rsi5m < 30 ? 'oversold' : 'normal';
+        const phase1h = rsi1h > 70 ? 'overbought' : rsi1h < 30 ? 'oversold' : 'normal';
+        const phase4h = rsi4h > 70 ? 'overbought' : rsi4h < 30 ? 'oversold' : 'normal';
+        const phase1d = rsi1d > 70 ? 'overbought' : rsi1d < 30 ? 'oversold' : 'normal';
+
+        let buySignalCount = 0;
+        let sellSignalCount = 0;
+
+        if (rsi5m < 30) buySignalCount += 2;
+        if (rsi5m > 70) sellSignalCount += 2;
+        if (rsi1h < 30) buySignalCount += 3;
+        if (rsi1h > 70) sellSignalCount += 3;
+        if (rsi4h < 30) buySignalCount += 2;
+        if (rsi4h > 70) sellSignalCount += 2;
+
+        if (macd1h.histogram > 0) buySignalCount += 2;
+        if (macd1h.histogram < 0) sellSignalCount += 2;
+        if (macd4h.histogram > 0) buySignalCount += 2;
+        if (macd4h.histogram < 0) sellSignalCount += 2;
+
+        const totalSignal = buySignalCount - sellSignalCount;
+
+        let grade = 'c';
+        let gradeScore = 1;
+        if (totalSignal >= 15) {
+          grade = 'splus'; gradeScore = 5;
+        } else if (totalSignal >= 10) {
+          grade = 's'; gradeScore = 4;
+        } else if (totalSignal >= 5) {
+          grade = 'a'; gradeScore = 3;
+        } else if (totalSignal >= 0) {
+          grade = 'b'; gradeScore = 2;
+        }
+
+        const crowdingRisk = calculateCrowdingRisk(
+          futuresData.globalLongShortRatio || 1,
+          0,
+          rsi1h,
+          mainDirection
+        );
+
+        return {
+          symbol,
+          price: stats24h.price,
+          change24h: stats24h.change24h,
+          marketCap: null,
+          rsi5m, rsi1h, rsi4h, rsi1d,
+          macd1h, macd4h,
+          cvd5m, cvd1h,
+          change5m, change1h, change4h, change1d,
+          mainDirection,
+          phase5m, phase1h, phase4h, phase1d,
+          buySignalCount,
+          sellSignalCount,
+          totalSignal,
+          grade,
+          gradeScore,
+          openInterest: futuresData.openInterest || 0,
+          fundingRate: futuresData.fundingRate || 0,
+          globalLongShortRatio: futuresData.globalLongShortRatio || 1,
+          oiMcapRatio: 0,
+          crowdingRisk,
+          longReasons: [],
+          shortReasons: [],
+          recommendType: 'spot',
+          recommendLeverage: 1,
+          recommendPosition: 1,
+          timestamp: Date.now()
+        };
+      } catch (e) {
+        console.error(`搜索分析 ${symbol} 失败:`, e.message);
+        return null;
+      }
+    }
+
     // ============ 完整分析函数 ============
     async function analyzeCoin(symbol, quickScanData = null) {
       try {
@@ -1431,71 +1626,6 @@
       }
     }
 
-    // ============ 拥挤度风险计算 ============
-    function calculateCrowdingRisk(longShortRatio, oiMcapRatio, rsi, direction) {
-      let score = 50;
-      let reasons = [];
-      let level = 'low';
-      let side = null;
-
-      if (longShortRatio > 2) {
-        score += 20;
-        reasons.push('多头严重拥挤');
-        side = 'long_crowded';
-      } else if (longShortRatio > 1.5) {
-        score += 10;
-        reasons.push('多头拥挤');
-        side = 'long_crowded';
-      }
-
-      if (longShortRatio < 0.5) {
-        score += 20;
-        reasons.push('空头严重拥挤');
-        side = 'short_crowded';
-      } else if (longShortRatio < 0.8) {
-        score += 10;
-        reasons.push('空头拥挤');
-        side = 'short_crowded';
-      }
-
-      if (oiMcapRatio > 50) {
-        score += 15;
-        reasons.push('OI/MCAP 极高（> 50%）');
-      } else if (oiMcapRatio > 30) {
-        score += 10;
-        reasons.push('OI/MCAP 较高（> 30%）');
-      }
-
-      if (rsi > 85 || rsi < 15) {
-        score += 15;
-        reasons.push('RSI 极端水平');
-      }
-
-      if (direction === 'up' && longShortRatio > 1.8) {
-        score += 10;
-        reasons.push('上升中多头过度拥挤');
-      }
-      if (direction === 'down' && longShortRatio < 0.6) {
-        score += 10;
-        reasons.push('下跌中空头过度拥挤');
-      }
-
-      if (score >= 80) {
-        level = 'high';
-      } else if (score >= 60) {
-        level = 'mid';
-      } else {
-        level = 'low';
-      }
-
-      return {
-        score: Math.min(100, score),
-        level,
-        side,
-        reasons
-      };
-    }
-
     // ============ 两阶段扫描流程 ============
     async function twoPhaseFullRefresh() {
       if (isRefreshing) {
@@ -1654,7 +1784,7 @@
 
           <div style="margin-bottom: 8px;">
             <span class="grade-badge ${coin.grade}">${coin.grade.toUpperCase()}</span>
-          </div>
+                      </div>
 
           <div class="recommend-section">
             <div class="recommend-label">💼 现货/合约推荐</div>
@@ -1740,30 +1870,57 @@
     }
 
     async function searchCoin() {
-      const query = document.getElementById('search-input').value.trim().toUpperCase();
-      if (!query) return;
+      const rawQuery = document.getElementById('search-input').value.trim().toUpperCase();
+      if (!rawQuery) return;
+
+      const query = rawQuery.endsWith('USDT') ? rawQuery.replace('USDT', '') : rawQuery;
 
       switchPage('search');
       document.getElementById('search-content').innerHTML = '<div class="error-box">⏳ 搜索中...</div>';
 
-      const coinData = await analyzeCoin(query);
-      if (!coinData) {
+      const assetInfo = binanceAssets[query];
+      if (!assetInfo) {
         document.getElementById('search-content').innerHTML = `
           <div class="error-box">
-            未找到 ${query} 的数据<br>
+            未找到 ${query} 的交易对<br>
             请检查币种代码是否正确
           </div>
         `;
         return;
       }
 
-      allCoins[query] = coinData;
-      document.getElementById('search-content').innerHTML = `
-        <button class="back-btn" onclick="switchPage('monitor')">← 返回监控</button>
-        ${renderCoinCard(coinData)}
-      `;
+      try {
+        const coinData = await analyzeCoinForSearch(query);
 
-      setTimeout(() => showDetail(query), 300);
+        if (!coinData) {
+          document.getElementById('search-content').innerHTML = `
+            <div class="error-box">
+              ${query} 存在于币安，但当前数据获取失败<br>
+              可能原因：接口限流 / 扫描中占用 / 临时超时<br><br>
+              建议：<br>
+              1. 等 3~5 秒再搜一次<br>
+              2. 先停止大批量扫描再搜索<br>
+              3. 点击手动扫描后稍等一会
+            </div>
+          `;
+          return;
+        }
+
+        allCoins[query] = coinData;
+        document.getElementById('search-content').innerHTML = `
+          <button class="back-btn" onclick="switchPage('monitor')">← 返回监控</button>
+          ${renderCoinCard(coinData)}
+        `;
+
+        setTimeout(() => showDetail(query), 200);
+      } catch (e) {
+        console.error('搜索失败:', e);
+        document.getElementById('search-content').innerHTML = `
+          <div class="error-box">
+            搜索 ${query} 失败：${e.message}
+          </div>
+        `;
+      }
     }
 
     async function searchCoinBySymbol(symbol) {
