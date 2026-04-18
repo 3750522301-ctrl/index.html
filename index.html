@@ -1352,8 +1352,37 @@ async function getFuturesData(symbol) {
 // ============ 获取市值数据 ============
 // ============ 获取市值数据 ============
 async function getMarketCapData(symbol) {
-  // 暂时禁用 CoinGecko，因为 API 经常不稳定
-  return null;
+  const cacheKey = `mcap_${symbol}`;
+  if (marketCapCache[cacheKey] && Date.now() - marketCapCache[cacheKey].time < 3600000) {
+    return marketCapCache[cacheKey].data;
+  }
+
+  try {
+    const coinName = symbol.toLowerCase();
+    const url = `${CONFIG.coingeckoApi}/simple/price?ids=${coinName}&vs_currencies=usd&include_market_cap=true`;
+    
+    const res = await fetchJSON(url);
+
+    // 检查响应数据有效性
+    if (!res || typeof res !== 'object') {
+      console.warn(`获取 ${symbol} 市值失败：无效响应`);
+      return null;
+    }
+
+    const data = res[coinName];
+    
+    if (data && typeof data === 'object' && data.usd_market_cap) {
+      const mcap = data.usd_market_cap;
+      marketCapCache[cacheKey] = { data: mcap, time: Date.now() };
+      return mcap;
+    }
+
+    console.warn(`获取 ${symbol} 市值失败：未找到数据`);
+    return null;
+  } catch (e) {
+    console.warn(`获取 ${symbol} 市值失败:`, e.message);
+    return null;
+  }
 }
 // ============ 快速扫描 ============
 async function quickScanCoin(symbol) {
