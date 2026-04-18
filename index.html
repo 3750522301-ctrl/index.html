@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>币安全品种启动点捕捉系统 v4.0 - 现货合约推荐</title>
+  <title>币安全品种启动点捕捉系统 v4.0</title>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <style>
     * {
@@ -45,7 +45,6 @@
       padding: 20px;
     }
 
-    /* 顶部导航 */
     .header {
       display: flex;
       justify-content: space-between;
@@ -148,7 +147,6 @@
       cursor: not-allowed;
     }
 
-    /* 搜索框 */
     .search-box {
       display: flex;
       gap: 8px;
@@ -227,7 +225,6 @@
       background: rgba(34, 211, 238, 0.4);
     }
 
-    /* 页面切换 */
     .page {
       display: none;
     }
@@ -236,7 +233,6 @@
       display: block;
     }
 
-    /* 统计栏 */
     .stats-bar {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -264,7 +260,6 @@
       color: var(--cyan);
     }
 
-    /* 等级分类 */
     .grade-section {
       margin-bottom: 24px;
     }
@@ -339,7 +334,6 @@
       margin-bottom: 20px;
     }
 
-    /* 硬币卡 */
     .coin-card {
       background: var(--sub-bg);
       border: 1px solid var(--border);
@@ -604,7 +598,6 @@
       border-color: var(--cyan);
     }
 
-    /* 详情页面 */
     .detail-page {
       animation: fadeIn 0.3s;
     }
@@ -703,7 +696,6 @@
       color: var(--text);
     }
 
-    /* 快捷通道 */
     .quick-channel-section {
       background: var(--sub-bg);
       border: 1px solid var(--border);
@@ -742,7 +734,6 @@
       line-height: 1.5;
     }
 
-    /* 错误提示 */
     .error-box {
       padding: 30px;
       text-align: center;
@@ -755,7 +746,6 @@
       line-height: 1.8;
     }
 
-    /* 通知 */
     .notification {
       position: fixed;
       bottom: 20px;
@@ -798,14 +788,6 @@
       color: #22d3ee;
     }
 
-    /* 搜索结果 */
-    .search-results-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-      gap: 12px;
-    }
-
-    /* 衍生品面板 */
     .derivatives-panel {
       background: var(--sub-bg);
       border: 1px solid var(--border);
@@ -836,7 +818,6 @@
       border-color: rgba(34, 197, 94, 0.3);
     }
 
-    /* 响应式 */
     @media (max-width: 768px) {
       .container {
         padding: 12px;
@@ -886,7 +867,6 @@
 </head>
 <body>
   <div class="container">
-    <!-- 顶部导航 -->
     <div class="header">
       <div class="header-left">
         <div class="logo">🚀 启动点捕捉 v4.0</div>
@@ -896,16 +876,11 @@
         </div>
       </div>
       <div class="header-right">
-        <div class="update-time">
-          最后更新: <span class="update-time-val" id="update-time">--:--</span>
-        </div>
-        <button class="btn primary" id="manual-refresh-btn" onclick="manualRefresh()">
-          <span id="refresh-icon">🔄</span> 刷新
-        </button>
+        <div class="update-time">最后更新: <span class="update-time-val" id="update-time">--:--</span></div>
+        <button class="btn primary" id="manual-refresh-btn" onclick="manualRefresh()"><span id="refresh-icon">🔄</span> 刷新</button>
       </div>
     </div>
 
-    <!-- 监控页面 -->
     <div id="monitor" class="page active">
       <div class="stats-bar">
         <div class="stat-card">
@@ -939,17 +914,9 @@
       </div>
     </div>
 
-    <!-- 搜索页面 -->
     <div id="search" class="page">
       <div class="search-box">
-        <input
-          type="text"
-          id="search-input"
-          class="search-input"
-          placeholder="输入币种代码或名称（如 PEPE、BTC、SOL）"
-          onkeyup="showSearchSuggestions()"
-          onkeydown="if(event.key==='Enter') searchCoin()"
-        />
+        <input type="text" id="search-input" class="search-input" placeholder="输入币种代码或名称（如 PEPE、BTC、SOL）" onkeyup="showSearchSuggestions()" onkeydown="if(event.key==='Enter') searchCoin()" />
         <button class="btn primary" id="search-btn" onclick="searchCoin()">🔍 搜索</button>
         <div id="search-suggestions" class="search-suggestions"></div>
       </div>
@@ -958,7 +925,6 @@
       </div>
     </div>
 
-    <!-- 详情页面 -->
     <div id="detail" class="page">
       <div id="detail-content">
         <div class="error-box">⏳ 加载中...</div>
@@ -1107,7 +1073,7 @@
         try {
           const futuresRes = await axios.get(`${CONFIG.futuresUrl}/exchangeInfo`, { timeout: CONFIG.requestTimeout });
           const futuresSymbols = futuresRes.data.symbols || [];
-          futuresSymbols.forEach(sym => {
+          futuresSymbols.forEach(sym =>{
             const baseAsset = sym.baseAsset;
             if (sym.quoteAsset === 'USDT' && sym.status === 'TRADING') {
               if (!binanceAssets[baseAsset]) {
@@ -1124,7 +1090,7 @@
         allSymbols = allSymbols.slice(0, CONFIG.maxCoinsToMonitor);
         console.log(`加载了 ${allSymbols.length} 个币种`);
       } catch (e) {
-        console.error('加载交易所信息失败:', e);
+        console.error('加载交所信息失败:', e);
         throw e;
       }
     }
@@ -1256,19 +1222,16 @@
     // ============ 获取合约数据 ============
     async function getFuturesData(symbol) {
       try {
-        // 获取持仓量
         const oiRes = await axios.get(`${CONFIG.futuresUrl}/openInterest`, {
           params: { symbol: `${symbol}USDT` },
           timeout: CONFIG.requestTimeout
         });
 
-        // 获取资金费率
         const fundRes = await axios.get(`${CONFIG.futuresUrl}/fundingRate`, {
           params: { symbol: `${symbol}USDT`, limit: 1 },
           timeout: CONFIG.requestTimeout
         });
 
-        // 获取多空持仓比
         const lsRes = await axios.get(`${CONFIG.futuresDataUrl}/longShortRatio`, {
           params: { pair: `${symbol}USDT`, period: '5m' },
           timeout: CONFIG.requestTimeout
@@ -1339,11 +1302,9 @@
           return null;
         }
 
-        // 价格数据
         const price = stats24h.price;
         const change24h = stats24h.change24h;
 
-        // 技术指标计算
         const prices5m = kline5m.map(k => k.close);
         const prices1h = kline1h.map(k => k.close);
         const prices4h = kline4h.map(k => k.close);
@@ -1363,26 +1324,21 @@
         const cvd5m = calcCVD(volumes5m, true);
         const cvd1h = calcCVD(volumes1h, true);
 
-        // 价格变动
         const change5m = ((prices5m[prices5m.length - 1] - prices5m[0]) / prices5m[0]) * 100;
         const change1h = ((prices1h[prices1h.length - 1] - prices1h[0]) / prices1h[0]) * 100;
         const change4h = ((prices4h[prices4h.length - 1] - prices4h[0]) / prices4h[0]) * 100;
         const change1d = ((prices1d[prices1d.length - 1] - prices1d[0]) / prices1d[0]) * 100;
 
-        // 方向判断
         const mainDirection = change1h > 0 ? 'up' : 'down';
 
-        // 相位判断
         const phase5m = rsi5m > 70 ? 'overbought' : rsi5m < 30 ? 'oversold' : 'normal';
         const phase1h = rsi1h > 70 ? 'overbought' : rsi1h < 30 ? 'oversold' : 'normal';
-        const phase4h = rsi4h > 70 ? overbought' : rsi4h < 30 ? 'oversold' : 'normal';
+        const phase4h = rsi4h > 70 ? 'overbought' : rsi4h < 30 ? 'oversold' : 'normal';
         const phase1d = rsi1d > 70 ? 'overbought' : rsi1d < 30 ? 'oversold' : 'normal';
 
-        // 信号强度计算
         let buySignalCount = 0;
         let sellSignalCount = 0;
 
-        // RSI 信号
         if (rsi5m < 30) buySignalCount += 2;
         if (rsi5m > 70) sellSignalCount += 2;
         if (rsi1h < 30) buySignalCount += 3;
@@ -1390,25 +1346,21 @@
         if (rsi4h < 30) buySignalCount += 2;
         if (rsi4h > 70) sellSignalCount += 2;
 
-        // MACD 信号
         if (macd1h.histogram > 0) buySignalCount += 2;
         if (macd1h.histogram < 0) sellSignalCount += 2;
         if (macd4h.histogram > 0) buySignalCount += 2;
         if (macd4h.histogram < 0) sellSignalCount += 2;
 
-        // CVD 信号
         if (cvd5m.trend === 'up') buySignalCount += 1;
         if (cvd5m.trend === 'down') sellSignalCount += 1;
         if (cvd1h.trend === 'up') buySignalCount += 1;
         if (cvd1h.trend === 'down') sellSignalCount += 1;
 
-        // 价格动量信号
         if (change5m > 0.5) buySignalCount += 1;
         if (change5m < -0.5) sellSignalCount += 1;
         if (change1h > 1) buySignalCount += 2;
         if (change1h < -1) sellSignalCount += 2;
 
-        // 等级评定
         const totalSignal = buySignalCount - sellSignalCount;
         let grade = 'c';
         let gradeScore = 0;
@@ -1430,36 +1382,30 @@
           gradeScore = 1;
         }
 
-        // 现货/合约推荐逻辑
         const oiMcapRatio = marketCap ? (futuresData.openInterest / marketCap) * 100 : 0;
         let recommendType = 'spot';
         let recommendLeverage = 1;
         let recommendPosition = 1;
 
         if (oiMcapRatio > 30) {
-          // OI 过高，倾向现货
           recommendType = 'spot';
           recommendLeverage = 1;
           recommendPosition = 3;
         } else if (oiMcapRatio > 15) {
-          // OI 适中，可以合约
           recommendType = 'futures';
           recommendLeverage = 3;
           recommendPosition = 2;
         } else {
-          // OI 较低，可以高倍杠杆
           recommendType = 'futures';
           recommendLeverage = 5;
           recommendPosition = 1;
         }
 
-        // 根据风险调整
         if (rsi1h > 70 || rsi1h < 30) {
           recommendLeverage = Math.max(1, recommendLeverage - 1);
           recommendPosition = Math.min(5, recommendPosition + 1);
         }
 
-        // 拥挤度风险评估
         const crowdingRisk = calculateCrowdingRisk(
           futuresData.globalLongShortRatio,
           oiMcapRatio,
@@ -1467,7 +1413,6 @@
           mainDirection
         );
 
-        // 做多/做空原因
         const longReasons = [];
         const shortReasons = [];
 
@@ -1535,7 +1480,6 @@
       let level = 'low';
       let side = null;
 
-      // 多空比风险
       if (longShortRatio > 2) {
         score += 20;
         reasons.push('多头严重拥挤');
@@ -1556,7 +1500,6 @@
         side = 'short_crowded';
       }
 
-      // OI/MCAP 风险
       if (oiMcapRatio > 50) {
         score += 15;
         reasons.push('OI/MCAP 极高（> 50%）');
@@ -1565,13 +1508,11 @@
         reasons.push('OI/MCAP 较高（> 30%）');
       }
 
-      // RSI 极端情况
       if (rsi > 85 || rsi < 15) {
         score += 15;
         reasons.push('RSI 极端水平');
       }
 
-      // 方向与多空比的矛盾
       if (direction === 'up' && longShortRatio > 1.8) {
         score += 10;
         reasons.push('上升中多头过度拥挤');
@@ -1581,7 +1522,6 @@
         reasons.push('下跌中空头过度拥挤');
       }
 
-      // 评级
       if (score >= 80) {
         level = 'high';
       } else if (score >= 60) {
@@ -1603,7 +1543,6 @@
       const grades = { splus: [], s: [], a: [], b: [], c: [] };
       const graylist = [];
 
-      // 分类
       Object.values(allCoins).forEach(coin => {
         if (!coin) return;
         if (coin.grade === 'c' && coin.totalSignal < -5) {
@@ -1613,7 +1552,6 @@
         }
       });
 
-      // 排序
       Object.keys(grades).forEach(grade => {
         grades[grade].sort((a, b) => {
           const scoreA = Math.abs(a.totalSignal);
@@ -1622,7 +1560,6 @@
         });
       });
 
-      // 统计
       document.getElementById('grade-splus-count').textContent = grades.splus.length;
       document.getElementById('grade-s-count').textContent = grades.s.length;
       document.getElementById('grade-a-count').textContent = grades.a.length;
@@ -1630,7 +1567,6 @@
       document.getElementById('grade-c-count').textContent = grades.c.length;
       document.getElementById('analyzed-count').textContent = Object.keys(allCoins).length;
 
-      // 生成 HTML
       let html = '';
 
       const gradeConfigs = [
@@ -1658,7 +1594,6 @@
         `;
       });
 
-      // 灰名单
       if (graylist.length > 0) {
         html += `
           <div class="grade-section" style="opacity: 0.5;">
@@ -1845,7 +1780,6 @@
           </div>
         </div>
 
-        <!-- 推荐面板 -->
         <div class="derivatives-panel">
           <div class="panel-title">💼 现货/合约推荐</div>
           <div class="detail-metrics">
@@ -1870,13 +1804,12 @@
             <div class="detail-metric">
               <div class="detail-metric-label">评级</div>
               <div class="detail-metric-value" style="color: var(--cyan); font-size: 18px;">
-                              ${coin.grade.toUpperCase()}
+                ${coin.grade.toUpperCase()}
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 技术指标面板 -->
         <div class="derivatives-panel">
           <div class="panel-title">📊 技术指标</div>
           <div class="detail-metrics">
@@ -1923,7 +1856,6 @@
           </div>
         </div>
 
-        <!-- 衍生品与拥挤度面板 -->
         <div class="derivatives-panel">
           <div class="panel-title">📈 衍生品数据与拥挤度</div>
           <div class="detail-metrics">
@@ -1966,7 +1898,6 @@
           </div>
         </div>
 
-        <!-- 拥挤度风险详情 -->
         <div class="derivatives-panel crowding-risk-${coin.crowdingRisk.level}">
           <div class="panel-title">⚠️ 拥挤度风险评估</div>
           <div style="font-size: 12px; line-height: 1.8; color: var(--sub);">
@@ -1986,7 +1917,6 @@
           </div>
         </div>
 
-        <!-- 信号强度与方向 -->
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
           <div class="derivatives-panel">
             <div class="panel-title" style="color: #86efac;">✅ 做多信号</div>
@@ -2008,7 +1938,6 @@
           </div>
         </div>
 
-        <!-- 时间框架分析 -->
         <div style="margin-bottom: 20px;">
           <div style="font-weight: 700; color: var(--cyan); margin-bottom: 12px; font-size: 13px;">⏱️ 时间框架分析</div>
           <div class="timeframe-analysis">
@@ -2051,7 +1980,6 @@
           </div>
         </div>
 
-        <!-- 快捷通道 -->
         <div class="quick-channel-section">
           <div class="quick-channel-title">🔗 快捷通道</div>
           <div class="channel-grid">
@@ -2099,12 +2027,10 @@
           }
         });
 
-        // 更新UI
         if (currentPage === 'monitor') {
           renderMonitorContent();
         }
 
-        // 更新时间
         const now = new Date();
         const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
         document.getElementById('update-time').textContent = timeStr;
@@ -2133,7 +2059,6 @@
         showNotification(`🔍 已找到 ${allSymbols.length} 个币种，开始分析...`, 'info');
         await refreshAllCoins();
 
-        // 定期自动刷新（3分钟）
         setInterval(refreshAllCoins, CONFIG.refreshMs);
 
         showNotification('✨ 系统已就绪', 'success');
@@ -2143,17 +2068,14 @@
       }
     }
 
-    // 页面加载时初始化
     window.addEventListener('load', init);
 
-    // 标签页切换时的处理
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
         console.log('标签页激活');
       }
     });
 
-    // 按 Enter 键搜索
     document.addEventListener('DOMContentLoaded', () => {
       const searchInput = document.getElementById('search-input');
       if (searchInput) {
