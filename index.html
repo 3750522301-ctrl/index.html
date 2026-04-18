@@ -1102,17 +1102,37 @@
     }
 
     // ============ 并发控制 ============
-    async function runWithConcurrencyLimit(tasks, limit) {
-      const results = new Array(tasks.length);
-      const executing = [];
+async function runWithConcurrencyLimit(tasks, limit) {
+  const results = new Array(tasks.length);
+  const executing = [];
 
-      for (let i = 0; i < tasks.length; i++) {
-        const task = tasks[i];
-        constpromise = Promise.resolve()
-.then(() => task())
-.then(result => {
-results[i] = result;
-})
+  for (let i = 0; i < tasks.length; i++) {
+    const task = tasks[i];
+
+    const promise = Promise.resolve()
+      .then(() => task())
+      .then(result => {
+        results[i] = result;
+      })
+      .catch(err => {
+        console.warn(`Task ${i} failed:`, err.message);
+        results[i] = null;
+      })
+      .finally(() => {
+        const index = executing.indexOf(promise);
+        if (index > -1) executing.splice(index, 1);
+      });
+
+    executing.push(promise);
+
+    if (executing.length >= limit) {
+      await Promise.race(executing);
+    }
+  }
+
+  await Promise.all(executing);
+  return results;
+}
 .catch(err => {
 console.warn(Task ${i} failed:, err.message);
 results[i] = null;
@@ -2261,20 +2281,37 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
         // ============ 页面卸载时清理 ============
-    window.addEventListener('beforeunload', () => {
-      console.log('页面即将关闭，清理资源...');
-      klineCache = {};
-      marketCapCache = {};
-    });
+window.addEventListener('load', init);
 
-    // ============ 错误处理 ============
-    window.addEventListener('error', (event) => {
-      console.error('全局错误:', event.error);
-    });
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    console.log('标签页激活');
+  }
+});
 
-    window.addEventListener('unhandledrejection', (event) => {
-      console.error('未处理的 Promise 拒绝:', event.reason);
+document.addEventListener('DOMContentLoaded', () => {
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) {
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        searchCoin();
+      }
     });
-  </script>
-</body>
-</html>
+  }
+});
+
+// 页面卸载时清理
+window.addEventListener('beforeunload', () => {
+  console.log('页面即将关闭，清理资源...');
+  klineCache = {};
+  marketCapCache = {};
+});
+
+// 错误处理
+window.addEventListener('error', (event) => {
+  console.error('全局错误:', event.error);
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('未处理的 Promise 拒绝:', event.reason);
+});
