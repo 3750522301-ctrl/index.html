@@ -1360,6 +1360,7 @@ async function analyzeCoin(symbol) {
     const phase_4h = analyzeWyckoff(klines_4h || []);
 
     const signal_5m = detectSignals(symbol, klines_5m || []);
+    const signal_15m = detectSignals(symbol, klines_15m || []);
     const signal_1h = detectSignals(symbol, klines_1h);
     const signal_4h = detectSignals(symbol, klines_4h || []);
 
@@ -1397,7 +1398,7 @@ async function analyzeCoin(symbol) {
       
       phase_5m, phase_1h, phase_4h,
       
-      signal_5m, signal_1h, signal_4h,
+      signal_5m, signal_15m, signal_1h, signal_4h,
       signalStrength: totalSignalStrength,
       mainDirection,
       signalCount: signalHistory[symbol]?.filter(s => Date.now() - s.time < 300000).length || 0
@@ -1471,6 +1472,7 @@ async function analyzePair(pair, market = 'spot') {
     const phase_4h = analyzeWyckoff(klines_4h || []);
 
     const signal_5m = detectSignals(symbol, klines_5m || []);
+    const signal_15m = detectSignals(symbol, klines_15m || []);
     const signal_1h = detectSignals(symbol, klines_1h);
     const signal_4h = detectSignals(symbol, klines_4h || []);
 
@@ -1492,7 +1494,7 @@ async function analyzePair(pair, market = 'spot') {
       change_5m, change_15m, change_1h, change_4h, change_1d,
       macd_1h, cvd_1h, cvd_5m,
       phase_5m, phase_1h, phase_4h,
-      signal_5m, signal_1h, signal_4h,
+      signal_5m, signal_15m, signal_1h, signal_4h,
       signalStrength: totalSignalStrength,
       mainDirection
     };
@@ -1613,8 +1615,9 @@ async function renderMonitor() {
 
   if (html === '') {
     html = `<div class="error-box">
-      ℹ️ 数据已加载，但暂无符合条件的推荐币种
-      <br>请继续关注下一轮更新 (1分钟后)
+      ℹ️ 数据已加载，已分析 ${coins.length} 个币种
+      <br>当前暂无符合条件的推荐币种
+      <br>请继续关注下一轮更新（1分钟后）
     </div>`;
   }
 
@@ -1683,7 +1686,7 @@ function renderCoinCard(coin, level) {
         </div>
         <div class="metric">
           <div class="metric-label">4h涨幅</div>
-          <div class="metric-value ${c.change_4h > 0 ? 'up' : 'down'} ${Math.abs(c.change_4h) > 5 ? 'star' : ''}">
+          <div class="metric-value ${c.change_4h > 0 ? 'up' :'down'} ${Math.abs(c.change_4h) > 5 ? 'star' : ''}">
             ${fmtPct(c.change_4h)}
           </div>
         </div>
