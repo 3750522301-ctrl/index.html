@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>币安永续交易管理系统 v8.5</title>
+  <title>币安交易管理系统 v9</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -12,7 +12,7 @@
       font-family: Arial, sans-serif;
       padding: 20px;
     }
-    .container { max-width: 1800px; margin: 0 auto; }
+    .container { max-width: 1400px; margin: 0 auto; }
     .version-tag {
       position: fixed;
       top: 10px;
@@ -28,8 +28,8 @@
     h1 {
       text-align: center;
       color: #10c4f5;
-      margin-bottom: 8px;
-      font-size: 36px;
+      margin-bottom: 6px;
+      font-size: 32px;
     }
     .subtitle {
       text-align: center;
@@ -47,10 +47,10 @@
       background: none;
       border: none;
       color: #8ca3ba;
-      padding: 12px 12px;
+      padding: 10px 12px;
       cursor: pointer;
       border-bottom: 2px solid transparent;
-      font-size: 14px;
+      font-size: 13px;
       transition: all 0.2s;
     }
     .tab-btn.active {
@@ -64,21 +64,21 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 18px;
+      margin-bottom: 14px;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 8px;
     }
     .time-info {
       color: #8ca3ba;
-      font-size: 13px;
+      font-size: 12px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
     .refresh-status {
       display: inline-block;
-      width: 10px;
-      height: 10px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       background: #22c55e;
       animation: pulse 2s infinite;
@@ -97,18 +97,18 @@
     }
     .search-box {
       width: 100%;
-      max-width: 500px;
+      max-width: 400px;
       position: relative;
-      margin-bottom: 20px;
+      margin-bottom: 14px;
     }
     .search-input {
       width: 100%;
-      padding: 12px 16px;
+      padding: 8px 12px;
       background: rgba(10, 22, 40, .9);
       border: 1px solid rgba(16,196,245,.3);
-      border-radius: 10px;
+      border-radius: 8px;
       color: #e5eefb;
-      font-size: 14px;
+      font-size: 13px;
       transition: all 0.2s;
     }
     .search-input:focus {
@@ -124,18 +124,19 @@
       background: rgba(10, 22, 40, .95);
       border: 1px solid rgba(16,196,245,.3);
       border-top: none;
-      border-radius: 0 0 10px 10px;
-      max-height: 400px;
+      border-radius: 0 0 8px 8px;
+      max-height: 300px;
       overflow-y: auto;
       z-index: 100;
       display: none;
     }
     .search-dropdown.active { display: block; }
     .search-item {
-      padding: 12px 16px;
+      padding: 8px 12px;
       cursor: pointer;
       border-bottom: 1px solid rgba(16,196,245,.1);
       transition: all 0.2s;
+      font-size: 12px;
     }
     .search-item:hover {
       background: rgba(16,196,245,.15);
@@ -146,334 +147,273 @@
     }
     .search-item-mcap {
       color: #8ca3ba;
-      font-size: 12px;
-      margin-top: 4px;
+      font-size: 11px;
+      margin-top: 2px;
     }
     .section {
-      margin-bottom: 30px;
+      margin-bottom: 20px;
     }
     .section-title {
-      font-size: 18px;
+      font-size: 14px;
       color: #10c4f5;
-      margin-bottom: 14px;
-      padding-bottom: 10px;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
       border-bottom: 2px solid rgba(16,196,245,.2);
     }
     .stats {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-      margin-bottom: 18px;
+      gap: 10px;
+      margin-bottom: 12px;
     }
     .card {
       background: rgba(10, 22, 40, .9);
       border: 1px solid rgba(16,196,245,.18);
-      border-radius: 14px;
-      padding: 16px;
+      border-radius: 10px;
+      padding: 12px;
       transition: all 0.2s;
     }
     .card:hover { border-color: rgba(16,196,245,.4); }
-    .label {
+    .card .label {
       color: #8ca3ba;
-      font-size: 12px;
-      margin-bottom: 8px;
+      font-size: 11px;
+      margin-bottom: 6px;
     }
-    .value {
+    .card .value {
       color: #10c4f5;
       font-weight: bold;
-      font-size: 24px;
+      font-size: 20px;
     }
-    .trading-panel {
+    
+    /* 首页卡片列表 */
+    .coin-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+    }
+    .coin-card {
       background: rgba(10, 22, 40, .95);
-      border: 2px solid rgba(16,196,245,.3);
+      border: 1px solid rgba(16,196,245,.25);
+      border-radius: 12px;
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+    .coin-card:hover {
+      border-color: rgba(16,196,245,.6);
+      box-shadow: 0 0 15px rgba(16,196,245,.15);
+      transform: translateY(-2px);
+    }
+    .coin-card-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .coin-symbol {
+      font-size: 16px;
+      color: #10c4f5;
+      font-weight: bold;
+    }
+    .coin-level {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+    .level-yao {
+      background: rgba(168, 85, 247, .3);
+      color: #d8b4fe;
+      border: 1px solid rgba(168, 85, 247, .5);
+    }
+    .level-buy {
+      background: rgba(34, 197, 94, .3);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, .5);
+    }
+    .coin-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+    }
+    .info-label {
+      color: #8ca3ba;
+    }
+    .info-value {
+      color: #e5eefb;
+      font-weight: bold;
+    }
+    .green { color: #22c55e; }
+    .red { color: #ef4444; }
+    .coin-footer {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(16,196,245,.1);
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      background: rgba(59, 130, 246, .2);
+      color: #93c5fd;
+      border: 1px solid rgba(59, 130, 246, .4);
+      white-space: nowrap;
+    }
+    
+    /* 详细面板 */
+    .detail-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, .8);
+      z-index: 1000;
+      overflow-y: auto;
+      padding: 20px;
+    }
+    .detail-modal.active { display: block; }
+    .detail-content {
+      background: linear-gradient(135deg, #061018 0%, #0b1730 100%);
+      border: 1px solid rgba(16,196,245,.3);
       border-radius: 16px;
       padding: 24px;
-      margin-bottom: 20px;
+      max-width: 900px;
+      margin: 20px auto;
+      position: relative;
     }
-    .trading-panel.search-result {
-      border-color: rgba(168, 85, 247, .5);
-    }
-    .panel-title {
+    .close-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: none;
+      border: none;
+      color: #8ca3ba;
       font-size: 24px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .close-btn:hover {
       color: #10c4f5;
-      margin-bottom: 20px;
+      transform: rotate(90deg);
+    }
+    .detail-title {
+      font-size: 28px;
+      color: #10c4f5;
+      margin-bottom: 16px;
       display: flex;
       align-items: center;
       gap: 10px;
       flex-wrap: wrap;
     }
-    .panel-grid {
+    .detail-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-    .panel-item {
-      background: rgba(255,255,255,.03);
-      border: 1px solid rgba(16,196,245,.12);
-      border-radius: 10px;
-      padding: 14px;
-    }
-    .panel-item-label {
-      color: #8ca3ba;
-      font-size: 12px;
-      margin-bottom: 8px;
-    }
-    .panel-item-value {
-      color: #10c4f5;
-      font-size: 18px;
-      font-weight: bold;
-    }
-    .trading-decision {
-      background: rgba(34,197,94,.1);
-      border: 2px solid rgba(34,197,94,.4);
-      border-radius: 12px;
-      padding: 16px;
+      gap: 12px;
       margin-bottom: 16px;
     }
-    .trading-decision h3 {
-      color: #22c55e;
-      margin-bottom: 12px;
-      font-size: 16px;
+    .detail-item {
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(16,196,245,.12);
+      border-radius: 8px;
+      padding: 10px;
     }
-    .trading-decision.warning {
+    .detail-item-label {
+      color: #8ca3ba;
+      font-size: 11px;
+      margin-bottom: 6px;
+    }
+    .detail-item-value {
+      color: #10c4f5;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .section-box {
+      background: rgba(34,197,94,.1);
+      border: 2px solid rgba(34,197,94,.4);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .section-box h3 {
+      color: #22c55e;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    .section-box.warning {
       background: rgba(245, 158, 11, .1);
       border-color: rgba(245, 158, 11, .4);
     }
-    .trading-decision.warning h3 {
+    .section-box.warning h3 {
       color: #fcd34d;
     }
-    .trading-decision.danger {
+    .section-box.danger {
       background: rgba(239, 68, 68, .1);
       border-color: rgba(239, 68, 68, .4);
     }
-    .trading-decision.danger h3 {
+    .section-box.danger h3 {
       color: #fca5a5;
     }
-    .decision-item {
+    .decision-row {
       display: flex;
       justify-content: space-between;
-      padding: 10px 0;
+      padding: 8px 0;
       border-bottom: 1px solid rgba(255,255,255,.05);
-      font-size: 13px;
-    }
-    .decision-item:last-child { border-bottom: none; }
-    .decision-item-label { color: #8ca3ba; }
-    .decision-item-value {
-      font-weight: bold;
-      color: #e5eefb;
-    }
-    .trading-type-badge {
-      display: inline-block;
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: bold;
-      border: 1px solid;
-      margin-right: 8px;
-    }
-    .badge-spot {
-      background: rgba(34, 197, 94, .2);
-      color: #22c55e;
-      border-color: rgba(34, 197, 94, .5);
-    }
-    .badge-futures {
-      background: rgba(59, 130, 246, .2);
-      color: #93c5fd;
-      border-color: rgba(59, 130, 246, .5);
-    }
-    .leverage-box {
-      background: rgba(168, 85, 247, .15);
-      border: 2px solid rgba(168, 85, 247, .5);
-      border-radius: 12px;
-      padding: 16px;
-      margin: 16px 0;
-    }
-    .leverage-box h3 {
-      color: #d8b4fe;
-      margin-bottom: 12px;
-      font-size: 15px;
-    }
-    .leverage-item {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 12px;
-      padding: 10px;
-      background: rgba(168, 85, 247, .08);
-      border-radius: 8px;
-    }
-    .leverage-item:last-child { margin-bottom: 0; }
-    .leverage-label {
-      color: #d8b4fe;
       font-size: 12px;
     }
-    .leverage-value {
-      color: #e5eefb;
-      font-weight: bold;
-      font-size: 14px;
-    }
-    .profit-loss-box {
-      background: rgba(16, 196, 245, .15);
-      border: 2px solid rgba(16, 196, 245, .5);
-      border-radius: 12px;
-      padding: 16px;
-      margin: 16px 0;
-    }
-    .profit-loss-box h3 {
-      color: #7dd3fc;
-      margin-bottom: 12px;
-      font-size: 15px;
-    }
-    .profit-loss-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-    }
-    .profit-loss-item {
-      background: rgba(16, 196, 245, .08);
-      border-radius: 8px;
-      padding: 12px;
-    }
-    .profit-loss-label {
-      color: #7dd3fc;
-      font-size: 12px;
-      margin-bottom: 6px;
-    }
-    .profit-loss-value {
-      font-weight: bold;
-      font-size: 16px;
-    }
-    .profit {
-      color: #22c55e;
-    }
-    .loss {
-      color: #ef4444;
-    }
-    .squeeze-indicator {
-      display: inline-block;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: bold;
-      margin-right: 8px;
-    }
-    .squeeze-up {
-      background: rgba(34,197,94,.3);
-      color: #22c55e;
-      border: 1px solid rgba(34,197,94,.5);
-    }
-    .squeeze-down {
-      background: rgba(239, 68, 68, .3);
-      color: #ef4444;
-      border: 1px solid rgba(239, 68, 68, .5);
-    }
-    .squeeze-none {
-      background: rgba(168, 85, 247, .3);
-      color: #d8b4fe;
-      border: 1px solid rgba(168, 85, 247, .5);
-    }
-    .momentum-indicator {
-      display: inline-block;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: bold;
-    }
-    .momentum-strong {
-      background: rgba(34,197,94,.3);
-      color: #22c55e;
-      border: 1px solid rgba(34,197,94,.5);
-    }
-    .momentum-weak {
-      background: rgba(245, 158, 11, .3);
-      color: #fcd34d;
-      border: 1px solid rgba(245, 158, 11, .5);
-    }
-    .momentum-none {
-      background: rgba(239, 68, 68, .3);
-      color: #ef4444;
-      border: 1px solid rgba(239, 68, 68, .5);
-    }
-    .risk-level {
-      display: inline-block;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: bold;
-    }
-    .risk-low {
-      background: rgba(34,197,94,.3);
-      color: #22c55e;
-    }
-    .risk-medium {
-      background: rgba(245, 158, 11, .3);
-      color: #fcd34d;
-    }
-    .risk-high {
-      background: rgba(239, 68, 68, .3);
-      color: #fca5a5;
-    }
-    .trade-guide {
-      background: rgba(59, 130, 246, .1);
-      border: 1px solid rgba(59, 130, 246, .3);
-      border-radius: 12px;
-      padding: 16px;
-      color: #93c5fd;
-      font-size: 13px;
-      line-height: 1.8;
-      margin-top: 16px;
-    }
-    .trade-guide h3 {
-      color: #7dd3fc;
-      margin-bottom: 12px;
-    }
-    .trade-guide strong {
-      color: #93c5fd;
-    }
+    .decision-row:last-child { border-bottom: none; }
+    .decision-label { color: #8ca3ba; }
+    .decision-value { font-weight: bold; color: #e5eefb; }
     .empty-state {
       text-align: center;
       color: #8ca3ba;
-      padding: 40px 20px;
-      font-size: 14px;
+      padding: 30px 20px;
+      font-size: 13px;
     }
     .tag {
       display: inline-block;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
       border: 1px solid;
       white-space: nowrap;
       font-weight: bold;
-      margin-right: 6px;
+      margin-right: 4px;
     }
-    .level-妖币 { background: rgba(168, 85, 247, .3); color: #d8b4fe; border-color: #a855f7; }
-    .level-建议 { background: rgba(34, 197, 94, .3); color: #22c55e; border-color: #22c55e; }
-    .green { color: #22c55e; }
-    .red { color: #ef4444; }
-    .gray { color: #94a3b8; }
 
-    @media (max-width: 1200px) {
-      .panel-grid { grid-template-columns: repeat(2, 1fr); }
-      .stats { grid-template-columns: repeat(2, 1fr); }
-      .profit-loss-grid { grid-template-columns: 1fr; }
+    @media (max-width: 1024px) {
+      .coin-list { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+      .detail-grid { grid-template-columns: repeat(2, 1fr); }
     }
     @media (max-width: 640px) {
-      .panel-grid { grid-template-columns: 1fr; }
-      .stats { grid-template-columns: 1fr; }
+      .coin-list { grid-template-columns: 1fr; }
+      .detail-grid { grid-template-columns: 1fr; }
+      h1 { font-size: 24px; }
+      .detail-title { font-size: 20px; }
     }
   </style>
 </head>
 <body>
-  <div class="version-tag">v8.5 现货/合约杠杆</div>
+  <div class="version-tag">v9 紧凑卡片</div>
 
   <div class="container">
-    <h1>⚡ 币安交易管理系统</h1>
-    <p class="subtitle">实时监控 | 现货/合约 | 杠杆管理 | 止盈止损</p>
+    <h1>⚡ 币安交易系统</h1>
+    <p class="subtitle">现货/合约 | 杠杆管理 | 止盈止损</p>
 
     <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('monitor', this)">📊 精选监控</button>
-      <button class="tab-btn" onclick="switchTab('search', this)">🔍 币种搜索</button>
+      <button class="tab-btn active" onclick="switchTab('monitor', this)">📊 监控</button>
+      <button class="tab-btn" onclick="switchTab('search', this)">🔍 搜索</button>
     </div>
 
     <!-- 监控页 -->
@@ -481,21 +421,15 @@
       <div class="toolbar">
         <div class="time-info">
           <span class="refresh-status" id="refresh-dot"></span>
-          <span id="last-update">最后更新：-</span>
-        </div>
-        <div style="color: #8ca3ba; font-size: 13px;">
-          ⏱️ 自动刷新：<span id="refresh-countdown">60</span> 秒
+          <span id="last-update">更新中...</span>
+          <span style="color: #8ca3ba;">| ⏱️ <span id="refresh-countdown">60</span>s</span>
         </div>
       </div>
 
-      <!-- 妖币部分 -->
+      <!-- 妖币 -->
       <div class="section">
-        <div class="section-title">💎 妖币机会</div>
+        <div class="section-title">💎 妖币 (<span id="stat-yao">0</span>)</div>
         <div class="stats">
-          <div class="card">
-            <div class="label">发现妖币</div>
-            <div class="value" id="stat-yao">0</div>
-          </div>
           <div class="card">
             <div class="label">推荐合约</div>
             <div class="value green" id="stat-yao-futures">0</div>
@@ -504,28 +438,32 @@
             <div class="label">强动量</div>
             <div class="value" id="stat-yao-momentum">0</div>
           </div>
+          <div class="card">
+            <div class="label">平均共振分</div>
+            <div class="value" id="stat-yao-score">-</div>
+          </div>
         </div>
-        <div id="yao-list"></div>
+        <div class="coin-list" id="yao-list"></div>
       </div>
 
-      <!-- 建议买入部分 -->
+      <!-- 建议买入 -->
       <div class="section">
-        <div class="section-title">🚀 建议买入</div>
+        <div class="section-title">🚀 建议买入 (<span id="stat-buy">0</span>)</div>
         <div class="stats">
-          <div class="card">
-            <div class="label">推荐币种</div>
-            <div class="value" id="stat-buy">0</div>
-          </div>
           <div class="card">
             <div class="label">现货推荐</div>
             <div class="value green" id="stat-buy-spot">0</div>
           </div>
           <div class="card">
-            <div class="label">高质量 (>85分)</div>
+            <div class="label">高质量 >85分</div>
             <div class="value" id="stat-high-quality">0</div>
           </div>
+          <div class="card">
+            <div class="label">平均共振分</div>
+            <div class="value" id="stat-buy-score">-</div>
+          </div>
         </div>
-        <div id="buy-list"></div>
+        <div class="coin-list" id="buy-list"></div>
       </div>
     </div>
 
@@ -536,12 +474,20 @@
           type="text" 
           class="search-input" 
           id="search-input" 
-          placeholder="搜索币种 (如: BTC, ETH, SOL)..."
+          placeholder="搜索币种 (BTC, ETH, SOL)..."
           oninput="handleSearch(this.value)"
         />
         <div class="search-dropdown" id="search-dropdown"></div>
       </div>
-      <div id="search-result" class="empty-state">搜索一个币种来查看实时数据和交易决策</div>
+      <div id="search-result" class="empty-state">搜索一个币种查看详情</div>
+    </div>
+  </div>
+
+  <!-- 详细面板 -->
+  <div class="detail-modal" id="detail-modal">
+    <div class="detail-content">
+      <button class="close-btn" onclick="closeDetail()">✕</button>
+      <div id="detail-body"></div>
     </div>
   </div>
 
@@ -604,87 +550,69 @@
       return map;
     }
 
-    // 新增：交易类型和杠杆建议
     function getTradingRecommendation(row, isYaoCoin = false, score = 0) {
       if (isYaoCoin) {
-        // 妖币：推荐合约
         const priceChange = row.priceChange;
         
         if (priceChange < -30) {
-          // 下跌过多，高风险
           return {
             type: 'futures',
             typeName: '合约',
             leverage: 1,
-            reason: '高风险下跌，用 1 倍杠杆降低风险',
-            warning: '⚠️ 建议只持仓 20-30%，随时准备离场'
+            reason: '高风险下跌，用 1 倍降低风险'
           };
         } else if (priceChange < -15) {
-          // 中等下跌
           return {
             type: 'futures',
             typeName: '合约',
             leverage: 2,
-            reason: '下跌到底部，用 2 倍杠杆放大收益',
-            warning: '📌 设置好止损和止盈，严格执行'
+            reason: '底部反弹，用 2 倍放大收益'
           };
         } else {
-          // 下跌不多，可以激进
           return {
             type: 'futures',
             typeName: '合约',
             leverage: 3,
-            reason: '即将拉盘，用 3 倍杠杆最大化收益',
-            warning: '🔥 最激进策略，要有足够本金'
+            reason: '即将拉盘，用 3 倍最大化收益'
           };
         }
       } else {
-        // 建议买入：根据共振分选择
         if (score >= 85) {
-          // 高质量信号
           return {
             type: 'spot',
             typeName: '现货',
             leverage: 1,
-            reason: '高质量信号，现货安全持有',
-            warning: '💰 可以长期持有，不用设置止损'
+            reason: '高质量信号，现货安全持有'
           };
         } else if (score >= 75) {
-          // 良好信号
           return {
             type: 'futures',
-            typeName: '合约 (低杠杆)',
+            typeName: '合约 1倍',
             leverage: 1,
-            reason: '良好信号，用 1 倍合约更灵活',
-            warning: '⚙️ 可以随时调整，需要止损'
+            reason: '良好信号，1 倍合约更灵活'
           };
         } else {
-          // 一般信号
           return {
             type: 'futures',
-            typeName: '合约 (1倍)',
+            typeName: '合约 1倍',
             leverage: 1,
-            reason: '一般信号，用 1 倍合约试单',
-            warning: '🧪 小额试单，收集更多数据'
+            reason: '一般信号，1 倍合约试单'
           };
         }
       }
     }
 
-    // 新增：计算杠杆下的盈亏
     function calculateLeveragePnL(entryPrice, takeProfit, stopLoss, leverage, initialCapital = 100) {
       const tp1Change = ((takeProfit.tp1 - entryPrice) / entryPrice) * 100;
       const tp2Change = ((takeProfit.tp2 - entryPrice) / entryPrice) * 100;
       const tp3Change = ((takeProfit.tp3 - entryPrice) / entryPrice) * 100;
       const slChange = ((stopLoss - entryPrice) / entryPrice) * 100;
 
-      // 杠杆下的收益
       const tp1Profit = tp1Change * leverage;
       const tp2Profit = tp2Change * leverage;
       const tp3Profit = tp3Change * leverage;
       const slLoss = slChange * leverage;
 
-      // 实际金额（以 100 美元为例）
       const tp1Amount = initialCapital * (1 + tp1Profit / 100);
       const tp2Amount = initialCapital * (1 + tp2Profit / 100);
       const tp3Amount = initialCapital * (1 + tp3Profit / 100);
@@ -766,38 +694,14 @@
         return {
           add1: (entryPrice * 0.95).toFixed(6),
           add2: (entryPrice * 0.90).toFixed(6),
-          ratio: '平均 5% 回调加仓'
+          ratio: '-5% 和 -10%'
         };
       } else {
         return {
           add1: (entryPrice * 0.97).toFixed(6),
           add2: (entryPrice * 0.94).toFixed(6),
-          ratio: '平均 5% 回调加仓'
+          ratio: '-3% 和 -6%'
         };
-      }
-    }
-
-    function assessRiskLevel(row, isYaoCoin = false) {
-      const score = row.yaoScore || row.buyScore || 0;
-      const priceChange = Math.abs(row.priceChange);
-      const oiMcap = row.oiMcap || 0;
-
-      if (isYaoCoin) {
-        if (row.priceChange < -30 || oiMcap > 12) {
-          return { level: 'high', action: '⚠️ 高风险，建议只持仓 20-30%，随时准备全部出场', color: 'danger' };
-        }
-        if (row.priceChange < -15 || score < 65) {
-          return { level: 'medium', action: '⚡ 中等风险，建议 50-50 分批止盈和继续持有', color: 'warning' };
-        }
-        return { level: 'low', action: '✅ 风险可控，可以分批止盈（30%-40%-30%）', color: 'success' };
-      } else {
-        if (score > 85) {
-          return { level: 'low', action: '✅ 高质量信号，现货持有，可分批止盈（40%-40%-20%）', color: 'success' };
-        }
-        if (score > 75) {
-          return { level: 'low', action: '✅ 良好信号，可以 1 倍合约，设置 -3% 止损', color: 'success' };
-        }
-        return { level: 'medium', action: '⚡ 一般信号，建议观察或 0.3% 小额试单', color: 'warning' };
       }
     }
 
@@ -808,47 +712,47 @@
       let priceSignal = 0;
       if (row.priceChange < -10 && row.priceChange > -50) {
         priceSignal += 20;
-        signals.push('价格在底部');
+        signals.push('底部');
       }
       if (previous && row.price > previous.price) {
         priceSignal += 20;
-        signals.push('价格反弹中');
+        signals.push('反弹');
       }
       score += priceSignal;
 
       let oiSignal = 0;
-      if (row.oiMcap && row.oiMcap >1 && row.oiMcap < 15) {
+      if (row.oiMcap && row.oiMcap > 1 && row.oiMcap < 15) {
         oiSignal += 15;
-        signals.push('OI活跃');
+        signals.push('OI活');
       }
       if (previous && row.oiMcap > previous.oiMcap * 0.95) {
         oiSignal += 15;
-        signals.push('OI维持');
+        signals.push('OI持');
       }
       score += oiSignal;
 
       let fundingSignal = 0;
       if (row.funding > -0.03 && row.funding < 0.05) {
         fundingSignal += 15;
-        signals.push('Funding平衡');
+        signals.push('资费平');
       }
       if (previous && row.funding > previous.funding) {
         fundingSignal += 10;
-        signals.push('Funding上升');
+        signals.push('资费升');
       }
       score += fundingSignal;
 
       let volumeSignal = 0;
       if (row.volMcap && row.volMcap > 5 && row.volMcap < 30) {
         volumeSignal += 15;
-        signals.push('成交活跃');
+        signals.push('成交活');
       }
       score += volumeSignal;
 
       let mcapSignal = 0;
       if (row.mcap && row.mcap > 0 && row.mcap < 1e9) {
         mcapSignal += 10;
-        signals.push('市值合理');
+        signals.push('市值合');
       }
       score += mcapSignal;
 
@@ -858,7 +762,6 @@
       return {
         totalScore: Math.min(100, score),
         signals: signals,
-        breakdown: { priceSignal, oiSignal, fundingSignal, volumeSignal, mcapSignal, resonanceBonus }
       };
     }
 
@@ -881,11 +784,11 @@
         let riskLevel = '';
         
         if (row.priceChange < -30) {
-          riskLevel = '🔴 高风险观察';
+          riskLevel = '🔴 高风险';
         } else if (row.priceChange < -15) {
-          riskLevel = conditions.priceRebounding ? '🟢 现在可入' : '🟡 等待回调';
+          riskLevel = '🟡 中风险';
         } else {
-          riskLevel = '🟢 现在可入';
+          riskLevel = '🟢 可入';
         }
 
         return {
@@ -893,7 +796,6 @@
           riskLevel,
           yaoScore: resonance.totalScore,
           signals: resonance.signals,
-          breakdown: resonance.breakdown
         };
       }
 
@@ -925,275 +827,77 @@
           isBuy: true,
           buyScore: Math.min(100, buyScore),
           signals: resonance.signals,
-          breakdown: resonance.breakdown
         };
       }
 
       return { isBuy: false };
     }
 
-    function renderTradingPanel(row) {
+    // 首页卡片
+    function renderCoinCard(row) {
       const isYaoCoin = row.level === '妖币';
       const score = row.yaoScore || row.buyScore || 0;
-      const tp = calculateTakeProfit(row, isYaoCoin);
-      const add = calculateAdditionalBuy(row, isYaoCoin);
-      const riskAssess = assessRiskLevel(row, isYaoCoin);
-      const squeeze = detectSqueeze(row, previousData[row.symbol]);
-      const momentum = detectMomentum(row, previousData[row.symbol]);
       const trading = getTradingRecommendation(row, isYaoCoin, score);
-      const pnl = calculateLeveragePnL(parseFloat(row.price), tp, parseFloat(tp.stopLoss), trading.leverage, 100);
-
-      const squeezeBadge = squeeze.squeeze === 'up' ? 
-        '<span class="squeeze-indicator squeeze-up">🔥 挤压空头中</span>' :
-        squeeze.squeeze === 'down' ? 
-        '<span class="squeeze-indicator squeeze-down">⚠️ 假挤压</span>' :
-        '<span class="squeeze-indicator squeeze-none">➡️ 无明显挤压</span>';
-
-      const momentumBadge = momentum.momentum === 'strong' ?
-        '<span class="momentum-indicator momentum-strong">🚀 强动量</span>' :
-        momentum.momentum === 'medium' ?
-        '<span class="momentum-indicator momentum-weak">⚡ 中动量</span>' :
-        '<span class="momentum-indicator momentum-none">❄️ 无动量</span>';
-
-      const tradingTypeBadge = trading.type === 'spot' ?
-        '<span class="trading-type-badge badge-spot">💰 现货</span>' :
-        `<span class="trading-type-badge badge-futures">📈 合约 ${trading.leverage}倍</span>`;
-
-      const html = `
-        <div class="panel-title">
-          ${row.symbol}
-          <span class="tag ${isYaoCoin ? 'level-妖币' : 'level-建议'}">
-            ${isYaoCoin ? '💎 妖币' : '🚀 建议买入'}
-          </span>
-          ${isYaoCoin ? `<span class="tag">${row.riskLevel}</span>` : ''}
-          ${tradingTypeBadge}
-        </div>
-
-        <div class="panel-grid">
-          <div class="panel-item">
-            <div class="panel-item-label">现价</div>
-            <div class="panel-item-value">$${fmtNum(row.price, 6)}</div>
-          </div>
-          <div class="panel-item">
-            <div class="panel-item-label">市值</div>
-            <div class="panel-item-value">$${fmtNum(row.mcap, 2)}</div>
-          </div>
-          <div class="panel-item">
-            <div class="panel-item-label">24h涨跌</div>
-            <div class="panel-item-value ${colorClass(row.priceChange)}">${row.priceChange.toFixed(2)}%</div>
-          </div>
-          <div class="panel-item">
-            <div class="panel-item-label">共振分</div>
-            <div class="panel-item-value">${score.toFixed(1)}/100</div>
-          </div>
-          <div class="panel-item">
-            <div class="panel-item-label">OI/Mcap</div>
-            <div class="panel-item-value">${row.oiMcap ? row.oiMcap.toFixed(2) + '%' : '-'}</div>
-          </div>
-          <div class="panel-item">
-            <div class="panel-item-label">Vol/Mcap</div>
-            <div class="panel-item-value">${row.volMcap ? row.volMcap.toFixed(2) + '%' : '-'}</div>
-          </div>
-          <div class="panel-item">
-            <div class="panel-item-label">Funding Rate</div>
-            <div class="panel-item-value ${colorClass(row.funding)}">${row.funding.toFixed(4)}%</div>
-          </div>
-          <div class="panel-item">
-            <div class="panel-item-label">信号数量</div>
-            <div class="panel-item-value">${row.signals ? row.signals.length : 0}个</div>
-          </div>
-        </div>
-
-        <div style="margin-bottom: 16px;">
-          ${squeezeBadge}
-          ${momentumBadge}
-        </div>
-
-        <div class="trading-decision ${riskAssess.color}">
-          <h3>⚠️ 风险评估</h3>
-          <div class="decision-item">
-            <span class="decision-item-label">风险等级</span>
-            <span class="decision-item-value">${riskAssess.level.toUpperCase()}</span>
-          </div>
-          <div class="decision-item">
-            <span class="decision-item-label">操作建议</span>
-            <span class="decision-item-value">${riskAssess.action}</span>
-          </div>
-        </div>
-
-        <div class="leverage-box">
-          <h3>📊 交易类型与杠杆</h3>
-          <div class="leverage-item">
-            <div class="leverage-label">推荐交易方式</div>
-            <div class="leverage-value">${trading.typeName}</div>
-          </div>
-          <div class="leverage-item">
-            <div class="leverage-label">杠杆倍数</div>
-            <div class="leverage-value">${trading.leverage}倍</div>
-          </div>
-          <div class="leverage-item">
-            <div class="leverage-label">选择原因</div>
-            <div class="leverage-value" style="color: #d8b4fe; font-size: 13px;">${trading.reason}</div>
-          </div>
-          <div class="leverage-item">
-            <div class="leverage-label">⚠️ 重要提示</div>
-            <div class="leverage-value" style="color: #fca5a5; font-size: 13px;">${trading.warning}</div>
-          </div>
-        </div>
-
-        <div class="trading-decision">
-          <h3>💰 入场决策</h3>
-          <div class="decision-item">
-            <span class="decision-item-label">入场价</span>
-            <span class="decision-item-value">$${fmtNum(row.price, 6)}</span>
-          </div>
-          <div class="decision-item">
-            <span class="decision-item-label">仓位建议</span>
-            <span class="decision-item-value">${isYaoCoin ? '账户的 20-30%' : '账户的 1-2%'}</span>
-          </div>
-          <div class="decision-item">
-            <span class="decision-item-label">本金参考</span>
-            <span class="decision-item-value">建议 100+ USDT 起</span>
-          </div>
-        </div>
-
-        <div class="trading-decision">
-          <h3>🎯 止损止盈计划</h3>
-          <div class="decision-item">
-            <span class="decision-item-label">止损价</span>
-            <span class="decision-item-value" style="color: #ef4444;">$${tp.stopLoss} (-3%)</span>
-          </div>
-          <div class="decision-item">
-            <span class="decision-item-label">第一止盈 TP1</span>
-            <span class="decision-item-value" style="color: #22c55e;">$${tp.tp1} (+${isYaoCoin ? '5' : '3'}%) 卖 ${tp.tp1Ratio}</span>
-          </div>
-          <div class="decision-item">
-            <span class="decision-item-label">第二止盈 TP2</span>
-            <span class="decision-item-value" style="color: #22c55e;">$${tp.tp2} (+${isYaoCoin ? '10' : '8'}%) 卖 ${tp.tp2Ratio}</span>
-          </div>
-          <div class="decision-item">
-            <span class="decision-item-label">第三止盈 TP3</span>
-            <span class="decision-item-value" style="color: #22c55e;">$${tp.tp3} (+${isYaoCoin ? '20' : '15'}%) 卖 ${tp.tp3Ratio}</span>
-          </div>
-        </div>
-
-        <div class="profit-loss-box">
-          <h3>💵 杠杆下的盈亏计算 (100 USDT 本金)</h3>
-          <div class="profit-loss-grid">
-            <div class="profit-loss-item">
-              <div class="profit-loss-label">止损 (-3%)</div>
-              <div class="profit-loss-value loss">
-                ${pnl.sl.change}% → $${pnl.sl.amount}
-              </div>
-            </div>
-            <div class="profit-loss-item">
-              <div class="profit-loss-label">TP1 (+${isYaoCoin ? '5' : '3'}%)</div>
-              <div class="profit-loss-value profit">
-                ${pnl.tp1.change}% → $${pnl.tp1.amount}
-              </div>
-            </div>
-            <div class="profit-loss-item">
-              <div class="profit-loss-label">TP2 (+${isYaoCoin ? '10' : '8'}%)</div>
-              <div class="profit-loss-value profit">
-                ${pnl.tp2.change}% → $${pnl.tp2.amount}
-              </div>
-            </div>
-            <div class="profit-loss-item">
-              <div class="profit-loss-label">TP3 (+${isYaoCoin ? '20' : '15'}%)</div>
-              <div class="profit-loss-value profit">
-                ${pnl.tp3.change}% → $${pnl.tp3.amount}
-              </div>
-            </div>
-          </div>
-          <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(16,196,245,.3); color: #7dd3fc; font-size: 12px;">
-            💡 <strong>杠杆说明</strong>：${trading.leverage}倍杠杆下，收益和损失都会放大 ${trading.leverage} 倍。如果本金是 1000 USDT，则所有数字乘以 10。
-          </div>
-        </div>
-
-        <div class="trading-decision">
-          <h3>📈 加仓时机</h3>
-          <div class="decision-item">
-            <span class="decision-item-label">回调加仓 1</span>
-            <span class="decision-item-value">$${add.add1} (${isYaoCoin ? '-5' : '-3'}% 时加仓)</span>
-          </div>
-          <div class="decision-item">
-            <span class="decision-item-label">回调加仓 2</span>
-            <span class="decision-item-value">$${add.add2} (${isYaoCoin ? '-10' : '-6'}% 时加仓)</span>
-          </div>
-          <div class="decision-item">
-            <span class="decision-item-label">加仓策略</span>
-            <span class="decision-item-value">${add.ratio}，但要遵守止损纪律</span>
-          </div>
-        </div>
-
-        <div class="trading-decision">
-          <h3>🔍 挤压与动量</h3>
-          <div class="decision-item">
-            <span class="decision-item-label">空头挤压</span>
-            <span class="decision-item-value">
-              ${squeeze.squeeze === 'up' ? '🔥 挤压中 - 还有上升空间，继续持有' : 
-                squeeze.squeeze === 'down' ? '⚠️ 假挤压 - 谨慎，可能继续下跌' : 
-                '➡️ 无明显挤压 - 关注变化'}
+      
+      return `
+        <div class="coin-card" onclick="showDetail('${row.symbol}')">
+          <div class="coin-card-title">
+            <span class="coin-symbol">${row.symbol}</span>
+            <span class="coin-level ${isYaoCoin ? 'level-yao' : 'level-buy'}">
+              ${isYaoCoin ? '💎 妖币' : '🚀 买入'}
             </span>
           </div>
-          <div class="decision-item">
-            <span class="decision-item-label">当前动量</span>
-            <span class="decision-item-value">
-              ${momentum.momentum === 'strong' ? '🚀 强动量 - 拉盘中，可以追' : 
-                momentum.momentum === 'medium' ? '⚡ 中动量 - 有上升趋势' : 
-                '❄️ 无动量 - 等待触发'}
-            </span>
+          <div class="coin-info">
+            <div class="info-item">
+              <span class="info-label">现价</span>
+              <span class="info-value">$${fmtNum(row.price, 6)}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">24h</span>
+              <span class="info-value ${row.priceChange > 0 ? 'green' : 'red'}">
+                ${row.priceChange.toFixed(1)}%
+              </span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">市值</span>
+              <span class="info-value">$${fmtNum(row.mcap, 0)}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">共振</span>
+              <span class="info-value">${score.toFixed(0)}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">OI/M</span>
+              <span class="info-value">${row.oiMcap ? row.oiMcap.toFixed(1) : '-'}%</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">资费</span>
+              <span class="info-value ${row.funding > 0 ? 'green' : 'red'}">
+                ${row.funding.toFixed(4)}%
+              </span>
+            </div>
           </div>
-        </div>
-
-        <div class="trade-guide">
-          <h3>📋 交易执行清单</h3>
-          <div style="margin-bottom: 10px;">
-            <strong>✓ 入场前检查：</strong><br>
-            • 确认交易方式：${trading.typeName}<br>
-            • 确认杠杆倍数：${trading.leverage}倍<br>
-            • 计算持仓金额（账户资金的 ${isYaoCoin ? '20-30%' : '1-2%'}）<br>
-            • 在止损价 $${tp.stopLoss} 下单<br>
-            • 设置 3 个止盈单（TP1、TP2、TP3）<br>
-          </div>
-          <div style="margin-bottom: 10px;">
-            <strong>✓ 持仓中监控：</strong><br>
-            • 每 ${isYaoCoin ? '3-5' : '5-10'} 分钟检查一次<br>
-            ${isYaoCoin ? '• 如果有回调到 ' + add.add1 + '，可以加仓<br>' : ''}
-            • 监控挤压情况，如果变成假挤压立即减仓<br>
-            • 如果动量消失 ${isYaoCoin ? '1-2' : '2-3'} 小时，考虑部分离场<br>
-            • 移动止损到成本价或盈利位<br>
-          </div>
-          <div>
-            <strong>✓ 止盈执行：</strong><br>
-            • TP1 自动卖 ${tp.tp1Ratio}，移动止损到成本价<br>
-            • TP2 自动卖 ${tp.tp2Ratio}，继续持有剩余部分<br>
-            • TP3 全部卖出或继续看 ${isYaoCoin ? '30+%' : '20+%'} 收益<br>
-            ${trading.type === 'spot' ? '• 现货可以长期持有，不需要太急着止盈' : '• 合约要严格执行止盈，避免回吐'}
+          <div class="coin-footer">
+            ${isYaoCoin ? `<span class="badge">${row.riskLevel}</span>` : ''}
+            <span class="badge">${trading.typeName}</span>
+            ${row.signals.slice(0, 2).map(s => `<span class="badge">${s}</span>`).join('')}
           </div>
         </div>
       `;
-
-      return html;
     }
 
     function renderYaoList() {
       const container = document.getElementById('yao-list');
       
       if (allRows.yao.length === 0) {
-        container.innerHTML = '<div class="empty-state">暂未发现符合条件的妖币</div>';
+        container.innerHTML = '<div class="empty-state">暂无妖币发现</div>';
         return;
       }
 
       let html = '';
       allRows.yao.forEach(row => {
-        html += `
-          <div class="trading-panel">
-            ${renderTradingPanel(row)}
-          </div>
-        `;
+        html += renderCoinCard(row);
       });
-
       container.innerHTML = html;
     }
 
@@ -1201,20 +905,193 @@
       const container = document.getElementById('buy-list');
       
       if (allRows.buy.length === 0) {
-        container.innerHTML = '<div class="empty-state">暂未发现符合条件的建议买入币种</div>';
+        container.innerHTML = '<div class="empty-state">暂无建议买入</div>';
         return;
       }
 
       let html = '';
       allRows.buy.forEach(row => {
-        html += `
-          <div class="trading-panel">
-            ${renderTradingPanel(row)}
-          </div>
-        `;
+        html += renderCoinCard(row);
       });
-
       container.innerHTML = html;
+    }
+
+    // 详细面板
+    function showDetail(symbol) {
+      const coin = allCoinsData.find(c => c.symbol === symbol);
+      if (!coin) return;
+
+      const isYaoCoin = coin.level === '妖币';
+      const score = coin.yaoScore || coin.buyScore || 0;
+      const tp = calculateTakeProfit(coin, isYaoCoin);
+      const add = calculateAdditionalBuy(coin, isYaoCoin);
+      const squeeze = detectSqueeze(coin, previousData[symbol]);
+      const momentum = detectMomentum(coin, previousData[symbol]);
+      const trading = getTradingRecommendation(coin, isYaoCoin, score);
+      const pnl = calculateLeveragePnL(parseFloat(coin.price), tp, parseFloat(tp.stopLoss), trading.leverage, 100);
+
+      const html = `
+        <div class="detail-title">
+          ${symbol}
+          <span class="tag ${isYaoCoin ? 'level-yao' : 'level-buy'}">
+            ${isYaoCoin ? '💎 妖币' : '🚀 买入'}
+          </span>
+        </div>
+
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-item-label">现价</div>
+            <div class="detail-item-value">$${fmtNum(coin.price, 6)}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-item-label">市值</div>
+            <div class="detail-item-value">$${fmtNum(coin.mcap, 2)}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-item-label">24h涨跌</div>
+            <div class="detail-item-value ${coin.priceChange > 0 ? 'green' : 'red'}">
+              ${coin.priceChange.toFixed(2)}%
+            </div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-item-label">共振分</div>
+            <div class="detail-item-value">${score.toFixed(1)}/100</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-item-label">OI/Mcap</div>
+            <div class="detail-item-value">${coin.oiMcap ? coin.oiMcap.toFixed(2) : '-'}%</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-item-label">Vol/Mcap</div>
+            <div class="detail-item-value">${coin.volMcap ? coin.volMcap.toFixed(2) : '-'}%</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-item-label">Funding Rate</div>
+            <div class="detail-item-value ${coin.funding > 0 ? 'green' : 'red'}">
+              ${coin.funding.toFixed(4)}%
+            </div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-item-label">信号数</div>
+            <div class="detail-item-value">${coin.signals.length}</div>
+          </div>
+        </div>
+
+        <div class="section-box">
+          <h3>📊 交易推荐</h3>
+          <div class="decision-row">
+            <span class="decision-label">推荐方式</span>
+            <span class="decision-value">${trading.typeName}</span>
+          </div>
+          <div class="decision-row">
+            <span class="decision-label">杠杆倍数</span>
+            <span class="decision-value">${trading.leverage}倍</span>
+          </div>
+          <div class="decision-row">
+            <span class="decision-label">选择原因</span>
+            <span class="decision-value" style="font-size: 11px;">${trading.reason}</span>
+          </div>
+          <div class="decision-row">
+            <span class="decision-label">仓位大小</span>
+            <span class="decision-value">${isYaoCoin ? '账户的 20-30%' : '账户的 1-2%'}</span>
+          </div>
+        </div>
+
+        <div class="section-box">
+          <h3>🎯 止损止盈</h3>
+          <div class="decision-row">
+            <span class="decision-label">止损价</span>
+            <span class="decision-value" style="color: #ef4444;">$${tp.stopLoss} (-3%)</span>
+          </div>
+          <div class="decision-row">
+            <span class="decision-label">TP1</span>
+            <span class="decision-value" style="color: #22c55e;">$${tp.tp1} (+${isYaoCoin ? '5' : '3'}%) 卖${tp.tp1Ratio}</span>
+          </div>
+          <div class="decision-row">
+            <span class="decision-label">TP2</span>
+            <span class="decision-value" style="color: #22c55e;">$${tp.tp2} (+${isYaoCoin ? '10' : '8'}%) 卖${tp.tp2Ratio}</span>
+          </div>
+          <div class="decision-row">
+            <span class="decision-label">TP3</span>
+            <span class="decision-value" style="color: #22c55e;">$${tp.tp3} (+${isYaoCoin ? '20' : '15'}%) 卖${tp.tp3Ratio}</span>
+          </div>
+        </div>
+
+        <div class="section-box" style="background: rgba(16,196,245,.1); border-color: rgba(16,196,245,.4);">
+          <h3 style="color: #7dd3fc;">💵 盈亏计算 (100 USDT本金, ${trading.leverage}倍杠杆)</h3>
+          <div class="decision-row">
+            <span class="decision-label">止损 (-3%)</span>
+            <span class="decision-value" style="color: #ef4444;">${pnl.sl.change}% → $${pnl.sl.amount}</span>
+          </div>
+          <div class="decision-row">
+            <span class="decision-label">TP1 (+${isYaoCoin ? '5' : '3'}%)</span>
+            <span class="decision-value" style="color: #22c55e;">${pnl.tp1.change}% → $${pnl.tp1.amount}</span>
+          </div>
+          <div class="decision-row">
+            <span class="decision-label">TP2 (+${isYaoCoin ? '10' : '8'}%)</span>
+            <span class="decision-value" style="color: #22c55e;">${pnl.tp2.change}% → $${pnl.tp2.amount}</span>
+          </div>
+          <div class="decision-row">
+            <span class="decision-label">TP3 (+${isYaoCoin ? '20' : '15'}%)</span>
+            <span class="decision-value" style="color: #22c55e;">${pnl.tp3.change}% → $${pnl.tp3.amount}</span>
+          </div>
+        </div>
+
+        <div class="section-box">
+          <h3>📈 加仓时机</h3>
+          <div class="decision-row">
+            <span class="decision-label">回调加仓1</span>
+            <span class="decision-value">$${add.add1}</span>
+          </div>
+          <div class="decision-row">
+            <span class="decision-label">回调加仓2</span>
+            <span class="decision-value">$${add.add2}</span>
+          </div>
+          <div class="decision-row">
+            <span class="decision-label">加仓策略</span>
+            <span class="decision-value">在${add.ratio}时各加仓25%</span>
+          </div>
+        </div>
+
+        <div class="section-box ${squeeze.squeeze === 'up' ? '' : squeeze.squeeze === 'down' ? 'danger' : 'warning'}">
+          <h3>🔍 市场信号</h3>
+          <div class="decision-row">
+            <span class="decision-label">空头挤压</span>
+            <span class="decision-value">
+              ${squeeze.squeeze === 'up' ? '🔥 挤压中' : squeeze.squeeze === 'down' ? '⚠️ 假挤压' : '➡️ 无挤压'}
+            </span>
+          </div>
+          <div class="decision-row">
+            <span class="decision-label">动量</span>
+            <span class="decision-value">
+              ${momentum.momentum === 'strong' ? '🚀 强动量' : momentum.momentum === 'medium' ? '⚡ 中动量' : '❄️ 无动量'}
+            </span>
+          </div>
+          <div class="decision-row">
+            <span class="decision-label">信号标签</span>
+            <span class="decision-value">${coin.signals.join(' | ')}</span>
+          </div>
+        </div>
+
+        <div class="section-box warning" style="border-color: rgba(245,158,11,.4); margin-top: 12px;">
+          <h3 style="color: #fcd34d;">⚠️ 重要提示</h3>
+          <div class="decision-row">
+            <span class="decision-label">必读</span>
+            <span class="decision-value" style="font-size: 11px; line-height: 1.6;">
+              ${isYaoCoin 
+                ? '妖币高风险，必须严格止损。不要抱希望，不要加仓超过止损。按计划执行。' 
+                : '建议买入，但也要设置止损。推荐现货长持，但如果用合约必须1倍。'}
+            </span>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('detail-body').innerHTML = html;
+      document.getElementById('detail-modal').classList.add('active');
+    }
+
+    function closeDetail() {
+      document.getElementById('detail-modal').classList.remove('active');
     }
 
     function handleSearch(query) {
@@ -1227,7 +1104,7 @@
 
       const filtered = allCoinsData.filter(coin => 
         coin.symbol.toUpperCase().includes(query.toUpperCase())
-      ).slice(0, 20);
+      ).slice(0, 15);
 
       if (filtered.length === 0) {
         dropdown.classList.remove('active');
@@ -1251,13 +1128,12 @@
       const coin = allCoinsData.find(c => c.symbol === symbol);
       
       if (!coin) {
-        document.getElementById('search-result').innerHTML = '<div class="empty-state">未找到该币种数据</div>';
+        document.getElementById('search-result').innerHTML = '<div class="empty-state">未找到该币种</div>';
         return;
       }
 
       const resonance = calculateResonanceScore(coin, previousData[symbol]);
       coin.signals = resonance.signals;
-      coin.breakdown = resonance.breakdown;
 
       const yaoCheck = detectYaoCoinV2(coin, previousData[symbol]);
       const buyCheck = detectBuyCoinV2(coin, previousData[symbol]);
@@ -1274,44 +1150,16 @@
         coin.resonanceScore = resonance.totalScore;
       }
 
-      const html = `
-        <div class="trading-panel search-result">
-          ${coin.level === '观察' ? `
-            <div class="panel-title">
-              ${symbol}
-              <span class="tag" style="background: rgba(100,116,139,.3); color: #cbd5e1; border-color: #64748b;">
-                📊 观察中（共振分: ${resonance.totalScore.toFixed(1)}/100）
-              </span>
-            </div>
-            <div class="panel-grid">
-              <div class="panel-item">
-                <div class="panel-item-label">现价</div>
-                <div class="panel-item-value">$${fmtNum(coin.price, 6)}</div>
-              </div>
-              <div class="panel-item">
-                <div class="panel-item-label">市值</div>
-                <div class="panel-item-value">$${fmtNum(coin.mcap, 2)}</div>
-              </div>
-              <div class="panel-item">
-                <div class="panel-item-label">24h涨跌</div>
-                <div class="panel-item-value ${colorClass(coin.priceChange)}">${coin.priceChange.toFixed(2)}%</div>
-              </div>
-              <div class="panel-item">
-                <div class="panel-item-label">OI/Mcap</div>
-                <div class="panel-item-value">${coin.oiMcap ? coin.oiMcap.toFixed(2) + '%' : '-'}</div>
-              </div>
-            </div>
-            <div class="notice-box" style="background: rgba(100,116,139,.1); border-color: rgba(100,116,139,.3); color: #cbd5e1; margin-top: 16px; border-radius: 12px; padding: 16px; border: 1px solid;">
-              <h3 style="color: #94a3b8; margin-bottom: 8px;">ℹ️ 信息</h3>
-              这个币种目前不符合妖币或建议买入的标准，但你可以继续关注它。
-            </div>
-          ` : `
-            ${renderTradingPanel(coin)}
-          `}
-        </div>
-      `;
-
-      document.getElementById('search-result').innerHTML = html;
+      if (coin.level === '观察') {
+        document.getElementById('search-result').innerHTML = `
+          <div class="empty-state">
+            💡 这个币种目前不符合推荐标准<br/>
+            共振分: ${resonance.totalScore.toFixed(0)}/100
+          </div>
+        `;
+      } else {
+        showDetail(symbol);
+      }
     }
 
     async function loadData() {
@@ -1328,7 +1176,7 @@
           getJSON('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1')
         ]);
 
-        if (!exchangeInfo || !ticker24h || !premiumIndex) throw new Error('基础数据获取失败');
+        if (!exchangeInfo || !ticker24h || !premiumIndex) throw new Error('数据获取失败');
 
         const symbols = exchangeInfo.symbols
           .filter(s => s.contractType === 'PERPETUAL' && s.quoteAsset === 'USDT' && s.status === 'TRADING')
@@ -1382,7 +1230,6 @@
             row.riskLevel = yaoCheck.riskLevel;
             row.yaoScore = yaoCheck.yaoScore;
             row.signals = yaoCheck.signals;
-            row.breakdown = yaoCheck.breakdown;
             allRows.yao.push(row);
             continue;
           }
@@ -1392,7 +1239,6 @@
             row.level = '建议';
             row.buyScore = buyCheck.buyScore;
             row.signals = buyCheck.signals;
-            row.breakdown = buyCheck.breakdown;
             allRows.buy.push(row);
           }
         }
@@ -1413,14 +1259,23 @@
         renderYaoList();
         renderBuyList();
 
+        // 更新统计
         document.getElementById('stat-yao').innerText = allRows.yao.length;
-        document.getElementById('stat-yao-futures').innerText = allRows.yao.length; // 妖币都推荐合约
+        document.getElementById('stat-yao-futures').innerText = allRows.yao.length;
         document.getElementById('stat-yao-momentum').innerText = allRows.yao.filter(x => x.priceChange > -15).length;
+        
+        if (allRows.yao.length > 0) {
+          const avgYaoScore = allRows.yao.reduce((s, x) => s + x.yaoScore, 0) / allRows.yao.length;
+          document.getElementById('stat-yao-score').innerText = avgYaoScore.toFixed(1);
+        }
 
         document.getElementById('stat-buy').innerText = allRows.buy.length;
-        document.getElementById('stat-buy-spot').innerText = allRows.buy.filter(x => x.buyScore >= 85).length; // 高分推荐现货
+        document.getElementById('stat-buy-spot').innerText = allRows.buy.filter(x => x.buyScore >= 85).length;
+        document.getElementById('stat-high-quality').innerText = allRows.buy.filter(x => x.buyScore >= 85).length;
+        
         if (allRows.buy.length > 0) {
-          document.getElementById('stat-high-quality').innerText = allRows.buy.filter(x => x.buyScore >= 85).length;
+          const avgBuyScore = allRows.buy.reduce((s, x) => s + x.buyScore, 0) / allRows.buy.length;
+          document.getElementById('stat-buy-score').innerText = avgBuyScore.toFixed(1);
         }
 
         document.getElementById('last-update').innerText = '最后更新：' + new Date().toLocaleTimeString();
@@ -1457,10 +1312,18 @@
       }
     });
 
+    // 搜索框失焦隐藏
     document.getElementById('search-input').addEventListener('blur', () => {
       setTimeout(() => {
         document.getElementById('search-dropdown').classList.remove('active');
       }, 100);
+    });
+
+    // 点击外面关闭详细面板
+    document.getElementById('detail-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'detail-modal') {
+        closeDetail();
+      }
     });
   </script>
 </body>
