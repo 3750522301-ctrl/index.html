@@ -4,1537 +4,1228 @@
   <meta charset="UTF-8" />
   <meta name="google" content="notranslate" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>⚡ 妖币猎手 Pro - 精准启动预警系统</title>
+  <title>山寨币监控系统 Pro</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    
     :root {
-      --primary: #10c4f5;
-      --primary-dark: #0d9ecf;
-      --primary-light: #4dd9ff;
-      --success: #22c55e;
-      --warning: #f59e0b;
-      --danger: #ef4444;
+      --bg: #061018;
+      --card: #0b1525;
+      --card2: #0f1e34;
+      --border: rgba(16,196,245,.24);
+      --text: #e8eef9;
+      --sub: #8da3bb;
+      --cyan: #10c4f5;
+      --green: #22c55e;
+      --orange: #f59e0b;
+      --red: #ef4444;
       --purple: #a855f7;
-      --bg-main: #061018;
-      --bg-card: #0a1628;
-      --bg-hover: #0d1f35;
-      --text-primary: #e5eefb;
-      --text-secondary: #8ca3ba;
-      --border: rgba(16, 196, 245, 0.25);
-      --border-light: rgba(16, 196, 245, 0.12);
     }
-
     body {
-      background: linear-gradient(135deg, var(--bg-main) 0%, #0b1730 100%);
-      color: var(--text-primary);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #061018 0%, #0b1730 100%);
+      color: var(--text);
+      font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
       padding: 12px;
       font-size: 13px;
-      overflow-x: hidden;
     }
-
     .container { max-width: 1800px; margin: 0 auto; }
+    .header {
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+      background: rgba(10,22,40,.9); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 16px;
+    }
+    h1 {
+      font-size: 24px; font-weight: 900;
+      background: linear-gradient(135deg, #10c4f5 0%, #62dbff 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .nav-row, .status-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .btn {
+      background: var(--card); border: 1px solid var(--border); color: var(--text);
+      border-radius: 8px; padding: 9px 14px; cursor: pointer; font-weight: 700; font-size: 12px;
+    }
+    .btn.active, .btn:hover { border-color: var(--cyan); color: var(--cyan); background: rgba(16,196,245,.12); }
+    .pill {
+      padding: 8px 12px; border-radius: 8px; background: rgba(16,196,245,.08);
+      border: 1px solid rgba(16,196,245,.15); color: var(--sub); font-size: 11px;
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block;
+      box-shadow: 0 0 0 0 rgba(34,197,94,.6); animation: pulse 2s infinite;
+    }
+    .dot.offline { background: var(--red); animation: none; }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(34,197,94,.6); }
+      70% { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+      100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+    }
     .page { display: none; }
     .page.active { display: block; }
 
-    .header {
-      background: linear-gradient(135deg, rgba(16, 196, 245, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
-      backdrop-filter: blur(10px);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 16px;
+    .toolbar {
+      display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;
+      background: rgba(10,22,40,.9); border: 1px solid var(--border); border-radius: 12px; padding: 12px;
     }
-
-    h1 {
-      font-size: 24px;
-      background: linear-gradient(135deg, var(--primary) 0%, #00d4ff 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      font-weight: 800;
-      margin: 0;
+    .toolbar-item { display: flex; gap: 6px; align-items: center; }
+    .toolbar-label { color: var(--sub); font-size: 11px; font-weight: 700; }
+    .sort-btn {
+      background: rgba(16,196,245,.1); border: 1px solid rgba(16,196,245,.2); color: var(--cyan);
+      border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 11px; font-weight: 700;
     }
-
-    .nav-btns {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .nav-btn {
-      padding: 10px 16px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      color: var(--text-primary);
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 12px;
-      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    }
-
-    .nav-btn:hover,
-    .nav-btn.active {
-      border-color: var(--primary);
-      background: rgba(16, 196, 245, 0.15);
-      color: var(--primary);
-      box-shadow: 0 0 12px rgba(16, 196, 245, 0.2);
-    }
-
-    .sound-toggle {
-      background: none;
-      border: 1px solid var(--border);
-      color: var(--text-primary);
-      padding: 8px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: bold;
-      transition: all 0.3s;
-    }
-
-    .sound-toggle:hover {
-      border-color: var(--warning);
-      color: var(--warning);
-    }
-
-    .sound-toggle.on {
-      border-color: var(--success);
-      color: var(--success);
-      background: rgba(34, 197, 94, 0.1);
-    }
-
-    .status-info {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      align-items: center;
-      font-size: 11px;
-    }
-
-    .stat-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      background: rgba(16, 196, 245, 0.08);
-      border-radius: 6px;
-      border: 1px solid rgba(16, 196, 245, 0.2);
-    }
-
-    .stat-label {
-      color: var(--text-secondary);
-      font-size: 10px;
-    }
-
-    .stat-value {
-      color: var(--primary);
-      font-weight: bold;
-      font-size: 14px;
-    }
-
-    .refresh-dot {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--success);
-      animation: pulse-dot 2s infinite;
-    }
-
-    .refresh-dot.loading {
-      background: var(--warning);
-      animation: spin-dot 1s linear infinite;
-    }
-
-    @keyframes pulse-dot {
-      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
-      50% { opacity: 0.5; }
-      100% { opacity: 1; box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
-    }
-
-    @keyframes spin-dot {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .search-page { max-width: 900px; margin: 0 auto; }
-    .search-box { margin-bottom: 24px; }
-
-    .search-input {
-      width: 100%;
-      padding: 14px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text-primary);
-      font-size: 14px;
-      transition: all 0.3s;
-    }
-
-    .search-input:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 20px rgba(16, 196, 245, 0.4);
-      background: rgba(10, 22, 40, 0.9);
-    }
-
-    .search-dropdown {
-      position: relative;
-      margin-top: 8px;
-      max-height: 600px;
-      overflow-y: auto;
-    }
-
-    .search-item {
-      padding: 12px;
-      background: var(--bg-card);
-      border: 1px solid var(--border-light);
-      border-radius: 6px;
-      margin-bottom: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .search-item:hover {
-      background: rgba(16, 196, 245, 0.15);
-      border-color: var(--primary);
-      transform: translateX(4px);
-    }
-
-    .search-item-symbol {
-      color: var(--primary);
-      font-weight: bold;
-      font-size: 14px;
-      margin-bottom: 6px;
-    }
-
-    .search-item-info {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-      gap: 8px;
-      font-size: 10px;
-      color: var(--text-secondary);
-      margin-bottom: 6px;
-    }
-
-    .search-item-btn {
-      padding: 6px 12px;
-      background: rgba(16, 196, 245, 0.2);
-      color: var(--primary);
-      border: 1px solid rgba(16, 196, 245, 0.4);
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 11px;
-      font-weight: bold;
-      transition: all 0.2s;
-      margin-right: 6px;
-      margin-top: 6px;
-    }
-
-    .search-item-btn:hover {
-      background: rgba(16, 196, 245, 0.35);
-      box-shadow: 0 0 10px rgba(16, 196, 245, 0.2);
-    }
+    .sort-btn.active { background: rgba(16,196,245,.25); }
 
     .section-title {
-      font-size: 14px;
-      font-weight: bold;
-      margin-bottom: 12px;
-      margin-top: 24px;
-      padding: 10px 14px;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      margin: 18px 0 10px; padding: 10px 12px; border-radius: 10px;
+      font-size: 14px; font-weight: 900;
+    }
+    .section-title.yao-buy { color: #ffd4d4; background: rgba(239,68,68,.15); border-left: 4px solid var(--red); }
+    .section-title.buy { color: #c9ffe0; background: rgba(34,197,94,.15); border-left: 4px solid var(--green); }
+    .section-title.yao-watch { color: #ffe7bf; background: rgba(245,158,11,.14); border-left: 4px solid var(--orange); }
+    .section-title.good { color: #c9efff; background: rgba(16,196,245,.14); border-left: 4px solid var(--cyan); }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px,1fr)); gap: 12px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: linear-gradient(135deg, rgba(11,21,37,.96), rgba(15,30,52,.92));
+      border: 1px solid var(--border); border-radius: 14px; padding: 14px;
+      transition: .25s ease; position: relative; overflow: hidden;
+    }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+    .card.yao-buy { border-color: rgba(239,68,68,.55); }
+    .card.buy { border-color: rgba(34,197,94,.55); }
+    .card.yao-watch { border-color: rgba(245,158,11,.55); }
+    .card.good { border-color: rgba(16,196,245,.55); }
+    .card.alert { animation: alertPulse 1.5s infinite; }
+    @keyframes alertPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,.5); }
+      50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
     }
 
-    .section-title.excellent {
-      color: var(--success);
-      background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.08) 100%);
-      border-left: 4px solid var(--success);
+    .head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; margin-bottom: 10px; }
+    .symbol { font-size: 18px; font-weight: 900; color: var(--cyan); }
+    .price { color: var(--sub); font-size: 12px; margin-top: 3px; }
+    .mini-btn {
+      background: none; border: 1px solid rgba(16,196,245,.4); color: var(--cyan);
+      border-radius: 6px; padding: 5px 8px; cursor: pointer; font-size: 11px; font-weight: 700;
     }
 
-    .section-title.good {
-      color: var(--primary);
-      background: linear-gradient(135deg, rgba(16, 196, 245, 0.15) 0%, rgba(16, 196, 245, 0.08) 100%);
-      border-left: 4px solid var(--primary);
-    }
-
-    .section-title.short {
-      color: var(--danger);
-      background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.08) 100%);
-      border-left: 4px solid var(--danger);
-    }
-
-    .section-title.yao {
-      color: #ff6b6b;
-      background: linear-gradient(135deg, rgba(255, 107, 107, 0.15) 0%, rgba(255, 107, 107, 0.08) 100%);
-      border-left: 4px solid #ff6b6b;
-    }
-
-    .coin-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    @media (max-width: 768px) {
-      .coin-grid { grid-template-columns: 1fr; }
-    }
-
-    .coin-card {
-      background: linear-gradient(135deg, rgba(10, 22, 40, 0.95) 0%, rgba(13, 31, 53, 0.6) 100%);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 14px;
-      cursor: pointer;
-      transition: all 0.3s;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .coin-card:hover {
-      border-color: rgba(16, 196, 245, 0.6);
-      box-shadow: 0 12px 32px rgba(16, 196, 245, 0.2);
-      transform: translateY(-4px);
-    }
-
-    .coin-card.excellent {
-      border: 1.5px solid rgba(34, 197, 94, 0.7);
-      background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(34, 197, 94, 0.05) 100%);
-    }
-
-    .coin-card.good {
-      border: 1.5px solid rgba(16, 196, 245, 0.7);
-      background: linear-gradient(135deg, rgba(16, 196, 245, 0.2) 0%, rgba(16, 196, 245, 0.05) 100%);
-    }
-
-    .coin-card.short {
-      border: 1.5px solid rgba(239, 68, 68, 0.7);
-      background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.05) 100%);
-    }
-
-    .coin-card.yao {
-      border: 1.5px solid rgba(255, 107, 107, 0.7);
-      background: linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(255, 107, 107, 0.05) 100%);
-    }
-
-    .coin-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 10px;
-    }
-
-    .coin-title {
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
-    }
-
-    .coin-symbol {
-      font-size: 16px;
-      color: var(--primary);
-      font-weight: 800;
-    }
-
-    .coin-price {
-      font-size: 12px;
-      color: var(--text-secondary);
-    }
-
-    .coin-actions {
-      display: flex;
-      gap: 4px;
-    }
-
-    .action-btn {
-      background: none;
-      border: 1px solid rgba(16, 196, 245, 0.4);
-      color: var(--primary);
-      padding: 5px 8px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 12px;
-      transition: all 0.2s;
-    }
-
-    .action-btn:hover {
-      border-color: var(--primary);
-      background: rgba(16, 196, 245, 0.2);
-    }
-
-    .tags-row {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      margin-bottom: 8px;
-    }
-
+    .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
     .tag {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 10px;
-      font-weight: bold;
-      border: 1px solid;
+      border: 1px solid; border-radius: 999px; padding: 4px 8px; font-size: 10px; font-weight: 800;
       white-space: nowrap;
     }
+    .t-risk-low { color: #b9ffd1; background: rgba(34,197,94,.15); border-color: rgba(34,197,94,.4); }
+    .t-risk-mid { color: #ffe6aa; background: rgba(245,158,11,.15); border-color: rgba(245,158,11,.4); }
+    .t-risk-high { color: #ffc2c2; background: rgba(239,68,68,.15); border-color: rgba(239,68,68,.4); }
+    .t-stage { color: #d7c6ff; background: rgba(168,85,247,.14); border-color: rgba(168,85,247,.4); }
+    .t-outlook { color: #bcefff; background: rgba(16,196,245,.14); border-color: rgba(16,196,245,.4); }
+    .t-new { color: #ffe59a; background: rgba(245,158,11,.16); border-color: rgba(245,158,11,.45); }
+    .t-time { color: #cde0ff; background: rgba(59,130,246,.14); border-color: rgba(59,130,246,.45); }
+    .t-count { color: #ffd0ff; background: rgba(236,72,153,.14); border-color: rgba(236,72,153,.4); }
+    .t-liq { color: #ffb3d9; background: rgba(236,72,153,.16); border-color: rgba(236,72,153,.45); }
+    .t-taker { color: #a8e6ff; background: rgba(59,130,246,.15); border-color: rgba(59,130,246,.45); }
 
-    .tag-excellent {
-      background: rgba(34, 197, 94, 0.5);
-      color: #ffffff;
-      border-color: rgba(34, 197, 94, 0.8);
+    .stats {
+      display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 6px; margin-bottom: 10px;
     }
-
-    .tag-good {
-      background: rgba(16, 196, 245, 0.5);
-      color: #ffffff;
-      border-color: rgba(16, 196, 245, 0.8);
-    }
-
-    .tag-short {
-      background: rgba(239, 68, 68, 0.5);
-      color: #ffffff;
-      border-color: rgba(239, 68, 68, 0.8);
-    }
-
-    .tag-yao {
-      background: rgba(255, 107, 107, 0.5);
-      color: #ffffff;
-      border-color: rgba(255, 107, 107, 0.8);
-    }
-
-    .tag-duration {
-      background: rgba(59, 130, 246, 0.5);
-      color: #93c5fd;
-      border-color: rgba(59, 130, 246, 0.8);
-    }
-
-    .tag-pattern {
-      background: rgba(168, 85, 247, 0.5);
-      color: #d8b4fe;
-      border-color: rgba(168, 85, 247, 0.8);
-      font-weight: bold;
-    }
-
-    .wave-status {
-      background: rgba(245, 158, 11, 0.12);
-      border: 1px solid rgba(245, 158, 11, 0.3);
-      border-radius: 6px;
-      padding: 8px;
-      margin-bottom: 8px;
-      font-size: 10px;
-      line-height: 1.6;
-    }
-
-    .wave-status-title {
-      color: var(--warning);
-      font-weight: bold;
-      margin-bottom: 4px;
-    }
-
-    .wave-status-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 4px 0;
-      border-bottom: 1px solid rgba(245, 158, 11, 0.2);
-      color: var(--text-secondary);
-    }
-
-    .wave-status-item:last-child {
-      border-bottom: none;
-    }
-
-    .wave-status-value {
-      color: var(--text-primary);
-      font-weight: bold;
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-      gap: 6px;
-      margin-bottom: 8px;
-      font-size: 10px;
-    }
-
     .stat {
-      display: flex;
-      justify-content: space-between;
-      padding: 4px 6px;
-      background: rgba(16, 196, 245, 0.05);
-      border-radius: 4px;
-      border-left: 2px solid rgba(16, 196, 245, 0.3);
+      background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.04);
+      border-radius: 8px; padding: 8px;
+    }
+    .stat .k { color: var(--sub); font-size: 10px; margin-bottom: 4px; }
+    .stat .v { font-weight: 800; font-size: 12px; }
+    .green { color: var(--green); }
+    .red { color: var(--red); }
+    .orange { color: var(--orange); }
+
+    .reason-box, .warn-box {
+      border-radius: 10px; padding: 10px; font-size: 11px; line-height: 1.7; margin-bottom: 8px;
+    }
+    .reason-box { background: rgba(16,196,245,.08); border: 1px solid rgba(16,196,245,.18); color: #d8f5ff; }
+    .warn-box { background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.18); color: #ffe3b2; }
+
+    .bar {
+      height: 6px; width: 100%; border-radius: 999px; overflow: hidden;
+      background: rgba(255,255,255,.06); margin: 8px 0 10px;
+    }
+    .fill {
+      height: 100%; background: linear-gradient(90deg, #ef4444, #f59e0b, #22c55e); border-radius: 999px;
     }
 
-    .stat-val {
-      color: var(--text-primary);
-      font-weight: bold;
+    .empty {
+      text-align: center; color: var(--sub); padding: 60px 20px;
+      background: rgba(10,22,40,.75); border: 1px solid var(--border); border-radius: 14px;
     }
 
-    .green { color: var(--success); }
-    .red { color: var(--danger); }
-
-    .confidence-bar {
-      width: 100%;
-      height: 4px;
-      background: rgba(16, 196, 245, 0.1);
-      border-radius: 2px;
-      overflow: hidden;
-      margin-bottom: 8px;
+    .search-wrap { max-width: 980px; margin: 0 auto; }
+    .search-input {
+      width: 100%; background: var(--card); color: var(--text); border: 1px solid var(--border);
+      padding: 14px; border-radius: 12px; font-size: 14px;
     }
-
-    .confidence-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--danger), var(--warning), var(--success));
-      width: 0;
-      border-radius: 2px;
-      transition: width 0.5s ease-out;
+    .search-results { margin-top: 12px; display: grid; gap: 10px; }
+    .search-item {
+      background: rgba(10,22,40,.9); border: 1px solid var(--border); border-radius: 12px; padding: 12px; cursor: pointer;
     }
-
-    .advice-box {
-      background: rgba(34, 197, 94, 0.12);
-      border-left: 3px solid rgba(34, 197, 94, 0.5);
-      padding: 7px 8px;
-      border-radius: 4px;
-      font-size: 10px;
-      color: #86efac;
-      margin-bottom: 6px;
-      line-height: 1.5;
-    }
-
-    .advice-box.warn {
-      background: rgba(245, 158, 11, 0.12);
-      border-left-color: rgba(245, 158, 11, 0.5);
-      color: #fcd34d;
-    }
-
-    .advice-box.danger {
-      background: rgba(255, 107, 107, 0.12);
-      border-left-color: rgba(255, 107, 107, 0.5);
-      color: #ffb3b3;
-    }
-
-    .advice-box.primary {
-      background: rgba(16, 196, 245, 0.12);
-      border-left-color: rgba(16, 196, 245, 0.5);
-      color: #a5f3fc;
-    }
+    .search-item:hover { border-color: var(--cyan); }
 
     .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.88);
-      z-index: 1000;
-      overflow-y: auto;
-      padding: 12px;
+      position: fixed; inset: 0; background: rgba(0,0,0,.82); display: none; z-index: 999;
+      align-items: flex-start; justify-content: center; overflow-y: auto; padding: 20px;
+    }
+    .modal.active { display: flex; }
+    .modal-box {
+      width: 100%; max-width: 1200px; background: linear-gradient(135deg, #07111d, #0e1830);
+      border: 1px solid var(--border); border-radius: 16px; padding: 20px; position: relative;
+    }
+    .close {
+      position: absolute; top: 12px; right: 12px; font-size: 22px; border: none; background: none; color: var(--sub); cursor: pointer;
     }
 
-    .modal.active {
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      padding-top: 20px;
+    .detail-title { font-size: 24px; font-weight: 900; color: var(--cyan); margin-bottom: 14px; }
+    .detail-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-bottom: 14px; }
+    @media (max-width: 900px) { .detail-grid { grid-template-columns: repeat(2,1fr); } }
+    .d-item {
+      background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06);
+      border-radius: 10px; padding: 10px;
     }
+    .d-item .k { font-size: 10px; color: var(--sub); margin-bottom: 4px; }
+    .d-item .v { font-size: 15px; font-weight: 900; }
 
-    .modal-content {
-      background: linear-gradient(135deg, rgba(6, 16, 24, 0.98) 0%, rgba(11, 23, 48, 0.98) 100%);
-      border: 1px solid rgba(16, 196, 245, 0.3);
-      border-radius: 12px;
-      padding: 24px;
-      max-width: 1000px;
-      width: 100%;
-      position: relative;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    .block {
+      background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06);
+      border-radius: 12px; padding: 14px; margin-bottom: 12px;
     }
-
-    .close-btn {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      background: none;
-      border: none;
-      color: var(--text-secondary);
-      font-size: 24px;
-      cursor: pointer;
-      width: 32px;
-      height: 32px;
+    .block h3 { font-size: 13px; margin-bottom: 10px; color: #9fe9ff; }
+    .rows { display: grid; gap: 8px; }
+    .row {
+      display: flex; justify-content: space-between; gap: 10px; align-items: flex-start;
+      border-bottom: 1px dashed rgba(255,255,255,.06); padding-bottom: 8px;
     }
+    .row:last-child { border-bottom: none; padding-bottom: 0; }
+    .rk { color: var(--sub); font-size: 11px; }
+    .rv { color: var(--text); text-align: right; font-size: 11px; font-weight: 700; }
 
-    .close-btn:hover {
-      color: var(--primary);
+    .quick-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 10px; }
+    .q-btn {
+      text-decoration: none; text-align: center; color: var(--text);
+      background: rgba(16,196,245,.09); border: 1px solid rgba(16,196,245,.18);
+      padding: 12px; border-radius: 10px; font-weight: 800; font-size: 12px; cursor: pointer;
     }
-
-    .detail-title {
-      font-size: 24px;
-      color: var(--primary);
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
+    .q-btn:hover { background: rgba(16,196,245,.15); }
+    .notice {
+      position: fixed; top: 20px; right: 20px; z-index: 1200;
+      background: rgba(11,21,37,.97); border: 1px solid var(--border); color: var(--text);
+      border-left: 4px solid var(--cyan); border-radius: 10px; padding: 12px 14px; min-width: 260px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      animation: slideIn .25s ease;
     }
-
-    .detail-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-
-    .detail-item {
-      background: rgba(16, 196, 245, 0.08);
-      border: 1px solid rgba(16, 196, 245, 0.2);
-      border-radius: 6px;
-      padding: 10px;
-    }
-
-    .detail-item-label {
-      color: var(--text-secondary);
-      font-size: 10px;
-      margin-bottom: 5px;
-    }
-
-    .detail-item-value {
-      color: var(--primary);
-      font-size: 14px;
-      font-weight: bold;
-    }
-
-    .detail-box {
-      background: rgba(255, 107, 107, 0.12);
-      border: 1px solid rgba(255, 107, 107, 0.3);
-      border-radius: 8px;
-      padding: 12px;
-      margin-bottom: 12px;
-    }
-
-    .detail-box h3 {
-      color: #ff6b6b;
-      margin-bottom: 10px;
-      font-size: 12px;
-    }
-
-    .detail-box.warn {
-      background: rgba(245, 158, 11, 0.12);
-      border-color: rgba(245, 158, 11, 0.3);
-    }
-
-    .detail-box.warn h3 {
-      color: var(--warning);
-    }
-
-    .detail-box.success {
-      background: rgba(34, 197, 94, 0.12);
-      border-color: rgba(34, 197, 94, 0.3);
-    }
-
-    .detail-box.success h3 {
-      color: var(--success);
-    }
-
-    .detail-box.primary {
-      background: rgba(16, 196, 245, 0.12);
-      border-color: rgba(16, 196, 245, 0.3);
-    }
-
-    .detail-box.primary h3 {
-      color: var(--primary);
-    }
-
-    .detail-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 7px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      font-size: 11px;
-    }
-
-    .detail-row:last-child {
-      border-bottom: none;
-    }
-
-    .detail-label {
-      color: var(--text-secondary);
-    }
-
-    .detail-value {
-      font-weight: bold;
-      color: var(--text-primary);
-      text-align: right;
-    }
-
-    .channel-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-
-    .channel-item {
-      background: rgba(59, 130, 246, 0.15);
-      border: 1px solid rgba(59, 130, 246, 0.3);
-      border-radius: 8px;
-      padding: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-align: center;
-    }
-
-    .channel-item:hover {
-      border-color: rgba(59, 130, 246, 0.6);
-      background: rgba(59, 130, 246, 0.25);
-      transform: translateY(-2px);
-    }
-
-    .channel-icon {
-      font-size: 24px;
-      margin-bottom: 6px;
-    }
-
-    .channel-name {
-      font-size: 11px;
-      color: #93c5fd;
-      font-weight: bold;
-    }
-
-    .empty-state {
-      text-align: center;
-      color: var(--text-secondary);
-      padding: 40px 20px;
-      font-size: 14px;
-    }
-
-    .empty-icon {
-      font-size: 48px;
-      margin-bottom: 12px;
-      opacity: 0.6;
-    }
-
-    .notification {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: rgba(34, 197, 94, 0.95);
-      color: white;
-      padding: 14px 18px;
-      border-radius: 8px;
-      border-left: 4px solid var(--success);
-      font-size: 12px;
-      z-index: 2000;
-      animation: slideIn 0.3s ease-out;
-      max-width: 300px;
-    }
-
     @keyframes slideIn {
-      from { transform: translateX(400px); opacity: 0; }
+      from { transform: translateX(24px); opacity: 0; }
       to { transform: translateX(0); opacity: 1; }
     }
 
-    .notification.warning {
-      background: rgba(245, 158, 11, 0.95);
-      border-left-color: var(--warning);
+    .heatmap-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; margin-top: 10px;
     }
-
-    .notification.error {
-      background: rgba(239, 68, 68, 0.95);
-      border-left-color: var(--danger);
+    .heatmap-item {
+      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08);
+      border-radius: 8px; padding: 10px; text-align: center; font-size: 11px;
     }
-
-    .wave-analysis {
-      background: rgba(168, 85, 247, 0.12);
-      border: 1px solid rgba(168, 85, 247, 0.3);
-      border-radius: 6px;
-      padding: 8px;
-      margin-bottom: 12px;
-      font-size: 10px;
-      line-height: 1.6;
-    }
-
-    .wave-analysis-title {
-      color: #d8b4fe;
-      font-weight: bold;
-      margin-bottom: 4px;
-    }
-
-    .signal-history {
-      background: rgba(59, 130, 246, 0.12);
-      border: 1px solid rgba(59, 130, 246, 0.3);
-      border-radius: 6px;
-      padding: 8px;
-      margin-bottom: 12px;
-      font-size: 10px;
-    }
-
-    .signal-history-title {
-      color: #93c5fd;
-      font-weight: bold;
-      margin-bottom: 6px;
-    }
-
-    .signal-timeline {
-      display: flex;
-      gap: 4px;
-      flex-wrap: wrap;
-      align-items: center;
-      line-height: 1.8;
-    }
-
-    .timeline-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: rgba(59, 130, 246, 0.6);
-    }
-
-    .timeline-dot.active {
-      background: #3b82f6;
-      box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
-    }
-
-    .timeline-text {
-      font-size: 9px;
-      color: var(--text-secondary);
-    }
+    .heatmap-item.hot { background: rgba(239,68,68,.25); border-color: rgba(239,68,68,.45); }
+    .heatmap-item.warm { background: rgba(245,158,11,.25); border-color: rgba(245,158,11,.45); }
+    .heatmap-item.cool { background: rgba(34,197,94,.25); border-color: rgba(34,197,94,.45); }
   </style>
 </head>
 <body translate="no">
-  <div class="container">
-    <div class="header">
-      <div>
-        <h1>⚡ 妖币猎手 Pro</h1>
-      </div>
-      <div class="nav-btns">
-        <button class="nav-btn active" onclick="switchPage('monitor', this)">📊 监控</button>
-        <button class="nav-btn" onclick="switchPage('search', this)">🔍 搜索</button>
-        <button class="sound-toggle on" id="sound-toggle" onclick="toggleSound()">🔔 声音</button>
-      </div>
-      <div class="status-info">
-        <span class="refresh-dot" id="refresh-dot"></span>
-        <span id="last-update">⏳ 初始化...</span>
-        <span>|</span>
-        <span id="refresh-countdown">60s</span>
-        <span>|</span>
-        <div class="stat-item">
-          <span class="stat-label">优秀建议</span>
-          <span class="stat-value" id="stat-excellent">0</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">精选建议</span>
-          <span class="stat-value" id="stat-good">0</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">做空建议</span>
-          <span class="stat-value" id="stat-short">0</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">妖币预警</span>
-          <span class="stat-value" id="stat-yao">0</span>
-        </div>
-      </div>
+<div class="container">
+  <div class="header">
+    <div>
+      <h1>⚡ 山寨币监控系统 Pro</h1>
+      <div style="color:var(--sub);font-size:12px;margin-top:6px;">实时Binance · 清液追踪 · 主力资金 · 智能预警</div>
     </div>
 
-    <div id="monitor-page" class="page active">
-      <div id="monitor-list">
-        <div class="empty-state">
-          <div class="empty-icon">⏳</div>
-          <div>加载中...</div>
-        </div>
-      </div>
+    <div class="nav-row">
+      <button class="btn active" onclick="switchPage('monitor', this)">📊 首页监控</button>
+      <button class="btn" onclick="switchPage('heatmap', this)">🔥 热力对比</button>
+      <button class="btn" onclick="switchPage('search', this)">🔍 搜索币种</button>
+      <button class="btn" onclick="refreshNow()">🔄 刷新</button>
     </div>
 
-    <div id="search-page" class="page search-page">
-      <div class="search-box">
-        <input 
-          type="text" 
-          class="search-input" 
-          id="search-input"
-          placeholder="🔍 输入币种符号搜索（如 BTC, ETH）..."
-          oninput="handleSearch(this.value)"
-        />
-      </div>
-      <div id="search-results" class="search-dropdown"></div>
+    <div class="status-row">
+      <span class="pill"><span class="dot" id="ws-dot"></span> <span id="ws-status">连接中...</span></span>
+      <span class="pill">更新：<span id="last-update">--:--:--</span></span>
+      <span class="pill">建议：<span id="suggestion-total">0</span></span>
+      <span class="pill">预警：<span id="alert-count">0</span></span>
+      <span class="pill">监控：<span id="monitor-count">0</span></span>
+      <span class="pill"><input type="checkbox" id="notify-toggle" onchange="toggleNotify()" /> 通知</span>
     </div>
   </div>
 
-  <div id="detail-modal" class="modal">
-    <div class="modal-content">
-      <button class="close-btn" onclick="closeDetail()">✕</button>
-      <div id="detail-body"></div>
+  <div id="monitor-page" class="page active">
+    <div class="toolbar">
+      <div class="toolbar-item">
+        <span class="toolbar-label">排序：</span>
+        <button class="sort-btn active" onclick="setSortBy('confidence', this)">信心度</button>
+        <button class="sort-btn" onclick="setSortBy('volume', this)">成交量</button>
+        <button class="sort-btn" onclick="setSortBy('liqAmount', this)">清液强度</button>
+        <button class="sort-btn" onclick="setSortBy('oiChange', this)">OI增速</button>
+        <button class="sort-btn" onclick="setSortBy('takerRatio', this)">主动买卖</button>
+      </div>
+    </div>
+    <div id="monitor-content"></div>
+  </div>
+
+  <div id="heatmap-page" class="page">
+    <div style="background: rgba(10,22,40,.9); border: 1px solid var(--border); border-radius: 14px; padding: 16px;">
+      <h2 style="color: #9fe9ff; margin-bottom: 14px;">🔥 多维度热力对比</h2>
+      <div id="heatmap-content"></div>
     </div>
   </div>
 
-  <script>
-    let allCoinsData = [];
-    let excellentCoins = [];
-    let goodCoins = [];
-    let shortCoins = [];
-    let yaoCoins = [];
-    let signalHistory = JSON.parse(localStorage.getItem('signalHistory') || '{}');
-    
-    let previousData = JSON.parse(localStorage.getItem('previousData') || '{}');
-    let soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
-    let isLoading = false;
-    let autoRefreshInterval = null;
+  <div id="search-page" class="page">
+    <div class="search-wrap">
+      <input id="search-input" class="search-input" placeholder="输入币种名，如 PEPE, WIF, ARB, OP, DOGE ..." oninput="handleSearch(this.value)" />
+      <div id="search-results" class="search-results"></div>
+    </div>
+  </div>
+</div>
 
-    const SIGNAL_STABLE_TIME = 5 * 60 * 1000;
+<div id="detail-modal" class="modal">
+  <div class="modal-box">
+    <button class="close" onclick="closeDetail()">✕</button>
+    <div id="detail-body"></div>
+  </div>
+</div>
 
-    function fmtNum(num, decimal = 2) {
-      if (num === null || num === undefined || isNaN(num)) return '0';
-      if (num >= 1e9) return (num / 1e9).toFixed(decimal) + 'B';
-      if (num >= 1e6) return (num / 1e6).toFixed(decimal) + 'M';
-      if (num >= 1e3) return (num / 1e3).toFixed(decimal) + 'K';
-      return Number(num).toFixed(decimal);
+<script>
+  const CONFIG = {
+    wsUrl: 'wss://stream.binance.com:9443/ws',
+    monitorSymbols: [
+      'doge', 'xrp', 'ada', 'sol', 'avax', 'link', 'op', 'arb',
+      'wif', 'pepe', 'bonk', 'floki', 'not', 'tia',
+      'sei', 'jup', 'sui', 'near', 'apt', 'ena', 'trb',
+      'inj', 'fet', 'wld', 'rndr', 'manta', 'zro', 'dydx',
+      'ordi', 'meme', 'bnx', 'gpt', 'ai', 'ult', 'pnut', 'vana'
+    ],
+    stableMs: 5 * 60 * 1000,
+    maxSuggestions: 15,
+    httpRefreshMs: 60000,
+    notifyEnabled: localStorage.getItem('notifyEnabled') === 'true'
+  };
+
+  let allCoinsData = {};
+  let categoryMap = { yaoBuy: [], directBuy: [], yaoWatch: [], good: [] };
+  let signalHistory = JSON.parse(localStorage.getItem('signalHistory5') || '{}');
+  let wsConnections = {};
+  let futuresData = {};
+  let liquidationData = {};
+  let takerData = {};
+  let alertRecords = {};
+  let httpTimer = null;
+  let currentSortBy = 'confidence';
+
+  function fmtNum(n, d = 2) {
+    const num = Number(n || 0);
+    if (!isFinite(num)) return '0';
+    if (Math.abs(num) >= 1e9) return (num / 1e9).toFixed(d) + 'B';
+    if (Math.abs(num) >= 1e6) return (num / 1e6).toFixed(d) + 'M';
+    if (Math.abs(num) >= 1e3) return (num / 1e3).toFixed(d) + 'K';
+    return num.toFixed(d);
+  }
+
+  function fmtPct(n, d = 2) {
+    const num = Number(n || 0);
+    return (num > 0 ? '+' : '') + num.toFixed(d) + '%';
+  }
+
+  function fmtTime(ms) {
+    const m = Math.floor(ms / 60000);
+    const h = Math.floor(m / 60);
+    if (h > 0) return h + 'h';
+    if (m > 0) return m + 'm';
+    return 'now';
+  }
+
+  function showNotice(text, color = 'var(--cyan)') {
+    const div = document.createElement('div');
+    div.className = 'notice';
+    div.style.borderLeftColor = color;
+    div.innerHTML = text;
+    document.body.appendChild(div);
+    setTimeout(() => div.remove(), 4000);
+  }
+
+  function sendNotification(title, options = {}) {
+    if (!CONFIG.notifyEnabled || !('Notification' in window)) return;
+    if (Notification.permission === 'granted') {
+      new Notification(title, { icon: '⚡', ...options });
     }
+  }
 
-    function fmtTime(ms) {
-      const mins = Math.floor(ms / 60000);
-      const hours = Math.floor(mins / 60);
-      const days = Math.floor(hours / 24);
-      
-      if (days > 0) return days + '天';
-      if (hours > 0) return hours + '小时';
-      if (mins > 0) return mins + '分钟';
-      return '刚发现';
+  function toggleNotify() {
+    CONFIG.notifyEnabled = document.getElementById('notify-toggle').checked;
+    localStorage.setItem('notifyEnabled', CONFIG.notifyEnabled);
+    if (CONFIG.notifyEnabled && Notification.permission === 'default') {
+      Notification.requestPermission();
     }
+  }
 
-    function playSound() {
-      if (!soundEnabled) return;
-      try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gain = audioContext.createGain();
+  function switchPage(page, el) {
+    document.querySelectorAll('.btn').forEach(btn => btn.classList.remove('active'));
+    if (el) el.classList.add('active');
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(page + '-page').classList.add('active');
+    if (page === 'heatmap') renderHeatmap();
+  }
 
-        oscillator.connect(gain);
-        gain.connect(audioContext.destination);
+  function setSortBy(sortBy, el) {
+    currentSortBy = sortBy;
+    document.querySelectorAll('.sort-btn').forEach(btn => btn.classList.remove('active'));
+    el.classList.add('active');
+    renderMonitor();
+  }
 
-        oscillator.frequency.value = 800;
-        oscillator.type = 'sine';
-
-        gain.gain.setValueAtTime(0.2, audioContext.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
-
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.4);
-      } catch (e) {
-        console.error('声音播放失败:', e);
-      }
-    }
-
-    function toggleSound() {
-      soundEnabled = !soundEnabled;
-      localStorage.setItem('soundEnabled', soundEnabled);
-      const btn = document.getElementById('sound-toggle');
-      if (soundEnabled) {
-        btn.classList.add('on');
-        btn.textContent = '🔔 声音';
-      } else {
-        btn.classList.remove('on');
-        btn.textContent = '🔇 静音';
-      }
-    }
-
-    function showNotification(message, type = 'success') {
-      const div = document.createElement('div');
-      div.className = `notification ${type}`;
-      div.textContent = message;
-      document.body.appendChild(div);
-
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('妖币猎手', { body: message });
-      }
-
-      playSound();
-      setTimeout(() => div.remove(), 5000);
-    }
-
-    function switchPage(page, element) {
-      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-      element.classList.add('active');
-
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.getElementById(page + '-page').classList.add('active');
-    }
-
-    function trackSignal(symbol, type) {
-      if (!signalHistory[symbol]) {
-        signalHistory[symbol] = {
-          type: type,
-          firstTime: Date.now(),
-          lastTime: Date.now(),
-          count: 1
-        };
-      } else if (signalHistory[symbol].type === type) {
-        signalHistory[symbol].lastTime = Date.now();
-        signalHistory[symbol].count++;
-      } else {
-        signalHistory[symbol].type = type;
-        signalHistory[symbol].firstTime = Date.now();
-        signalHistory[symbol].lastTime = Date.now();
-        signalHistory[symbol].count = 1;
-      }
-      localStorage.setItem('signalHistory', JSON.stringify(signalHistory));
-    }
-
-    function isSignalStable(symbol, type) {
-      const history = signalHistory[symbol];
-      if (!history || history.type !== type) return false;
-      
-      const duration = Date.now() - history.firstTime;
-      return duration >= SIGNAL_STABLE_TIME;
-    }
-
-    function analyzeWavePattern(symbol) {
-      const rnd = Math.random();
-      const volatility = Math.random() * 100;
-      
-      // 分析浪型结构
-      if (rnd < 0.35) {
-        // 一浪结束 + 二浪回调
-        return {
-          status: '二浪回调',
-          pattern: '一浪✓ 二浪进行中',
-          risk: '低',
-          action: '👍 回调买点',
-          detail: '一浪已完成，正在二浪回调中，可逐步建仓',
-          nextTarget: '三浪上升',
-          stopLoss: '-7%'
-        };
-      } else if (rnd < 0.50) {
-        // 一浪结束 直接砸盘
-        return {
-          status: '一浪出货',
-          pattern: '一浪✓ 直接下杀',
-          risk: '高',
-          action: '⚠️ 警惕风险',
-          detail: '一浪可能已见顶，需谨慎，不建议追高',
-          nextTarget: '深度回调或反转',
-          stopLoss: '-12%'
-        };
-      } else if (rnd < 0.70) {
-        // 三浪上升
-        return {
-          status: '三浪加速',
-          pattern: '三浪启动',
-          risk: '中低',
-          action: '🚀 加速上升',
-          detail: '进入三浪主升段，可稳健持仓',
-          nextTarget: '三浪顶部',
-          stopLoss: '-5%'
-        };
-      } else if (rnd < 0.85) {
-        // 四浪回调
-        return {
-          status: '四浪回调',
-          pattern: '三浪✓ 四浪调整',
-          risk: '低',
-          action: '📊 四浪底部',
-          detail: '三浪后的四浪调整，蓄势五浪',
-          nextTarget: '五浪突破',
-          stopLoss: '-8%'
-        };
-      } else {
-        // 五浪结束
-        return {
-          status: '五浪顶部',
-          pattern: '五浪见顶',
-          risk: '高',
-          action: '⛔ 警惕顶部',
-          detail: '五浪可能见顶，做好止盈准备',
-          nextTarget: 'A浪下跌',
-          stopLoss: '-10%'
-        };
-      }
-    }
-
-    function generateCoins() {
-      const symbols = [
-        'BTC', 'ETH', 'SOL', 'XRP', 'ADA', 'DOGE', 'BNBUSDT', 'AVAX', 'LINK', 'MATIC',
-        'PEPE', 'SHIB', 'FLOKI', 'WIF', 'BONK', 'PNUT', 'MOG', 'BRETT', 'POPCAT', 'AIXBT',
-        'ARB', 'OP', 'BLUR', 'MEME', 'GROK', 'FARTCOIN', 'DYDX', 'APE', 'PIXELS', 'GRASS'
-      ];
-      
-      excellentCoins = [];
-      goodCoins = [];
-      shortCoins = [];
-      yaoCoins = [];
-
-      symbols.forEach(symbol => {
-        const prev = previousData[symbol] || {};
-        const price = (prev.price || Math.random() * 100000).toString();
-        const change = (Math.random() * 20 - 10).toFixed(2);
-        const volume = Math.random() * 1000000000;
-        const holders = Math.floor(Math.random() * 500000);
-        const fundingRate = (Math.random() * 0.01 - 0.005).toFixed(4);
-        const waveInfo = analyzeWavePattern(symbol);
-        
-        // 优化概率：增加建议币数量
-        const rnd = Math.random();
-        let signal = 'none';
-        
-        // 40% 概率得到优秀建议（一些积极信号）
-        if (rnd < 0.40) {
-          signal = 'excellent';
-        } 
-        // 35% 概率得到精选建议（回调买点）
-        else if (rnd < 0.75) {
-          signal = 'good';
-        }
-        
-        const data = {
-          symbol,
-          price,
-          change,
-          volume,
-          holders,
-          fundingRate,
-          signal,
-          waveInfo
-        };
-
-        trackSignal(symbol, signal);
-
-        // 优秀建议：稳定5分钟+的积极信号
-        if (signal === 'excellent' && isSignalStable(symbol, 'excellent')) {
-          excellentCoins.push(data);
-        } 
-        // 精选建议：稳定5分钟+的回调信号
-        else if (signal === 'good' && isSignalStable(symbol, 'good')) {
-          goodCoins.push(data);
-        }
-        // 也加入不稳定的最近发现（显示为新发现）
-        else if (signal !== 'none') {
-          if (signal === 'excellent') excellentCoins.push(data);
-          else if (signal === 'good') goodCoins.push(data);
-        }
-
-        // 做空建议：15% 概率
-        if (Math.random() > 0.85) {
-          shortCoins.push(data);
-        }
-
-        // 妖币预警：12% 概率
-        if (Math.random() > 0.88) {
-          const yaoScore = Math.random() * 100;
-          data.yaoScore = yaoScore.toFixed(1);
-          yaoCoins.push(data);
-        }
-
-        allCoinsData.push(data);
-      });
-
-      previousData = Object.fromEntries(allCoinsData.map(c => [c.symbol, c]));
-      localStorage.setItem('previousData', JSON.stringify(previousData));
-    }
-
-    function renderCoinCard(coin, type) {
-      const history = signalHistory[coin.symbol];
-      const duration = history ? (Date.now() - history.firstTime) : 0;
-      const durationText = fmtTime(duration);
-      const isNew = history && duration < 60000;
-      const waveInfo = coin.waveInfo;
-
-      let html = `<div class="coin-card ${type}">
-        <div class="coin-header">
-          <div class="coin-title">
-            <span class="coin-symbol">${coin.symbol}</span>
-            <span class="coin-price">${fmtNum(coin.price, 4)}</span>
-          </div>
-          <div class="coin-actions">
-            <button class="action-btn" onclick="openDetail('${coin.symbol}')">📊 详情</button>
-          </div>
-        </div>
-
-        <div class="tags-row">`;
-
-      if (type === 'excellent') {
-        html += `<span class="tag tag-excellent">💎 优秀建议</span>`;
-      } else if (type === 'good') {
-        html += `<span class="tag tag-good">⭐ 精选建议</span>`;
-      } else if (type === 'short') {
-        html += `<span class="tag tag-short">⬇️ 做空建议</span>`;
-      } else if (type === 'yao') {
-        html += `<span class="tag tag-yao">🔴 妖币预警</span>`;
-      }
-
-      // 浪型标记
-      if (waveInfo) {
-        let patternColor = 'tag-pattern';
-        let patternText = waveInfo.pattern;
-        
-        if (waveInfo.status === '二浪回调') {
-          patternColor = 'tag-good';
-          patternText = '📍 ' + waveInfo.pattern;
-        } else if (waveInfo.status === '一浪出货') {
-          patternColor = 'tag-short';
-          patternText = '⚠️ ' + waveInfo.pattern;
-        } else if (waveInfo.status === '三浪加速') {
-          patternColor = 'tag-excellent';
-          patternText = '🚀 ' + waveInfo.pattern;
-        } else if (waveInfo.status === '四浪回调') {
-          patternColor = 'tag-good';
-          patternText = '📊 ' + waveInfo.pattern;
-        } else if (waveInfo.status === '五浪顶部') {
-          patternColor = 'tag-short';
-          patternText = '⛔ ' + waveInfo.pattern;
-        }
-        
-        html += `<span class="tag ${patternColor}">${patternText}</span>`;
-      }
-
-      if (history && !isNew) {
-        html += `<span class="tag tag-duration">⏱️ ${durationText}</span>`;
-      } else if (isNew) {
-        html += `<span class="tag tag-duration" style="background: rgba(251, 191, 36, 0.5); color: #fcd34d; border-color: rgba(251, 191, 36, 0.8);">✨ 新发现</span>`;
-      }
-
-      html += `</div>`;
-
-      // 浪型状态显示
-      if (waveInfo) {
-        html += `
-        <div class="wave-status">
-          <div class="wave-status-title">${waveInfo.status}</div>
-          <div class="wave-status-item">
-            <span>当前阶段</span>
-            <span class="wave-status-value">${waveInfo.pattern}</span>
-          </div>
-          <div class="wave-status-item">
-            <span>风险等级</span>
-            <span class="wave-status-value" style="color: ${waveInfo.risk === '高' ? '#ef4444' : waveInfo.risk === '中低' ? '#f59e0b' : '#22c55e'}">${waveInfo.risk}</span>
-          </div>
-          <div class="wave-status-item">
-            <span>下一目标</span>
-            <span class="wave-status-value">${waveInfo.nextTarget}</span>
-          </div>
-        </div>`;
-      }
-
-      html += `
-        <div class="stats-grid">
-          <div class="stat">
-            <span>涨幅</span>
-            <span class="stat-val ${coin.change > 0 ? 'green' : 'red'}">${coin.change}%</span>
-          </div>
-          <div class="stat">
-            <span>成交量</span>
-            <span class="stat-val">${fmtNum(coin.volume)}</span>
-          </div>
-          <div class="stat">
-            <span>资金费</span>
-            <span class="stat-val ${coin.fundingRate > 0 ? 'green' : 'red'}">${coin.fundingRate}</span>
-          </div>
-          <div class="stat">
-            <span>持仓</span>
-            <span class="stat-val">${fmtNum(coin.holders)}</span>
-          </div>
-        </div>
-
-        <div class="confidence-bar">
-          <div class="confidence-fill" style="width: ${Math.random() * 100}%"></div>
-        </div>
-
-        <div class="advice-box ${type === 'short' ? 'danger' : type === 'excellent' ? '' : type === 'good' ? 'primary' : 'warn'}">
-          ${waveInfo ? waveInfo.action : (type === 'excellent' ? '✅ 强势看好' : type === 'good' ? '✨ 精选关注' : '⚠️ 谨慎操作')}
-        </div>`;
-
-      if (type === 'yao') {
-        html += `
-        <div class="detail-box warn">
-          <h3>⚠️ 妖币风险预警</h3>
-          <div class="detail-row">
-            <span class="detail-label">妖币评分</span>
-            <span class="detail-value">${coin.yaoScore}/100</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">风险等级</span>
-            <span class="detail-value" style="color: #ff6b6b;">高风险</span>
-          </div>
-        </div>`;
-      }
-
-      html += `</div>`;
-      return html;
-    }
-
-    function renderMonitor() {
-      let html = '';
-
-      if (excellentCoins.length > 0) {
-        html += `<div class="section-title excellent">💎 优秀建议（强势信号）</div>`;
-        html += `<div class="coin-grid">`;
-        excellentCoins.forEach(coin => {
-          html += renderCoinCard(coin, 'excellent');
-        });
-        html += `</div>`;
-      }
-
-      if (goodCoins.length > 0) {
-        html += `<div class="section-title good">⭐ 精选建议（回调买点）</div>`;
-        html += `<div class="coin-grid">`;
-        goodCoins.forEach(coin => {
-          html += renderCoinCard(coin, 'good');
-        });
-        html += `</div>`;
-      }
-
-      if (shortCoins.length > 0) {
-        html += `<div class="section-title short">⬇️ 做空建议</div>`;
-        html += `<div class="coin-grid">`;
-        shortCoins.forEach(coin => {
-          html += renderCoinCard(coin, 'short');
-        });
-        html += `</div>`;
-      }
-
-      if (yaoCoins.length > 0) {
-        html += `<div class="section-title yao">🔴 妖币预警</div>`;
-        html += `<div class="coin-grid">`;
-        yaoCoins.forEach(coin => {
-          html += renderCoinCard(coin, 'yao');
-        });
-        html += `</div>`;
-      }
-
-      if (excellentCoins.length === 0 && goodCoins.length === 0 && shortCoins.length === 0 && yaoCoins.length === 0) {
-        html = `<div class="empty-state">
-          <div class="empty-icon">📊</div>
-          <div>暂无推荐信号</div>
-        </div>`;
-      }
-
-      document.getElementById('monitor-list').innerHTML = html;
-      updateStats();
-    }
-
-    function updateStats() {
-      document.getElementById('stat-excellent').textContent = excellentCoins.length;
-      document.getElementById('stat-good').textContent = goodCoins.length;
-      document.getElementById('stat-short').textContent = shortCoins.length;
-      document.getElementById('stat-yao').textContent = yaoCoins.length;
-    }
-
-    function openDetail(symbol) {
-      const coin = allCoinsData.find(c => c.symbol === symbol);
-      if (!coin) return;
-
-      const history = signalHistory[symbol];
-      const duration = history ? (Date.now() - history.firstTime) : 0;
-      const durationText = fmtTime(duration);
-      const waveInfo = coin.waveInfo;
-
-      let html = `
-        <div class="detail-title">
-          ${coin.symbol}
-          <span style="font-size: 14px; color: var(--text-secondary);">${fmtNum(coin.price, 4)}</span>
-        </div>
-
-        <div class="detail-grid">
-          <div class="detail-item">
-            <div class="detail-item-label">涨跌幅</div>
-            <div class="detail-item-value ${coin.change > 0 ? '' : 'red'}" style="color: ${coin.change > 0 ? 'var(--success)' : 'var(--danger)'}">${coin.change}%</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-item-label">成交量</div>
-            <div class="detail-item-value">${fmtNum(coin.volume)}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-item-label">资金费率</div>
-            <div class="detail-item-value">${coin.fundingRate}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-item-label">持仓数</div>
-            <div class="detail-item-value">${fmtNum(coin.holders)}</div>
-          </div>
-        </div>`;
-
-      if (history) {
-        html += `
-        <div class="signal-history">
-          <div class="signal-history-title">📊 信号追踪历史</div>
-          <div class="signal-timeline">
-            <span class="timeline-dot active"></span>
-            <span class="timeline-text">信号类型: ${history.type === 'excellent' ? '💎 优秀' : history.type === 'good' ? '⭐ 精选' : '未分类'}</span>
-            <span style="margin: 0 8px;">|</span>
-            <span class="timeline-dot active"></span>
-            <span class="timeline-text">持续时间: ${durationText}</span>
-            <span style="margin: 0 8px;">|</span>
-            <span class="timeline-dot active"></span>
-            <span class="timeline-text">出现次数: ${history.count}次</span>
-          </div>
-        </div>`;
-      }
-
-      if (waveInfo) {
-        let boxClass = 'primary';
-        let riskColor = waveInfo.risk === '高' ? 'danger' : waveInfo.risk === '中低' ? 'warn' : 'success';
-        
-        if (waveInfo.status === '一浪出货') {
-          boxClass = 'danger';
-        } else if (waveInfo.status === '二浪回调') {
-          boxClass = 'success';
-        } else if (waveInfo.status === '三浪加速') {
-          boxClass = 'success';
-        } else if (waveInfo.status === '五浪顶部') {
-          boxClass = 'danger';
-        }
-
-        html += `
-        <div class="wave-analysis">
-          <div class="wave-analysis-title">📈 波浪分析详情</div>
-          <div style="font-size: 10px; line-height: 1.8; color: var(--text-secondary);">
-            <div><strong>当前状态:</strong> ${waveInfo.status}</div>
-            <div><strong>浪型结构:</strong> ${waveInfo.pattern}</div>
-            <div><strong>风险评估:</strong> <span style="color: ${waveInfo.risk === '高' ? '#ef4444' : waveInfo.risk === '中低' ? '#f59e0b' : '#22c55e'}">${waveInfo.risk}</span></div>
-            <div><strong>下一目标:</strong> ${waveInfo.nextTarget}</div>
-            <div><strong>分析说明:</strong> ${waveInfo.detail}</div>
-          </div>
-        </div>`;
-      }
-
-      html += `
-        <div class="detail-box success">
-          <h3>✅ 操作建议</h3>
-          <div class="detail-row">
-            <span class="detail-label">建议操作</span>
-            <span class="detail-value">${waveInfo ? (waveInfo.status === '二浪回调' ? '逐步建仓' : waveInfo.status === '一浪出货' ? '远离观望' : waveInfo.status === '三浪加速' ? '稳健持仓' : waveInfo.status === '四浪回调' ? '底部加仓' : '分批止盈') : '等待确认'}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">风险等级</span>
-            <span class="detail-value" style="color: ${waveInfo && waveInfo.risk === '高' ? '#ef4444' : '#22c55e'}">${waveInfo ? waveInfo.risk : '中低'}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">止损位</span>
-            <span class="detail-value" style="color: #ef4444;">${waveInfo ? waveInfo.stopLoss : '-8%'}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">建议仓位</span>
-            <span class="detail-value">${waveInfo && waveInfo.status === '二浪回调' ? '60-70%' : waveInfo && waveInfo.status === '一浪出货' ? '10-20%' : '30-50%'}</span>
-          </div>
-        </div>
-
-        <div class="channel-grid">
-          <div class="channel-item" onclick="searchDex('${coin.symbol}', 'uniswap')">
-            <div class="channel-icon">🦄</div>
-            <div class="channel-name">Uniswap</div>
-          </div>
-          <div class="channel-item" onclick="searchDex('${coin.symbol}', 'raydium')">
-            <div class="channel-icon">🔀</div>
-            <div class="channel-name">Raydium</div>
-          </div>
-          <div class="channel-item" onclick="searchDex('${coin.symbol}', 'pancake')">
-            <div class="channel-icon">🌊</div>
-            <div class="channel-name">PancakeSwap</div>
-          </div>
-          <div class="channel-item" onclick="searchDex('${coin.symbol}', 'jupiter')">
-            <div class="channel-icon">⚡</div>
-            <div class="channel-name">Jupiter</div>
-          </div>
-        </div>`;
-
-      document.getElementById('detail-body').innerHTML = html;
-      document.getElementById('detail-modal').classList.add('active');
-    }
-
-    function searchDex(symbol, dex) {
-      const dexUrls = {
-        'uniswap': `https://app.uniswap.org/explore/tokens/ethereum/${symbol}`,
-        'raydium': `https://raydium.io/swap?inputMint=sol&outputMint=`,
-        'pancake': `https://pancakeswap.finance/swap?outputCurrency=${symbol}`,
-        'jupiter': `https://jup.ag/swap/${symbol}-USDC`
+  function trackSignal(symbol, category) {
+    if (!signalHistory[symbol]) {
+      signalHistory[symbol] = {
+        category: category,
+        firstTime: Date.now(),
+        lastTime: Date.now(),
+        count: 1,
+        prevCategory: null
       };
-      
-      window.open(dexUrls[dex] || dexUrls['uniswap'], '_blank');
+    } else {
+      const prev = signalHistory[symbol];
+      if (prev.category !== category) {
+        prev.prevCategory = prev.category;
+      }
+      prev.category = category;
+      prev.lastTime = Date.now();
+      prev.count++;
     }
+    localStorage.setItem('signalHistory5', JSON.stringify(signalHistory));
+  }
 
-    function closeDetail() {
-      document.getElementById('detail-modal').classList.remove('active');
-    }
+  function isStableSignal(symbol, category) {
+    const hist = signalHistory[symbol];
+    if (!hist || hist.category !== category) return false;
+    return Date.now() - hist.firstTime >= CONFIG.stableMs;
+  }
 
-    function handleSearch(value) {
-      if (!value) {
-        document.getElementById('search-results').innerHTML = '';
+  // 获取清液数据
+  async function fetchLiquidationData(symbol) {
+    try {
+      const upperSymbol = symbol.toUpperCase() + 'USDT';
+      const res = await fetch(`https://fapi.binance.com/fapi/v1/forceOrders?symbol=${upperSymbol}&limit=100`);
+      const data = await res.json();
+
+      if (!Array.isArray(data)) {
+        liquidationData[symbol] = { longLiq: 0, shortLiq: 0, totalLiq: 0 };
         return;
       }
 
-      const filtered = allCoinsData.filter(c => c.symbol.toUpperCase().includes(value.toUpperCase()));
-      let html = '';
+      let longLiq = 0, shortLiq = 0;
+      const now = Date.now();
 
-      filtered.forEach(coin => {
-        html += `
-          <div class="search-item">
-            <div class="search-item-symbol">${coin.symbol}</div>
-            <div class="search-item-info">
-              <div>价格: ${fmtNum(coin.price, 4)}</div>
-              <div style="color: ${coin.change > 0 ? 'var(--success)' : 'var(--danger)'}">${coin.change > 0 ? '↑' : '↓'} ${Math.abs(coin.change)}%</div>
-              <div>成交量: ${fmtNum(coin.volume)}</div>
-              <div>${coin.waveInfo ? coin.waveInfo.status : '未分析'}</div>
-            </div>
-            <button class="search-item-btn" onclick="openDetail('${coin.symbol}')">查看详情</button>
-            <button class="search-item-btn" onclick="searchDex('${coin.symbol}', 'uniswap')" style="background: rgba(34, 197, 94, 0.2); color: var(--success); border-color: rgba(34, 197, 94, 0.4);">去交易</button>
-          </div>`;
+      data.forEach(liq => {
+        const timeDiff = now - liq.time;
+        if (timeDiff < 3600000) { // 近1小时
+          const side = liq.side;
+          const amount = parseFloat(liq.avgPrice) * parseFloat(liq.origQty);
+          if (side === 'SELL') longLiq += amount; // 多头清液（被卖出）
+          if (side === 'BUY') shortLiq += amount; // 空头清液（被买入）
+        }
       });
 
-      if (filtered.length === 0) {
-        html = `<div class="empty-state" style="padding: 20px;"><div>未找到相关币种</div></div>`;
+      liquidationData[symbol] = {
+        longLiq: longLiq,
+        shortLiq: shortLiq,
+        totalLiq: longLiq + shortLiq
+      };
+    } catch (e) {
+      console.warn(`获取 ${symbol} 清液数据失败:`, e.message);
+      if (!liquidationData[symbol]) {
+        liquidationData[symbol] = { longLiq: 0, shortLiq: 0, totalLiq: 0 };
+      }
+    }
+  }
+
+  // 获取合约数据
+  async function fetchFuturesData(symbol) {
+    try {
+      const upperSymbol = symbol.toUpperCase() + 'USDT';
+      
+      const ratioRes = await fetch(`https://fapi.binance.com/fapi/v1/openInterestHist?symbol=${upperSymbol}&period=1h&limit=2`);
+      const ratioData = await ratioRes.json();
+      
+      const fundingRes = await fetch(`https://fapi.binance.com/fapi/v1/fundingRate?symbol=${upperSymbol}&limit=1`);
+      const fundingData = await fundingRes.json();
+
+      const oiRes = await fetch(`https://fapi.binance.com/fapi/v1/openInterest?symbol=${upperSymbol}`);
+      const oiData = await oiRes.json();
+
+      const lsRes = await fetch(`https://fapi.binance.com/fapi/v1/globalLongShortAccountRatio?symbol=${upperSymbol}&period=1h&limit=2`);
+      const lsData = await lsRes.json();
+
+      const currOI = parseFloat(oiData.openInterest || 0);
+      let oiChange = 0;
+      if (ratioData.length >= 2) {
+        const prevOI = parseFloat(ratioData[1].sumOpenInterest || 0);
+        oiChange = prevOI > 0 ? ((currOI - prevOI) / prevOI * 100) : 0;
       }
 
-      document.getElementById('search-results').innerHTML = html;
+      let longRatio = 0.5;
+      if (lsData.length > 0) {
+        longRatio = parseFloat(lsData[0].longAccount || 0.5);
+      }
+
+      futuresData[symbol] = {
+        oi: currOI,
+        oiChange: oiChange,
+        fundingRate: fundingData.length > 0 ? parseFloat(fundingData[0].fundingRate) : 0,
+        longRatio: longRatio,
+        shortRatio: 1 - longRatio,
+        timestamp: Date.now()
+      };
+    } catch (e) {
+      console.warn(`获取 ${symbol} 合约数据失败:`, e.message);
+      if (!futuresData[symbol]) {
+        futuresData[symbol] = {
+          oi: 0,
+          oiChange: 0,
+          fundingRate: 0,
+          longRatio: 0.5,
+          shortRatio: 0.5,
+          timestamp: Date.now()
+        };
+      }
+    }
+  }
+
+  async function fetchAllFuturesData() {
+    const promises = CONFIG.monitorSymbols.map(sym => {
+      return Promise.all([
+        fetchFuturesData(sym),
+        fetchLiquidationData(sym)
+      ]);
+    });
+    await Promise.all(promises);
+    renderMonitor();
+  }
+
+  function initWebSocket(symbol) {
+    const streams = [
+      `${symbol.toLowerCase()}usdt@kline_5m`,
+      `${symbol.toLowerCase()}usdt@kline_15m`,
+      `${symbol.toLowerCase()}usdt@kline_1h`,
+      `${symbol.toLowerCase()}usdt@kline_4h`,
+      `${symbol.toLowerCase()}usdt@ticker`
+    ];
+    
+    const stream = streams.join('/');
+    const wsKey = symbol.toLowerCase();
+    
+    if (wsConnections[wsKey]) {
+      wsConnections[wsKey].close();
     }
 
-    function updateRefreshCountdown() {
-      let countdown = 60;
-      const timer = setInterval(() => {
-        countdown--;
-        document.getElementById('refresh-countdown').textContent = countdown + 's';
-        if (countdown <= 0) {
-          clearInterval(timer);
-          refreshData();
+    const ws = new WebSocket(`${CONFIG.wsUrl}/${stream}`);
+    
+    ws.onopen = () => {
+      console.log(`✓ ${symbol} connected`);
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        
+        if (msg.k) {
+          const kline = msg.k;
+          const interval = kline.i;
+          
+          if (!allCoinsData[symbol]) {
+            allCoinsData[symbol] = {
+              symbol,
+              klines: {},
+              ticker: {}
+            };
+          }
+          
+          const takerBuyVol = parseFloat(kline.V);
+          const takerSellVol = parseFloat(kline.v) - takerBuyVol;
+          const takerRatio = takerBuyVol / (parseFloat(kline.v) || 1);
+
+          allCoinsData[symbol].klines[interval] = {
+            open: parseFloat(kline.o),
+            high: parseFloat(kline.h),
+            low: parseFloat(kline.l),
+            close: parseFloat(kline.c),
+            volume: parseFloat(kline.v),
+            quoteVolume: parseFloat(kline.q),
+            takerBuyVol: takerBuyVol,
+            takerSellVol: takerSellVol,
+            takerRatio: takerRatio,
+            time: kline.T,
+            isClosed: kline.x
+          };
+        } else if (msg.c) {
+          const ticker = msg;
+          allCoinsData[symbol].ticker = {
+            price: parseFloat(ticker.c),
+            change24h: parseFloat(ticker.P),
+            volume24h: parseFloat(ticker.q),
+            quoteVolume24h: parseFloat(ticker.Q),
+            high24h: parseFloat(ticker.h),
+            low24h: parseFloat(ticker.l)
+          };
         }
-      }, 1000);
-    }
-
-    function refreshData() {
-      document.getElementById('refresh-dot').classList.add('loading');
-      isLoading = true;
-
-      setTimeout(() => {
-        generateCoins();
+        
         renderMonitor();
-        document.getElementById('last-update').textContent = `✅ ${new Date().toLocaleTimeString()}`;
-        document.getElementById('refresh-dot').classList.remove('loading');
-        isLoading = false;
-        updateRefreshCountdown();
-      }, 500);
-    }
-
-    function init() {
-      if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission();
+      } catch (e) {
+        console.error('Parse error:', e);
       }
+    };
 
-      generateCoins();
-      renderMonitor();
-      document.getElementById('last-update').textContent = `✅ ${new Date().toLocaleTimeString()}`;
-      updateRefreshCountdown();
+    ws.onerror = (err) => {
+      console.error(`${symbol} error:`, err);
+      document.getElementById('ws-dot').classList.add('offline');
+      document.getElementById('ws-status').textContent = '连接错误';
+    };
+
+    ws.onclose = () => {
+      console.log(`${symbol} disconnected, retrying...`);
+      setTimeout(() => initWebSocket(symbol), 3000);
+    };
+
+    wsConnections[wsKey] = ws;
+  }
+
+  function analyzeSymbol(symbol) {
+    const data = allCoinsData[symbol];
+    const futures = futuresData[symbol];
+    const liq = liquidationData[symbol];
+    
+    if (!data || !data.ticker || !data.klines['1h']) {
+      return null;
     }
 
-    init();
+    const ticker = data.ticker;
+    const k5m = data.klines['5m'] || { close: ticker.price, open: ticker.price, volume: 0 };
+    const k15m = data.klines['15m'] || { close: ticker.price, open: ticker.price, volume: 0 };
+    const k1h = data.klines['1h'] || { close: ticker.price, open: ticker.price, volume: 0 };
+    const k4h = data.klines['4h'] || { close: ticker.price, open: ticker.price, volume: 0 };
+
+    const change5m = ((k5m.close - k5m.open) / k5m.open * 100) || 0;
+    const change15m = ((k15m.close - k15m.open) / k15m.open * 100) || 0;
+    const change1h = ((k1h.close - k1h.open) / k1h.open * 100) || 0;
+    const change4h = ((k4h.close - k4h.open) / k4h.open * 100) || 0;
+
+const avgVol = (k5m.volume + k15m.volume + k1h.volume) / 3;
+const volRatio = k1h.volume / (avgVol || 1);
+
+let stage = '启动前压缩';
+let riskLevel = '中低';
+let outlook = '等待破位';
+let direction = '中立';
+let confidence = 0.5;
+
+const longRatio = futures ? futures.longRatio : 0.5;
+const fundingRate = futures ? futures.fundingRate : 0;
+const oiChange = futures ? futures.oiChange : 0;
+const longLiq = liq ? liq.longLiq : 0;
+const shortLiq = liq ? liq.shortLiq : 0;
+const totalLiq = liq ? liq.totalLiq : 0;
+
+// 主动买卖比分析
+const takerRatio1h = k1h.takerRatio || 0.5;
+const takerBuyDominant = takerRatio1h > 0.58;
+const takerSellDominant = takerRatio1h < 0.42;
+
+if (change1h > 5 && volRatio > 1.2 && longRatio < 0.55 && takerBuyDominant) {
+  stage = '一浪启动';
+  riskLevel = '中低';
+  outlook = '快速拉升中';
+  direction = '做多';
+  confidence = 0.82;
+} else if (change1h > 2 && change1h <= 5 && volRatio > 1.1) {
+  stage = '三浪推进';
+  riskLevel = '中低';
+  outlook = '加速上升';
+  direction = '做多';
+  confidence = 0.75;
+} else if (change1h > 0 && change1h <= 2 && change15m < 0) {
+  stage = '二浪回调';
+  riskLevel = '低';
+  outlook = '回踩后再起';
+  direction = '做多';
+  confidence = 0.72;
+} else if (change1h < -3 && volRatio > 1.15 && takerSellDominant) {
+  stage = '出货试探';
+  riskLevel = '高';
+  outlook = '警惕砸盘';
+  direction = '做空';
+  confidence = 0.6;
+} else if (change1h > 8) {
+  stage = '高位分歧';
+  riskLevel = '高';
+  outlook = '警惕冲高回落';
+  direction = '谨慎';
+  confidence = 0.45;
+} else if (Math.abs(change1h) < 2 && volRatio > 1.3) {
+  stage = '三浪预备';
+  riskLevel = '低';
+  outlook = '蓄势突破';
+  direction = '做多';
+  confidence = 0.68;
+}
+
+// 清液分析加权
+if (longLiq > shortLiq && longLiq > 100000 && change1h < 0) {
+  confidence -= 0.12;
+  outlook = '多头被挤压，警惕继续砸';
+  riskLevel = '高';
+} else if (shortLiq > longLiq && shortLiq > 100000 && change1h > 0) {
+  confidence += 0.15;
+  outlook = '空头被大幅清液，加速上升';
+  riskLevel = '中低';
+}
+
+// OI变化分析
+if (oiChange > 15 && change1h > 0) {
+  confidence += 0.1;
+  outlook = 'OI快速增长+价格上升，多头建仓';
+} else if (oiChange < -10 && change1h > 3) {
+  confidence += 0.08;
+  outlook = 'OI下降+价格上升，多头获利平仓';
+}
+
+// 多空分析
+if (longRatio < 0.45 && change1h > 0) {
+  confidence += 0.1;
+  outlook = '空头被挤压，继续拉升';
+} else if (longRatio > 0.65 && change1h > 3) {
+  confidence -= 0.1;
+  outlook = '多头过热，谨防回踩';
+  riskLevel = '中';
+}
+
+confidence = Math.max(0.1, Math.min(1, confidence));
+
+const isYao = ticker.price < 1 || (change1h > 10 && volRatio > 1.5 && ticker.volume24h > 50000000);
+
+return {
+  symbol,
+  price: ticker.price,
+  change24h: ticker.change24h,
+  change4h,
+  change1h,
+  change15m,
+  change5m,
+  volume24h: ticker.volume24h,
+  volume4h: k4h.volume,
+  volume1h: k1h.volume,
+  volume15m: k15m.volume,
+  volume5m: k5m.volume,
+  volRatio,
+  stage,
+  riskLevel,
+  outlook,
+  direction,
+  confidence,
+  isYao,
+  longRatio: longRatio * 100,
+  shortRatio: (1 - longRatio) * 100,
+  fundingRate: fundingRate * 100,
+  oiChange: oiChange,
+  oi: futures ? futures.oi : 0,
+  longLiq,
+  shortLiq,
+  totalLiq,
+  takerRatio1h: takerRatio1h * 100,
+  takerBuyDominant,
+  takerSellDominant,
+  k1h,
+  k4h,
+  k15m,
+  k5m
+};
+​
+}
+
+function categorizeSymbol(coin) {
+if (!coin) return null;
+
+const hist = signalHistory[coin.symbol];
+const dur = hist ? Date.now() - hist.firstTime : 999999999;
+const isNew = dur < 60000;
+const stable = dur >= CONFIG.stableMs;
+
+let score = 0;
+score += coin.confidence * 30;
+score += Math.max(coin.change1h, 0) * 3;
+score += (coin.volRatio - 1) * 20;
+score += (coin.direction === '做多' ? 15 : coin.direction === '做空' ? -20 : 0);
+
+if (coin.longRatio < 50 && coin.change1h > 0) score += 12;
+if (coin.longRatio > 65 && coin.change1h > 3) score -= 12;
+
+if (coin.shortLiq > coin.longLiq && coin.change1h > 0) score += 18;
+if (coin.longLiq > coin.shortLiq && coin.change1h < 0) score -= 15;
+
+if (coin.takerBuyDominant && coin.change1h > 0) score += 10;
+if (coin.takerSellDominant && coin.change1h < 0) score += 8;
+
+if (coin.oiChange > 15) score += 8;
+if (coin.oiChange < -10) score += 6;
+
+if (coin.stage === '一浪启动' || coin.stage === '三浪推进') score += 25;
+if (coin.stage === '二浪回调') score += 20;
+if (coin.stage === '高位分歧' || coin.stage === '出货试探') score -= 30;
+
+if (coin.isYao && score > 65 && stable) {
+  return 'yaoBuy';
+} else if (coin.isYao && (isNew || score > 50)) {
+  return 'yaoWatch';
+} else if (!coin.isYao && score > 55 && stable) {
+  return 'directBuy';
+} else if (!coin.isYao && score > 45 && stable) {
+  return 'good';
+}
+return null;
+​
+}
+
+function checkAlerts(coin) {
+if (!alertRecords[coin.symbol]) alertRecords[coin.symbol] = { lastAlert: 0 };
+
+const lastAlert = alertRecords[coin.symbol].lastAlert;
+const now = Date.now();
+const cooldown = 300000; // 5分钟冷却
+
+// 一浪启动告警
+if (coin.stage === '一浪启动' && coin.confidence > 0.75 && now - lastAlert > cooldown) {
+  sendNotification(`🚀 ${coin.symbol} 一浪启动！`, {
+    body: `价格: ${fmtNum(coin.price, 6)} | 1h: ${fmtPct(coin.change1h)} | 空头被挤: ${coin.longRatio.toFixed(1)}%`
+  });
+  alertRecords[coin.symbol].lastAlert = now;
+  return true;
+}
+
+// OI突增告警
+if (coin.oiChange > 30 && coin.change1h > 0 && now - lastAlert > cooldown) {
+  sendNotification(`📈 ${coin.symbol} OI突增！`, {
+    body: `OI: +${fmtPct(coin.oiChange)} | 价格: ${fmtPct(coin.change1h)}`
+  });
+  alertRecords[coin.symbol].lastAlert = now;
+  return true;
+}
+
+// 清液突增告警
+if (coin.totalLiq > 500000 && coin.shortLiq > coin.longLiq && now - lastAlert > cooldown) {
+  sendNotification(`💥 ${coin.symbol} 空头被清！`, {
+    body: `空头清液: ${fmtNum(coin.shortLiq)} | 多头清液: ${fmtNum(coin.longLiq)}`
+  });
+  alertRecords[coin.symbol].lastAlert = now;
+  return true;
+}
+
+return false;
+​
+}
+
+function renderMonitor() {
+categoryMap = { yaoBuy: [], directBuy: [], yaoWatch: [], good: [] };
+
+Object.keys(allCoinsData).forEach(symbol => {
+  const coin = analyzeSymbol(symbol);
+  if (!coin) return;
+
+  const cat = categorizeSymbol(coin);
+  if (cat) {
+    trackSignal(symbol, cat);
+    if (isStableSignal(symbol, cat)) {
+      categoryMap[cat].push(coin);
+    } else if (cat === 'yaoWatch' || cat === 'good') {
+      categoryMap[cat].push(coin);
+    }
+  }
+
+  checkAlerts(coin);
+});
+
+// 排序
+const sortFunctions = {
+  confidence: (a, b) => b.confidence - a.confidence,
+  volume: (a, b) => b.volume1h - a.volume1h,
+  liqAmount: (a, b) => b.totalLiq - a.totalLiq,
+  oiChange: (a, b) => Math.abs(b.oiChange) - Math.abs(a.oiChange),
+  takerRatio: (a, b) => Math.abs(b.takerRatio1h - 50) - Math.abs(a.takerRatio1h - 50)
+};
+
+Object.keys(categoryMap).forEach(cat => {
+  categoryMap[cat].sort(sortFunctions[currentSortBy] || sortFunctions.confidence);
+});
+
+const totalSuggestions = categoryMap.yaoBuy.length + categoryMap.directBuy.length;
+if (totalSuggestions > CONFIG.maxSuggestions) {
+  const excess = totalSuggestions - CONFIG.maxSuggestions;
+  if (excess <= categoryMap.directBuy.length) {
+    categoryMap.directBuy = categoryMap.directBuy.slice(0, categoryMap.directBuy.length - excess);
+  } else {
+    categoryMap.directBuy = [];
+    categoryMap.yaoBuy = categoryMap.yaoBuy.slice(0, CONFIG.maxSuggestions);
+  }
+}
+
+let html = '';
+
+if (categoryMap.yaoBuy.length > 0) {
+  html += `<div class="section-title yao-buy">🔴 妖币买入 (${categoryMap.yaoBuy.length})</div>`;
+  html += '<div class="grid">' + categoryMap.yaoBuy.map(c => renderCard(c, 'yao-buy')).join('') + '</div>';
+}
+
+if (categoryMap.directBuy.length > 0) {
+  html += `<div class="section-title buy">💎 直接买入建议币 (${categoryMap.directBuy.length})</div>`;
+  html += '<div class="grid">' + categoryMap.directBuy.map(c => renderCard(c, 'buy')).join('') + '</div>';
+}
+
+if (categoryMap.yaoWatch.length > 0) {
+  html += `<div class="section-title yao-watch">🟠 妖币观察 (${categoryMap.yaoWatch.length})</div>`;
+  html += '<div class="grid">' + categoryMap.yaoWatch.map(c => renderCard(c, 'yao-watch')).join('') + '</div>';
+}
+
+if (categoryMap.good.length > 0) {
+  html += `<div class="section-title good">⭐ 优秀币 (${categoryMap.good.length})</div>`;
+  html += '<div class="grid">' + categoryMap.good.map(c => renderCard(c, 'good')).join('') + '</div>';
+}
+
+if (!html) {
+  html = '<div class="empty">正在分析数据中...</div>';
+}
+
+document.getElementById('monitor-content').innerHTML = html;
+document.getElementById('suggestion-total').textContent = totalSuggestions;
+document.getElementById('alert-count').textContent = Object.keys(alertRecords).filter(s => alertRecords[s].lastAlert > Date.now() - 600000).length;
+document.getElementById('monitor-count').textContent = Object.keys(allCoinsData).length;
+document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+
+if (Object.keys(allCoinsData).length > 0) {
+  document.getElementById('ws-dot').classList.remove('offline');
+  document.getElementById('ws-status').textContent = '已连接';
+}
+​
+}
+
+function renderCard(coin, cat) {
+const hist = signalHistory[coin.symbol];
+const dur = hist ? Date.now() - hist.firstTime : 0;
+const durText = fmtTime(dur);
+const isNew = dur < 60000;
+
+let riskClass = 't-risk-low';
+if (coin.riskLevel === '中') riskClass = 't-risk-mid';
+if (coin.riskLevel === '高') riskClass = 't-risk-high';
+
+const change1hClass = coin.change1h > 0 ? 'green' : 'red';
+const hasAlert = coin.stage === '一浪启动' && coin.confidence > 0.75;
+
+let html = `<div class="card ${cat}${hasAlert ? ' alert' : ''}">
+  <div class="head">
+    <div>
+      <div class="symbol">${coin.symbol}</div>
+      <div class="price">${fmtNum(coin.price, 6)}</div>
+    </div>
+    <button class="mini-btn" onclick="openDetail('${coin.symbol}')">📊</button>
+  </div>
+
+  <div class="tags">
+    <span class="tag ${riskClass}">风险: ${coin.riskLevel}</span>
+    <span class="tag t-stage">${coin.stage}</span>
+    ${coin.totalLiq > 200000 ? `<span class="tag t-liq">清液: ${fmtNum(coin.totalLiq, 0)}</span>` : ''}
+    ${coin.takerBuyDominant ? `<span class="tag t-taker">主买: ${coin.takerRatio1h.toFixed(1)}%</span>` : ''}
+    ${isNew ? '<span class="tag t-new">✨ 新</span>' : ''}
+    ${hist && !isNew ? `<span class="tag t-time">⏱️ ${durText}</span>` : ''}
+    ${hist ? `<span class="tag t-count">🔔 ${hist.count}次</span>` : ''}
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="k">24h</div>
+      <div class="v ${coin.change24h > 0 ? 'green' : 'red'}">${fmtPct(coin.change24h)}</div>
+    </div>
+    <div class="stat">
+      <div class="k">4h</div>
+      <div class="v ${coin.change4h > 0 ? 'green' : 'red'}">${fmtPct(coin.change4h)}</div>
+    </div>
+    <div class="stat">
+      <div class="k">1h★</div>
+      <div class="v ${change1hClass}" style="font-weight:900;">${fmtPct(coin.change1h)}</div>
+    </div>
+    <div class="stat">
+      <div class="k">Vol倍数</div>
+      <div class="v orange">${coin.volRatio.toFixed(2)}x</div>
+    </div>
+  </div>
+
+  <div class="bar">
+    <div class="fill" style="width: ${coin.confidence * 100}%"></div>
+  </div>
+
+  <div class="reason-box">
+    🎯 <strong>关键信号:</strong>
+    ${coin.stage.includes('一浪') ? '✓ 一浪启动中' : ''}
+    ${coin.stage.includes('二浪') ? '✓ 回调结束待起' : ''}
+    ${coin.stage.includes('三浪') ? '✓ 加速推升' : ''}
+    ${coin.longRatio < 50 ? ` | 空头${((50 - coin.longRatio).toFixed(0))}%` : ''}
+    ${coin.shortLiq > coin.longLiq && coin.totalLiq > 100000 ? ` | 空被清${fmtNum(coin.shortLiq)}` : ''}
+  </div>
+
+  ${coin.riskLevel === '高' ? `<div class="warn-box">⚠️ 风险: 高位或出货风险，谨慎追高</div>` : ''}
+</div>`;
+
+return html;
+​
+}
+
+function renderHeatmap() {
+const coins = Object.values(allCoinsData).map(d => analyzeSymbol(d.symbol)).filter(c => c);
+
+const dimensions = [
+  {
+    name: '📊 信心度',
+    key: 'confidence',
+    norm: c => c.confidence,
+    format: c => (c.confidence * 100).toFixed(0) + '%'
+  },
+  {
+    name: '📈 成交量倍数',
+    key: 'volRatio',
+    norm: c => Math.min(c.volRatio, 3) / 3,
+    format: c => c.volRatio.toFixed(2) + 'x'
+  },
+  {
+    name: '💥 清液强度',
+    key: 'totalLiq',
+    norm: c => Math.min(c.totalLiq, 2000000) / 2000000,
+    format: c => fmtNum(c.totalLiq)
+  },
+  {
+    name: '📊 OI增速',
+    key: 'oiChange',
+    norm: c => (c.oiChange + 50) / 100,
+    format: c => fmtPct(c.oiChange)
+  },
+  {
+    name: '🎯 主动买卖',
+    key: 'takerRatio1h',
+    norm: c => c.takerRatio1h / 100,
+    format: c => c.takerRatio1h.toFixed(1) + '%'
+  }
+];
+
+let html = '';
+
+dimensions.forEach(dim => {
+  html += `<div style="margin-bottom: 20px;">
+    <div style="font-size: 12px; color: #9fe9ff; margin-bottom: 10px; font-weight: 900;">${dim.name}</div>
+    <div class="heatmap-grid">`;
+
+  const sorted = [...coins].sort((a, b) => dim.norm(b) - dim.norm(a));
+
+  sorted.slice(0, 15).forEach(coin => {
+    const norm = dim.norm(coin);
+    let heatClass = 'cool';
+    if (norm > 0.6) heatClass = 'hot';
+    else if (norm > 0.35) heatClass = 'warm';
+
+    html += `<div class="heatmap-item ${heatClass}" title="${coin.symbol}">
+      <div style="font-weight: 900; color: var(--cyan);">${coin.symbol}</div>
+      <div style="color: var(--sub); font-size: 10px; margin-top: 4px;">${dim.format(coin)}</div>
+    </div>`;
+  });
+
+  html += `</div></div>`;
+});
+
+document.getElementById('heatmap-content').innerHTML = html;
+​
+}
+
+function handleSearch(q) {
+if (!q) {
+document.getElementById('search-results').innerHTML = '';
+return;
+}
+const filtered = Object.values(allCoinsData).map(d => analyzeSymbol(d.symbol)).filter(c => c && c.symbol.includes(q.toUpperCase()));
+let html = '';
+filtered.forEach(coin => {
+html += <div class="search-item" onclick="openDetail('${coin.symbol}')"> <div style="display:flex;justify-content:space-between;align-items:center;"> <div> <div style="font-size:16px;font-weight:900;color:var(--cyan);">${coin.symbol}</div> <div style="color:var(--sub);font-size:11px;">价格: ${fmtNum(coin.price, 6)}</div> </div> <div style="text-align:right;"> <div class="v ${coin.change24h > 0 ? 'green' : 'red'}" style="font-weight:900;">${fmtPct(coin.change24h)}</div> <div style="font-size:11px;color:var(--sub);">24h</div> </div> </div> </div>;
+});
+if (filtered.length === 0) html = '
+
+未找到该币种
+';
+document.getElementById('search-results').innerHTML = html;
+}
+function openDetail(symbol) {
+const coin = analyzeSymbol(symbol);
+if (!coin) return;
+
+let html = `<div class="detail-title">${coin.symbol} ${fmtNum(coin.price, 6)}</div>`;
+
+html += `<div class="detail-grid">
+  <div class="d-item">
+    <div class="k">24h涨幅</div>
+    <div class="v ${coin.change24h > 0 ? 'green' : 'red'}">${fmtPct(coin.change24h)}</div>
+  </div>
+  <div class="d-item">
+    <div class="k">OI当前</div>
+    <div class="v">${fmtNum(coin.oi)}</div>
+  </div>
+  <div class="d-item">
+    <div class="k">OI 1h增速</div>
+    <div class="v ${coin.oiChange > 0 ? 'green' : 'red'}">${fmtPct(coin.oiChange)}</div>
+  </div>
+  <div class="d-item">
+    <div class="k">资金费率</div>
+    <div class="v ${coin.fundingRate > 0 ? 'green' : 'red'}">${fmtPct(coin.fundingRate, 4)}</div>
+  </div>
+  <div class="d-item">
+    <div class="k">多空人数比</div>
+    <div class="v">${coin.longRatio.toFixed(1)}% L <span style="color:var(--sub);">|</span> ${coin.shortRatio.toFixed(1)}% S</div>
+  </div>
+  <div class="d-item">
+    <div class="k">清液(1h)</div>
+    <div class="v" style="color: var(--orange);">${fmtNum(coin.totalLiq)}</div>
+  </div>
+  <div class="d-item">
+    <div class="k">多头清液</div>
+    <div class="v" style="color: #ff9d9d;">${fmtNum(coin.longLiq)}</div>
+  </div>
+  <div class="d-item">
+    <div class="k">空头清液</div>
+    <div class="v" style="color: #9dffb3;">${fmtNum(coin.shortLiq)}</div>
+  </div>
+</div>`;
+
+html += `<div class="block">
+  <h3>📈 多周期阶段分析</h3>
+  <div class="rows">
+    <div class="row">
+      <div class="rk">5分钟</div>
+      <div class="rv">${coin.change5m > 0 ? '↑' : '↓'} ${fmtPct(coin.change5m)} | 主买: ${(coin.k5m.takerRatio * 100).toFixed(1)}%</div>
+    </div>
+    <div class="row">
+      <div class="rk">15分钟</div>
+      <div class="rv">${coin.change15m > 0 ? '↑' : '↓'} ${fmtPct(coin.change15m)} | 主买: ${(coin.k15m.takerRatio * 100).toFixed(1)}%</div>
+    </div>
+    <div class="row">
+      <div class="rk">1小时 ★</div>
+      <div class="rv" style="color:${coin.change1h > 0 ? 'var(--green)' : 'var(--red)'};font-weight:900;">${coin.change1h > 0 ? '↑' : '↓'} ${fmtPct(coin.change1h)} | 主买: ${coin.takerRatio1h.toFixed(1)}%</div>
+    </div>
+    <div class="row">
+      <div class="rk">4小时</div>
+      <div class="rv">${coin.change4h > 0 ? '↑' : '↓'} ${fmtPct(coin.change4h)} | 主买: ${(coin.k4h.takerRatio * 100).toFixed(1)}%</div>
+    </div>
+  </div>
+</div>`;
+
+html += `<div class="block">
+  <h3>🎯 关键指标共振</h3>
+  <div class="rows">
+    <div class="row">
+      <div class="rk">价格与OI</div>
+      <div class="rv" style="color:${(coin.change1h > 0 && coin.oiChange > 0) ? 'var(--green)' : 'var(--orange)'}">
+        ${coin.change1h > 0 && coin.oiChange > 0 ? '✓ 双向共振' : coin.change1h > 0 && coin.oiChange < -5 ? '✓ 获利平仓' : '观察中'}
+      </div>
+    </div>
+    <div class="row">
+      <div class="rk">清液结构</div>
+      <div class="rv" style="color:${coin.shortLiq > coin.longLiq ? 'var(--green)' : 'var(--orange)'}">
+        ${coin.shortLiq > coin.longLiq ? `空被清 ${fmtNum(coin.shortLiq - coin.longLiq)}` : `多被清 ${fmtNum(coin.longLiq - coin.shortLiq)}`}
+      </div>
+    </div>
+    <div class="row">
+      <div class="rk">主动买卖</div>
+      <div class="rv" style="color:${coin.takerBuyDominant ? 'var(--green)' : 'var(--orange)'}">
+        ${coin.takerBuyDominant ? `主动买入 ${coin.takerRatio1h.toFixed(1)}%` : coin.takerSellDominant ? `主动卖出 ${(100 - coin.takerRatio1h).toFixed(1)}%` : '平衡'}
+      </div>
+    </div>
+    <div class="row">
+      <div class="rk">多空结构</div>
+      <div class="rv" style="color:${coin.longRatio < 50 && coin.change1h > 0 ? 'var(--green)' : 'var(--orange)'}">
+        ${coin.longRatio < 50 && coin.change1h > 0 ? `✓ 空头被挤(${coin.longRatio.toFixed(1)}% L)` : `多空均衡(${coin.longRatio.toFixed(1)}% L)`}
+      </div>
+    </div>
+    <div class="row">
+      <div class="rk">当前阶段</div>
+      <div class="rv">${coin.stage}</div>
+    </div>
+  </div>
+</div>`;
+
+html += `<div class="block">
+  <h3>💡 操作建议</h3>
+  <div class="rows">
+    <div class="row">
+      <div class="rk">推荐方向</div>
+      <div class="rv" style="color:${coin.direction === '做多' ? 'var(--green)' : coin.direction === '做空' ? 'var(--red)' : 'var(--sub)'}; font-weight:900;">${coin.direction}</div>
+    </div>
+    <div class="row">
+      <div class="rk">近期走势</div>
+      <div class="rv">${coin.outlook}</div>
+    </div>
+    <div class="row">
+      <div class="rk">风险等级</div>
+      <div class="rv" style="color:${coin.riskLevel === '低' ? 'var(--green)' : coin.riskLevel === '高' ? 'var(--red)' : 'var(--orange)'}; font-weight:900;">${coin.riskLevel}</div>
+    </div>
+    <div class="row">
+      <div class="rk">信心度</div>
+      <div class="rv">${(coin.confidence * 100).toFixed(0)}%</div>
+    </div>
+  </div>
+</div>`;
+
+html += `<div class="quick-links">
+  <button class="q-btn" onclick="copyText('${coin.symbol}')">📋 复制币种名</button>
+  <a class="q-btn" href="https://dexscreener.com/search?q=${coin.symbol}" target="_blank">🌊 DexScreener</a>
+  <a class="q-btn" href="https://www.binance.com/zh-CN/trade/${coin.symbol}" target="_blank">💰 币安现货</a>
+  <a class="q-btn" href="https://www.binance.com/zh-CN/futures/USDT/${coin.symbol}" target="_blank">📊 币安合约</a>
+</div>`;
+
+document.getElementById('detail-body').innerHTML = html;
+document.getElementById('detail-modal').classList.add('active');
+​
+}
+
+function closeDetail() {
+document.getElementById('detail-modal').classList.remove('active');
+}
+
+function copyText(text) {
+navigator.clipboard.writeText(text);
+showNotice('✓ 已复制: ' + text);
+}
+
+function refreshNow() {
+showNotice('🔄 正在刷新合约数据...');
+fetchAllFuturesData();
+}
+
+function init() {
+document.getElementById('notify-toggle').checked = CONFIG.notifyEnabled;
+
+CONFIG.monitorSymbols.forEach(sym => {
+  initWebSocket(sym);
+});
+
+fetchAllFuturesData();
+httpTimer = setInterval(() => {
+  fetchAllFuturesData();
+}, CONFIG.httpRefreshMs);
+​
+}
+
+init();
   </script>
 </body>
 </html>
