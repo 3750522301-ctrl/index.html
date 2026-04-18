@@ -360,6 +360,25 @@
     .decision-label { color: #8ca3ba; }
     .decision-value { font-weight: bold; color: #e5eefb; }
 
+    .confidence-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin: 8px 0;
+    }
+    .confidence-fill {
+      height: 6px;
+      border-radius: 3px;
+      background: linear-gradient(90deg, #ef4444, #f59e0b, #22c55e);
+      flex: 1;
+    }
+    .confidence-text {
+      font-size: 10px;
+      color: #8ca3ba;
+      min-width: 40px;
+      text-align: right;
+    }
+
     @media (max-width: 1024px) {
       .coin-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
       .detail-grid { grid-template-columns: repeat(2, 1fr); }
@@ -374,8 +393,8 @@
 </head>
 <body translate="no">
   <div class="container">
-    <h1 translate="no">⚡ 币安交易系统</h1>
-    <p class="subtitle">妖币早期发现 | 稳健建议 | 实时监控</p>
+    <h1 translate="no">⚡ 币安交易系统 v10</h1>
+    <p class="subtitle">多维度联动检测 | 精准筹码分析 | 拉盘前夕发现</p>
 
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('monitor', this)">📊 监控</button>
@@ -441,6 +460,7 @@
     let oiMap = {};
     let isLoading = false;
     let previousData = {};
+    let twoStepsAgoData = {};
     let autoRefreshInterval = null;
 
     function switchTab(tab, el) {
@@ -448,11 +468,6 @@
       document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active'));
       document.getElementById(tab).classList.add('active');
       el.classList.add('active');
-    }
-
-    function colorClass(v) {
-      if (v === null || isNaN(v)) return '';
-      return v > 0 ? 'green' : v < 0 ? 'red' : '';
     }
 
     function fmtNum(n, d = 2) {
@@ -489,144 +504,307 @@
       return map;
     }
 
-    function calculateResonanceScore(row, previous) {
-      let score = 0;
-      let signals = [];
-
-      // 价格信号
-      if (row.priceChange < -8 && row.priceChange > -40) {
-        score += 25;
-        signals.push('超跌');
-      } else if (row.priceChange < -3) {
-        score += 15;
-        signals.push('回调');
-      }
-      
-      if (previous && row.price > previous.price) {
-        score += 20;
-        signals.push('反弹');
+    /**
+     * 多维度综合分析框架
+     * 不只看单个指标，而是看指标间的逻辑关系
+     */
+    class CoinAnalyzer {
+      constructor(row, previous, twoStepsAgo) {
+        this.row = row;
+        this.prev = previous;
+        this.twoStepsAgo = twoStepsAgo;
+        this.evidences = [];
+        this.score = 0;
       }
 
-      // OI信号
-      if (row.oiMcap && row.oiMcap > 1.5 && row.oiMcap < 12) {
-        score += 15;
-        signals.push('OI活');
-      }
-      if (previous && row.oiMcap > previous.oiMcap * 0.95) {
-        score += 15;
-        signals.push('OI持');
-      }
+      // 维度1：价格动态
+      analyzePriceDynamics() {
+        const priceChange = this.row.priceChange;
+        
+        // 检测：长期沉寂 + 最近无大跌
+        if (priceChange > -15 && priceChange < 10) {
+          this.evidences.push('价格平稳');
+          
+          // 如果是刚从底部反弹（前面跌过，现在恢复了）
+          if (this.prev && this.row.price > this.prev.price) {
+            this.evidences.push('短期反弹');
+            return 15; // 反弹是好信号
+          }
+          return 8;
+        }
 
-      // 资费信号
-      if (row.funding > -0.025 && row.funding < 0.04) {
-        score += 12;
-        signals.push('资费平');
-      }
+        // 如果在缓慢上升（没有暴跌过）
+        if (priceChange > 0 && priceChange < 8) {
+          this.evidences.push('缓慢上升');
+          return 12;
+        }
 
-      // 成交信号
-      if (row.volMcap && row.volMcap > 6 && row.volMcap < 28) {
-        score += 12;
-        signals.push('成交活');
-      }
-
-      // 市值信号
-      if (row.mcap && row.mcap > 1e7 && row.mcap < 3e8) {
-        score += 8;
-        signals.push('市值合');
+        return 0;
       }
 
-      // 共鸣加成
-      score += Math.min(10, signals.length * 1.5);
+      // 维度2：成交量真实性检验
+      // 用来检测OI是否真实（OI高但成交低 = 假OI）
+      analyzeVolumeAuthenticity() {
+        if (!this.row.volMcap || !this.row.oiMcap) return 0;
 
-      return {
-        totalScore: Math.min(100, score),
-        signals: signals
-      };
+        // 检测：OI和成交的比例
+        // 正常：Vol/Mcap 是 OI/Mcap 的 1/3 ~ 1/5
+        // 异常：OI很高但成交很低 = 假OI
+        const oiToVolRatio = this.row.oiMcap / (this.row.volMcap || 0.1);
+
+        // 比例太高 = OI虚假，减分
+        if (oiToVolRatio > 2) {
+          this.evidences.push('⚠️ OI可能虚假');
+          return -20; // 大幅减分！
+        }
+
+        // 比例合理 = OI真实
+        if (this.row.volMcap > 8 && this.row.oiMcap > 2) {
+          this.evidences.push('成交成✓OI真');
+          return 18;
+        }
+
+        // 成交活跃 + OI适中
+        if (this.row.volMcap > 10 && this.row.oiMcap > 1.5) {
+          this.evidences.push('成交活跃');
+          return 15;
+        }
+
+        return 0;
+      }
+
+      // 维度3：资金进场方向（Funding Rate三角验证）
+      analyzeFundingPattern() {
+        if (!this.prev) return 0;
+
+        const fundingNow = this.row.funding;
+        const fundingPrev = this.prev.funding;
+        const fundingTrend = fundingNow - fundingPrev;
+
+        // 检测1：从负→正 = 空头转多头（空头被轧）
+        if (fundingPrev < 0 && fundingNow > 0.003) {
+          this.evidences.push('空头平仓');
+          return 20; // 强信号！
+        }
+
+        // 检测2：持续正向 + 逐步上升 = 多头在持续加仓
+        if (fundingNow > 0.01 && fundingNow < 0.04 && fundingTrend > 0.002) {
+          this.evidences.push('多头加仓中');
+          return 16;
+        }
+
+        // 检测3：funding太高 = 容易砸盘风险
+        if (fundingNow > 0.05) {
+          this.evidences.push('资费过高-风险');
+          return -15;
+        }
+
+        // 正向funding但稳定 = 资金在做多（好）
+        if (fundingNow > 0.005 && fundingNow < 0.025) {
+          this.evidences.push('资金做多');
+          return 12;
+        }
+
+        return 0;
+      }
+
+      // 维度4：OI增长率（需要时序数据验证）
+      analyzeOIGrowth() {
+        if (!this.prev || !this.row.oiMcap) return 0;
+
+        const oiGrowth = (this.row.oiMcap - this.prev.oiMcap) / (this.prev.oiMcap || 0.1);
+        const priceGrowth = (this.row.price - this.prev.price) / this.prev.price;
+
+        // 检测：OI增长 > 价格增长 = 资金在进，但价格还没跟上（底部信号！）
+        if (oiGrowth > 0.15 && Math.abs(priceGrowth) < 0.05) {
+          this.evidences.push('底部积累中');
+          return 22; // 最强信号之一
+        }
+
+        // OI保持稳定 + 价格缓涨 = 稳健上升
+        if (oiGrowth > -0.05 && oiGrowth < 0.1 && priceGrowth > 0) {
+          this.evidences.push('OI稳健');
+          return 10;
+        }
+
+        // OI大幅下降 = 资金出逃（减分！）
+        if (oiGrowth < -0.2) {
+          this.evidences.push('资金出逃');
+          return -25;
+        }
+
+        return 0;
+      }
+
+      // 维度5：地址活跃度（链上信号）
+      // 通过成交量变化反推
+      analyzeAddressActivity() {
+        if (!this.prev || !this.row.volMcap) return 0;
+
+        const volGrowth = (this.row.volMcap - this.prev.volMcap) / (this.prev.volMcap || 0.1);
+
+        // 成交量突然爆升 + OI也升 = 大量地址在活跃
+        if (volGrowth > 0.4 && this.row.oiMcap > 2) {
+          this.evidences.push('地址活跃度↑');
+          return 18;
+        }
+
+        // 成交持续稳定 = 地址保持活跃
+        if (Math.abs(volGrowth) < 0.3 && this.row.volMcap > 8) {
+          this.evidences.push('地址活跃✓');
+          return 12;
+        }
+
+        return 0;
+      }
+
+      // 维度6：市值规模（拉盘潜力）
+      analyzeMarketCap() {
+        const mcap = this.row.mcap;
+        if (!mcap) return 0;
+
+        // 理想的妖币市值：1000万 ~ 3亿
+        // 理想的建议币市值：3000万 ~ 10亿
+        if (mcap > 1e7 && mcap < 3e8) {
+          this.evidences.push('市值合适');
+          return 10; // 有拉盘空间
+        }
+
+        if (mcap > 3e8 && mcap < 1e9) {
+          this.evidences.push('市值偏大');
+          return 6;
+        }
+
+        if (mcap > 1e9) {
+          this.evidences.push('市值太大');
+          return -5; // 拉盘空间小
+        }
+
+        return 0;
+      }
+
+      // 维度7：时序验证（2次数据对比）
+      analyzeTimeSequence() {
+        if (!this.prev || !this.twoStepsAgo) return 0;
+
+        // 检测趋势：是否连续向好
+        const oiTrend = (this.row.oiMcap > this.prev.oiMcap) && 
+                        (this.prev.oiMcap > this.twoStepsAgo.oiMcap);
+        const volTrend = (this.row.volMcap > this.prev.volMcap) && 
+                        (this.prev.volMcap > this.twoStepsAgo.volMcap);
+        const fundingTrend = (this.row.funding > this.prev.funding) && 
+                            (this.prev.funding > this.twoStepsAgo.funding);
+
+        let trends = 0;
+        if (oiTrend) { this.evidences.push('OI连升'); trends++; }
+        if (volTrend) { this.evidences.push('成交连升'); trends++; }
+        if (fundingTrend) { this.evidences.push('资费连升'); trends++; }
+
+        // 多条指标连续向好 = 非常强的信号
+        return trends * 8; // 每条趋势 +8分
+      }
+
+      // 最终综合分数
+      getScore() {
+        const dimensions = [
+          this.analyzePriceDynamics(),
+          this.analyzeVolumeAuthenticity(),
+          this.analyzeFundingPattern(),
+          this.analyzeOIGrowth(),
+          this.analyzeAddressActivity(),
+          this.analyzeMarketCap(),
+          this.analyzeTimeSequence()
+        ];
+
+        this.score = Math.max(0, Math.min(100, dimensions.reduce((a, b) => a + b, 0)));
+        return this.score;
+      }
+
+      // 获取检测信心度（用来显示在UI上）
+      getConfidence() {
+        // 信心度 = 证据数量
+        // 证据越多 = 信号越清晰 = 信心越高
+        const evidenceCount = this.evidences.length;
+        return Math.min(100, evidenceCount * 12);
+      }
     }
 
-    function detectYaoCoinV2(row, previous) {
-      const resonance = calculateResonanceScore(row, previous);
+    function detectYaoCoin(row, prev, twoStepsAgo) {
+      const analyzer = new CoinAnalyzer(row, prev, twoStepsAgo);
+      const score = analyzer.getScore();
+      const confidence = analyzer.getConfidence();
       
-      // 妖币必须满足：超跌 + OI活跃 + 市值小 + 有反弹迹象
-      const isHeavyDrop = row.priceChange < -12 && row.priceChange > -45;
-      const hasOI = row.oiMcap && row.oiMcap > 2 && row.oiMcap < 11;
-      const smallCap = row.mcap && row.mcap > 8e6 && row.mcap < 3e8;
-      const hasRebound = previous && row.price > previous.price;
-      const hasVolume = row.volMcap && row.volMcap > 7 && row.volMcap < 26;
+      // 妖币标准：分数 >= 75 + 证据 >= 5个 + 市值 < 3亿
+      const hasNegativeEvidence = analyzer.evidences.some(e => e.includes('⚠️') || e.includes('风险'));
 
       if (
-        isHeavyDrop && 
-        hasOI && 
-        smallCap && 
-        resonance.signals.length >= 5 && 
-        resonance.totalScore >= 75
+        score >= 75 &&
+        analyzer.evidences.length >= 5 &&
+        !hasNegativeEvidence &&
+        row.mcap < 3e8
       ) {
         let status = '';
-        if (row.priceChange < -30) {
-          status = '🔴 高风险-观察';
-        } else if (row.priceChange < -18) {
-          status = '🟡 中风险-小仓';
+        if (row.priceChange < -15) {
+          status = '🔴 底部蓄势';
+        } else if (row.priceChange > 3) {
+          status = '🟡 温和上升';
         } else {
-          status = '🟢 可进-试水';
+          status = '🟢 筹码激活';
         }
 
         return {
           isYao: true,
           status,
-          yaoScore: resonance.totalScore,
-          signals: resonance.signals,
-          reason: '超跌反弹+OI活跃+小市值'
+          yaoScore: score,
+          confidence,
+          signals: analyzer.evidences,
+          reason: analyzer.evidences.slice(0, 3).join(' + ')
         };
       }
 
       return { isYao: false };
     }
 
-    function detectBuyCoinV2(row, previous) {
-      const resonance = calculateResonanceScore(row, previous);
+    function detectBuyCoin(row, prev, twoStepsAgo) {
+      const analyzer = new CoinAnalyzer(row, prev, twoStepsAgo);
+      const score = analyzer.getScore();
+      const confidence = analyzer.getConfidence();
 
-      const isStable = row.priceChange > -2 && row.priceChange < 6;
-      const hasModerateOI = row.oiMcap && row.oiMcap > 3 && row.oiMcap < 9;
-      const fundingGood = row.funding > -0.018 && row.funding < 0.025;
-      const volumeGood = row.volMcap && row.volMcap > 7 && row.volMcap < 24;
-      const capGood = row.mcap && row.mcap > 3e7 && row.mcap < 5e8;
+      const hasNegativeEvidence = analyzer.evidences.some(e => e.includes('⚠️') || e.includes('风险'));
 
+      // 建议币标准：分数 >= 72 + 证据 >= 4个 + 市值 3亿~ 10亿 + 价格稳健
       if (
-        (isStable || row.priceChange > 0) &&
-        hasModerateOI &&
-        fundingGood &&
-        volumeGood &&
-        capGood &&
-        resonance.totalScore >= 72
+        score >= 72 &&
+        analyzer.evidences.length >= 4 &&
+        !hasNegativeEvidence &&
+        row.mcap > 3e7 &&
+        row.mcap < 1e9 &&
+        row.priceChange > -5 &&
+        row.priceChange < 15
       ) {
-        let buyScore = resonance.totalScore;
-        if (resonance.signals.length >= 5) buyScore += 8;
-
         return {
           isBuy: true,
-          buyScore: Math.min(100, buyScore),
-          signals: resonance.signals,
-          reason: '稳健机会+OI平衡+成交活跃'
+          buyScore: score,
+          confidence,
+          signals: analyzer.evidences,
+          reason: analyzer.evidences.slice(0, 3).join(' + ')
         };
       }
 
       return { isBuy: false };
     }
 
-    function detectWatch(row, previous) {
-      const resonance = calculateResonanceScore(row, previous);
+    function detectWatch(row, prev, twoStepsAgo) {
+      const analyzer = new CoinAnalyzer(row, prev, twoStepsAgo);
+      const score = analyzer.getScore();
 
-      // 有信号但不足以上榜，或市值偏大但其他不错
-      const hasSignals = resonance.signals.length >= 3;
-      const isNearWatch = resonance.totalScore >= 60;
-      const capOkay = row.mcap && row.mcap > 5e8 && row.mcap < 2e9;
-
-      if (hasSignals && isNearWatch && (capOkay || resonance.totalScore < 72)) {
+      // 观察标准：分数 >= 60 但低于建议 + 证据 >= 3个
+      if (score >= 60 && score < 72 && analyzer.evidences.length >= 3) {
         return {
           isWatch: true,
-          watchScore: resonance.totalScore,
-          signals: resonance.signals,
-          reason: '待观察-信号不足或市值偏大'
+          watchScore: score,
+          signals: analyzer.evidences,
+          reason: '信号不足，继续观察'
         };
       }
 
@@ -635,22 +813,23 @@
 
     function getTradingAdvice(row, type) {
       if (type === 'yao') {
-        if (row.priceChange < -30) {
-          return '⏸️ 观察为主，先看有没有底部反弹';
-        } else if (row.priceChange < -18) {
-          return '💰 可以小仓位 1-2% 试水，严格 -3% 止损';
+        if (row.priceChange < -15) {
+          return '⏸️ 观察为主，等待底部信号更明确再进';
+        } else if (row.priceChange < 3) {
+          return '💰 可小仓 1-2% 试水，严格止损';
         } else {
-          return '🔥 可以进场，推荐 2-3% 试水，计划是拉盘前夕';
+          return '🔥 筹码激活，可 2-3% 试水，拉盘前夕';
         }
       } else if (type === 'buy') {
-        return '✅ 现货推荐，可以分批建仓，1-2% 仓位稳妥';
+        return '✅ 现货推荐，分批建仓 1-2%';
       } else {
-        return '📌 继续观察，等信号更确定或市值下降';
+        return '📌 继续观察，等更确定信号';
       }
     }
 
     function renderCoinCard(row, type) {
       const score = row.yaoScore || row.buyScore || row.watchScore || 0;
+      const confidence = row.confidence || 0;
       const advice = getTradingAdvice(row, type);
       
       const tagClass = type === 'yao' ? 'tag-yao' : type === 'buy' ? 'tag-buy' : 'tag-watch';
@@ -674,14 +853,14 @@
             </div>
             <div class="stat">
               <span class="stat-label">24h</span>
-              <span class="stat-value ${colorClass(row.priceChange)}">${row.priceChange.toFixed(1)}%</span>
+              <span class="stat-value ${row.priceChange > 0 ? 'green' : 'red'}">${row.priceChange.toFixed(1)}%</span>
             </div>
             <div class="stat">
               <span class="stat-label">市值</span>
               <span class="stat-value">$${fmtNum(row.mcap, 0)}</span>
             </div>
             <div class="stat">
-              <span class="stat-label">共振</span>
+              <span class="stat-label">综评</span>
               <span class="stat-value">${score.toFixed(0)}</span>
             </div>
             <div class="stat">
@@ -690,8 +869,13 @@
             </div>
             <div class="stat">
               <span class="stat-label">资费</span>
-              <span class="stat-value ${colorClass(row.funding)}">${row.funding.toFixed(4)}%</span>
+              <span class="stat-value ${row.funding > 0 ? 'green' : 'red'}">${row.funding.toFixed(4)}%</span>
             </div>
+          </div>
+
+          <div class="confidence-bar">
+            <div class="confidence-fill" style="width: ${confidence}%"></div>
+            <span class="confidence-text">${confidence.toFixed(0)}%</span>
           </div>
 
           <div class="coin-note">${advice}</div>
@@ -735,6 +919,7 @@
       if (!coin) return;
 
       const score = coin.yaoScore || coin.buyScore || coin.watchScore || 0;
+      const confidence = coin.confidence || 0;
       const tp = calculateTP(coin, type === 'yao');
       const add = calculateAdd(coin, type === 'yao');
 
@@ -763,8 +948,12 @@
             </div>
           </div>
           <div class="detail-item">
-            <div class="detail-item-label">共振分</div>
+            <div class="detail-item-label">综合评分</div>
             <div class="detail-item-value">${score.toFixed(1)}/100</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-item-label">信心度</div>
+            <div class="detail-item-value">${confidence.toFixed(0)}%</div>
           </div>
           <div class="detail-item">
             <div class="detail-item-label">OI/Mcap</div>
@@ -780,14 +969,30 @@
               ${coin.funding.toFixed(4)}%
             </div>
           </div>
-          <div class="detail-item">
-            <div class="detail-item-label">信号数</div>
-            <div class="detail-item-value">${coin.signals.length}</div>
+        </div>
+
+        <div class="detail-box">
+          <h3>📋 多维度分析</h3>
+          <div class="decision-row">
+            <span class="decision-label">检测证据</span>
+            <span class="decision-value">${coin.signals.length}个信号触发</span>
+          </div>
+          <div class="decision-row">
+            <span class="decision-label">信号清单</span>
+            <span class="decision-value">${coin.signals.join(' | ')}</span>
+          </div>
+          <div class="decision-row">
+            <span class="decision-label">核心原因</span>
+            <span class="decision-value">${coin.reason}</span>
+          </div>
+          <div class="confidence-bar" style="margin-top: 8px;">
+            <div class="confidence-fill" style="width: ${confidence}%"></div>
+            <span class="confidence-text">${confidence.toFixed(0)}% 信心</span>
           </div>
         </div>
 
         <div class="detail-box">
-          <h3>📋 交易建议</h3>
+          <h3>💡 交易建议</h3>
           <div class="decision-row">
             <span class="decision-label">推荐方式</span>
             <span class="decision-value">${type === 'yao' ? '合约试水' : '现货建仓'}</span>
@@ -814,43 +1019,51 @@
           </div>
           <div class="decision-row">
             <span class="decision-label">TP1</span>
-            <span class="decision-value" style="color: #22c55e;">$${tp.tp1} (${type === 'yao' ? '+5%' : '+3%'})</span>
+            <span class="decision-value" style="color: #22c55e;">$${tp.tp1} (${type === 'yao' ? '+5%' : '+3%'}) - 卖${type === 'yao' ? '25%' : '30%'}</span>
           </div>
           <div class="decision-row">
             <span class="decision-label">TP2</span>
-            <span class="decision-value" style="color: #22c55e;">$${tp.tp2} (${type === 'yao' ? '+10%' : '+8%'})</span>
+            <span class="decision-value" style="color: #22c55e;">$${tp.tp2} (${type === 'yao' ? '+10%' : '+8%'}) - 卖${type === 'yao' ? '25%' : '30%'}</span>
           </div>
           <div class="decision-row">
             <span class="decision-label">TP3</span>
-             <span class="decision-value" style="color: #22c55e;">$${tp.tp3} (${type === 'yao' ? '+20%' : '+15%'})</span>
+            <span class="decision-value" style="color: #22c55e;">$${tp.tp3} (${type === 'yao' ? '+20%' : '+15%'}) - 卖${type === 'yao' ? '50%' : '40%'}</span>
           </div>
         </div>
 
         <div class="detail-box">
           <h3>📈 加仓计划</h3>
           <div class="decision-row">
-            <span class="decision-label">加仓1</span>
+            <span class="decision-label">回调加仓1</span>
             <span class="decision-value">$${add.add1}</span>
           </div>
           <div class="decision-row">
-            <span class="decision-label">加仓2</span>
+            <span class="decision-label">回调加仓2</span>
             <span class="decision-value">$${add.add2}</span>
           </div>
           <div class="decision-row">
-            <span class="decision-label">策略</span>
+            <span class="decision-label">加仓策略</span>
             <span class="decision-value">每次加仓 ${type === 'yao' ? '25%' : '30%'} 仓位</span>
           </div>
         </div>
 
         <div class="detail-box">
-          <h3>📊 实时信号</h3>
+          <h3>🔍 关键指标详解</h3>
           <div class="decision-row">
-            <span class="decision-label">检测标签</span>
-            <span class="decision-value">${coin.signals.join(' | ')}</span>
+            <span class="decision-label">OI/Vol比</span>
+            <span class="decision-value">${coin.oiMcap && coin.volMcap ? (coin.oiMcap / coin.volMcap).toFixed(2) : '-'}</span>
           </div>
           <div class="decision-row">
-            <span class="decision-label">推荐原因</span>
-            <span class="decision-value">${coin.reason || '综合信号触发'}</span>
+            <span class="decision-label">成交真实性</span>
+            <span class="decision-value ${coin.oiMcap && coin.volMcap && (coin.oiMcap / coin.volMcap) < 2 ? 'green' : 'red'}>
+              ${coin.oiMcap && coin.volMcap && (coin.oiMcap / coin.volMcap) < 2 ? '✓真实' : '⚠️ 可能虚假'}
+            </span>
+          </div>
+          <div class="decision-row">
+            <span class="decision-label">资金方向</span>
+            <span class="decision-value ${coin.funding > 0 ? 'green' : 'red'}">
+              ${coin.funding > 0.01 ? '🔴 多头加码' : coin.funding > 0 ? '🟡 温和做多' : '🟢 空头优势'}
+            </span>
           </div>
         </div>
 
@@ -860,8 +1073,8 @@
             <span class="decision-label">必读</span>
             <span class="decision-value" style="font-size: 10px; line-height: 1.6;">
               ${type === 'yao' 
-                ? '妖币高风险。必须严格止损 -3%，不要抱希望。按计划执行，不要加仓超过止损。拉盘前期进场收益最大，但风险也大。' 
-                : '稳健机会。推荐现货分批建仓。第一批 50%，反弹再加仓。不要all in。长期持有为主。'}
+                ? '妖币基于多维度信号触发，但仍存风险。必须严格止损 -3%，不要抱希望。按计划执行，拉盘前期介入收益最大。信心度越高越可信。' 
+                : '建议币已通过7维度分析，相对稳健。推荐现货分批建仓。分三次进场，每次1/3仓位，降低风险。'}
             </span>
           </div>
         </div>
@@ -946,20 +1159,22 @@
         return;
       }
 
-      const yaoCheck = detectYaoCoinV2(coin, previousData[symbol]);
-      const buyCheck = detectBuyCoinV2(coin, previousData[symbol]);
-      const watchCheck = detectWatch(coin, previousData[symbol]);
+      const yaoCheck = detectYaoCoin(coin, previousData[symbol], twoStepsAgoData[symbol]);
+      const buyCheck = detectBuyCoin(coin, previousData[symbol], twoStepsAgoData[symbol]);
+      const watchCheck = detectWatch(coin, previousData[symbol], twoStepsAgoData[symbol]);
 
       let type = '';
       if (yaoCheck.isYao) {
         type = 'yao';
         coin.status = yaoCheck.status;
         coin.yaoScore = yaoCheck.yaoScore;
+        coin.confidence = yaoCheck.confidence;
         coin.signals = yaoCheck.signals;
         coin.reason = yaoCheck.reason;
       } else if (buyCheck.isBuy) {
         type = 'buy';
         coin.buyScore = buyCheck.buyScore;
+        coin.confidence = buyCheck.confidence;
         coin.signals = buyCheck.signals;
         coin.reason = buyCheck.reason;
       } else if (watchCheck.isWatch) {
@@ -971,7 +1186,7 @@
         document.getElementById('search-result').innerHTML = `
           <div class="empty-state">
             💭 暂不符合推荐标准<br/>
-            信号不足或市值不合适
+            信号不足或指标不匹配
           </div>
         `;
         return;
@@ -994,7 +1209,7 @@
           getJSON('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1')
         ]);
 
-        if (!exchangeInfo || !ticker24h || !premiumIndex) throw new Error('数据失败');
+        if (!exchangeInfo || !ticker24h || !premiumIndex) throw new Error('数据获取失败');
 
         const symbols = exchangeInfo.symbols
           .filter(s => s.contractType === 'PERPETUAL' && s.quoteAsset === 'USDT' && s.status === 'TRADING')
@@ -1042,29 +1257,35 @@
 
           allCoinsData.push(row);
 
+          // 使用时序数据进行三维度分析
+          const prev = previousData[symbol];
+          const twoStepsAgo = twoStepsAgoData[symbol];
+
           // 优先判建议，再判妖币，最后判观察
-          const buyCheck = detectBuyCoinV2(row, previousData[symbol]);
+          const buyCheck = detectBuyCoin(row, prev, twoStepsAgo);
           if (buyCheck.isBuy) {
             row.level = '建议';
             row.buyScore = buyCheck.buyScore;
+            row.confidence = buyCheck.confidence;
             row.signals = buyCheck.signals;
             row.reason = buyCheck.reason;
             allRows.buy.push(row);
             continue;
           }
 
-          const yaoCheck = detectYaoCoinV2(row, previousData[symbol]);
+          const yaoCheck = detectYaoCoin(row, prev, twoStepsAgo);
           if (yaoCheck.isYao) {
             row.level = '妖币';
             row.status = yaoCheck.status;
             row.yaoScore = yaoCheck.yaoScore;
+            row.confidence = yaoCheck.confidence;
             row.signals = yaoCheck.signals;
             row.reason = yaoCheck.reason;
             allRows.yao.push(row);
             continue;
           }
 
-          const watchCheck = detectWatch(row, previousData[symbol]);
+          const watchCheck = detectWatch(row, prev, twoStepsAgo);
           if (watchCheck.isWatch) {
             row.level = '观察';
             row.watchScore = watchCheck.watchScore;
@@ -1075,20 +1296,25 @@
         }
 
         // 排序
-        allRows.yao.sort((a, b) => b.yaoScore - a.yaoScore).slice(0, 30);
-        allRows.buy.sort((a, b) => b.buyScore - a.buyScore).slice(0, 15);
-        allRows.watch.sort((a, b) => b.watchScore - a.watchScore).slice(0, 20);
+        allRows.yao.sort((a, b) => b.yaoScore - a.yaoScore);
+        allRows.buy.sort((a, b) => b.buyScore - a.buyScore);
+        allRows.watch.sort((a, b) => b.watchScore - a.watchScore);
 
-        // 保存历史
-        const tempPrev = {};
+        // 保存历史（两层历史数据）
+        const newTwoStepsAgo = previousData;
+        const newPreviousData = {};
+        
         [...allRows.yao, ...allRows.buy, ...allRows.watch].forEach(row => {
-          tempPrev[row.symbol] = {
+          newPreviousData[row.symbol] = {
             price: row.price,
             oiMcap: row.oiMcap,
-            funding: row.funding
+            funding: row.funding,
+            volMcap: row.volMcap
           };
         });
-        previousData = tempPrev;
+
+        twoStepsAgoData = newTwoStepsAgo;
+        previousData = newPreviousData;
 
         renderYaoList();
         renderBuyList();
@@ -1103,7 +1329,7 @@
 
       } catch (e) {
         console.error(e);
-        document.getElementById('last-update').innerText = '❌ 数据获取失败';
+        document.getElementById('last-update').innerText = '❌ 获取失败';
       } finally {
         isLoading = false;
         document.getElementById('refresh-dot').classList.remove('loading');
