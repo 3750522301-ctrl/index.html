@@ -1256,7 +1256,7 @@ function startTrendProtection(symbol) {
   }
 }
 
-// ============ 推荐等级判断 ============
+// ============ 推荐等级判断（改松版本） ============
 
 function determineLevel(symbol, coin_data, signal_data) {
   const riskLevel = assessRisk(coin_data);
@@ -1266,45 +1266,41 @@ function determineLevel(symbol, coin_data, signal_data) {
     return allCoins[symbol]?.level || null;
   }
 
+  // ============ 直接买入（改松） ============
+  if (
+    signal_data.strength >= 50 &&
+    riskLevel !== 'high' &&
+    coin_data.change_1h > 0 &&
+    signal_data.direction === 'LONG'
+  ) {
+    startTrendProtection(symbol);
+    return 'buy';
+  }
+
+  // ============ 妖币买入 ============
   if (isYao) {
-    if (signal_data.strength >= 60 && riskLevel !== 'high' && signal_data.direction === 'LONG') {
-      startWatching(symbol);
-      if (isQualifiedForRecommend(symbol)) {
-        startTrendProtection(symbol);
-        return 'yao-buy';
-      }
-      return 'watching';
+    if (signal_data.strength >= 50 && riskLevel !== 'high' && signal_data.direction === 'LONG') {
+      startTrendProtection(symbol);
+      return 'yao-buy';
     }
-    if (signal_data.strength >= 40 && (riskLevel === 'high' || signal_data.strength < 60)) {
+    if (signal_data.strength >= 35) {
       return 'yao-watch';
     }
   }
 
+  // ============ 优秀币 ============
   if (
-    signal_data.strength >= 65 &&
-    riskLevel !== 'high' &&
-    coin_data.change_1h > 0 &&
-    coin_data.change_4h > 0 &&
-    signal_data.direction === 'LONG'
-  ) {
-    startWatching(symbol);
-    if (isQualifiedForRecommend(symbol)) {
-      startTrendProtection(symbol);
-      return 'buy';
-    }
-    return 'watching';
-  }
-
-  if (
-    signal_data.strength >= 45 &&
+    signal_data.strength >= 40 &&
     riskLevel !== 'high' &&
     coin_data.change_1h > -2
   ) {
+    startTrendProtection(symbol);
+    return 'excellent';
+  }
+
+  // ============ 关注中 ============
+  if (signal_data.strength >= 30) {
     startWatching(symbol);
-    if (isQualifiedForRecommend(symbol)) {
-      startTrendProtection(symbol);
-      return 'excellent';
-    }
     return 'watching';
   }
 
@@ -1565,18 +1561,18 @@ async function renderMonitor() {
     return;
   }
 
-  const buyCoins = coins.filter(c => c.level === 'buy' || (c.level === 'watching' && isTrendProtected(c.data.symbol))).sort((a, b) => b.data.signalStrength - a.data.signalStrength).slice(0, 10);
-  const excellentCoins = coins.filter(c => c.level === 'excellent' || (c.level === 'watching' && isTrendProtected(c.data.symbol) && c.level !== 'buy')).sort((a, b) => b.data.signalStrength - a.data.signalStrength).slice(0, 10);
-  const yaoBuyCoins = coins.filter(c => c.level === 'yao-buy' || (c.level === 'watching' && isTrendProtected(c.data.symbol) && c.level === 'yao-buy')).sort((a, b) => b.data.signalStrength - a.data.signalStrength).slice(0, 10);
+  const buyCoins = coins.filter(c => c.level === 'buy').sort((a, b) => b.data.signalStrength - a.data.signalStrength).slice(0, 10);
+  const excellentCoins = coins.filter(c => c.level === 'excellent').sort((a, b) => b.data.signalStrength - a.data.signalStrength).slice(0, 10);
+  const yaoBuyCoins = coins.filter(c => c.level === 'yao-buy').sort((a, b) => b.data.signalStrength - a.data.signalStrength).slice(0, 10);
   const yaoWatchCoins = coins.filter(c => c.level === 'yao-watch').sort((a, b) => b.data.signalStrength - a.data.signalStrength).slice(0, 10);
-  const watchingCoins_list = coins.filter(c => c.level === 'watching' && !isTrendProtected(c.data.symbol)).sort((a, b) => b.data.signalStrength - a.data.signalStrength).slice(0, 10);
+  const watchingCoins_list = coins.filter(c => c.level === 'watching').sort((a, b) => b.data.signalStrength - a.data.signalStrength).slice(0, 10);
 
   let html = '';
 
   if (buyCoins.length) {
     html += `<div class="section-title buy">
       🟢 可以直接买入 (${buyCoins.length})
-      <span class="section-count">信号强度高 · 点位好 · 拉升途中</span>
+      <span class="section-count">信号强度中等 · 点位较好 · 拉升途中</span>
     </div>`;
     html += `<div class="grid">${buyCoins.map(c => renderCoinCard(c, 'buy')).join('')}</div>`;
   }
@@ -1608,7 +1604,7 @@ async function renderMonitor() {
   if (watchingCoins_list.length) {
     html += `<div class="section-title watching">
       🔍 关注中 (${watchingCoins_list.length})
-      <span class="section-count">观察中 · 需持续5分钟确认</span>
+      <span class="section-count">观察中 · 信号初现</span>
     </div>`;
     html += `<div class="grid">${watchingCoins_list.map(c => renderCoinCard(c, 'watching')).join('')}</div>`;
   }
@@ -1623,7 +1619,7 @@ async function renderMonitor() {
 
   document.getElementById('monitor-content').innerHTML = html;
   document.getElementById('buy-count').textContent = buyCoins.length;
-  document.getElementById('watch-count').textContent = Object.keys(watchingCoins).length;
+  document.getElementById('watch-count').textContent = watchingCoins_list.length;
   updateTime();
 }
 
@@ -1633,26 +1629,10 @@ function renderCoinCard(coin, level) {
   const riskClass = coin.riskLevel === 'high' ? 'risk-high' : 
                     coin.riskLevel === 'mid' ? 'risk-mid' : 'risk-low';
 
-  const watching = watchingCoins[c.symbol];
-  const isProtected = isTrendProtected(c.symbol);
-  const isQualified = isQualifiedForRecommend(c.symbol);
-
-  let watchStatus = '';
-  if (watching) {
-    const elapsed = Date.now() - watching.startTime;
-    const remaining = Math.max(0, CONFIG.watchDurationMs - elapsed);
-    const seconds = Math.ceil(remaining / 1000);
-    watchStatus = `<div class="watch-badge">⏱️ ${seconds}s</div>`;
-  }
-
-  let trendStatus = '';
-  if (isProtected) {
-    trendStatus = `<div class="trend-protection">🛡️ 保护中</div>`;
-  }
+  const trendStatus = isTrendProtected(c.symbol) ? `<div class="trend-protection">🛡️ 保护中</div>` : '';
 
   let html = `
     <div class="coin-card ${level}" onclick="viewDetail('${c.symbol}')">
-      ${watchStatus}
       ${trendStatus}
       
       <div class="card-header">
@@ -1686,7 +1666,7 @@ function renderCoinCard(coin, level) {
         </div>
         <div class="metric">
           <div class="metric-label">4h涨幅</div>
-          <div class="metric-value ${c.change_4h > 0 ? 'up' :'down'} ${Math.abs(c.change_4h) > 5 ? 'star' : ''}">
+          <div class="metric-value ${c.change_4h > 0 ? 'up' : 'down'} ${Math.abs(c.change_4h) > 5 ? 'star' : ''}">
             ${fmtPct(c.change_4h)}
           </div>
         </div>
@@ -1747,7 +1727,7 @@ function getPriceExpectation(c, riskLevel) {
   }
 
   if (c.mainDirection === 'LONG') {
-    if (c.signalStrength > 70) {
+    if (c.signalStrength > 60) {
       return '多个信号共振，有望继续上涨，可追进或等回调。';
     }
     return '看多信号中等，建议低吸或等待确认。';
@@ -1774,7 +1754,7 @@ function getTradeAdvice(c, riskLevel, level) {
     return `🟠 妖币观察。妖币特征明显但有风险。等待回调或动能恢复再介入。`;
   }
   if (level === 'watching') {
-    return `🔍 关注中。信号已出现但还需确认，继续观察5分钟后会自动推荐。`;
+    return `🔍 关注中。信号已出现，继续观察确认。`;
   }
   return `⚪ 继续观察。`;
 }
@@ -1803,8 +1783,6 @@ function renderDetail(symbol) {
 
   let html = `
     <div class="detail-page">
-      <button class="back-btn" onclick="switchPage('monitor', null)">← 返回首页</button>
-
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
         <div>
           <h2 style="font-size: 32px; color: var(--cyan); margin-bottom: 8px;">${c.symbol}</h2>
@@ -1820,7 +1798,6 @@ function renderDetail(symbol) {
             ⚠️ ${coin.riskLevel === 'high' ? '高风险' : coin.riskLevel === 'mid' ? '中风险' : '低风险'}
           </span>
           ${isTrendProtected(c.symbol) ? '<span class="tag" style="background: rgba(34,197,94,.2); border-color: rgba(34,197,94,.4); color: #a7f3d0; font-size: 12px; padding: 8px 12px;">🛡️ 趋势保护中</span>' : ''}
-          ${watchingCoins[c.symbol] ? '<span class="tag" style="background: rgba(168,85,247,.2); border-color: rgba(168,85,247,.4); color: #e9d5ff; font-size: 12px; padding: 8px 12px;">👁️ 关注中</span>' : ''}
         </div>
       </div>
 
@@ -1858,7 +1835,7 @@ function renderDetail(symbol) {
         </div>
         <div class="detail-metric">
           <div class="detail-metric-label">信号强度</div>
-          <div class="detail-metric-value ${c.signalStrength > 60 ? 'up' : 'down'} ${c.signalStrength > 75 ? 'star' : ''}">
+          <div class="detail-metric-value ${c.signalStrength > 50 ? 'up' : 'down'} ${c.signalStrength > 65 ? 'star' : ''}">
             ${Math.round(c.signalStrength)}
           </div>
         </div>
@@ -1874,16 +1851,16 @@ function renderDetail(symbol) {
               <strong>相位:</strong> ${c.phase_5m}<br>
               <strong>RSI:</strong> ${Math.round(c.rsi_5m)}<br>
               <strong>涨幅:</strong> ${fmtPct(c.change_5m)}<br>
-              <strong>量能:</strong> ${c.cvd_5m.trend} (${fmt(c.cvd_5m.value)})
+              <strong>量能:</strong> ${c.cvd_5m.trend}
             </div>
           </div>
           <div class="tf-analysis">
             <div class="tf-title">15分钟</div>
             <div class="tf-content">
+              <strong>相位:</strong> ${c.signal_15m?.direction || '待定'}<br>
               <strong>RSI:</strong> ${Math.round(c.rsi_15m)}<br>
               <strong>涨幅:</strong> ${fmtPct(c.change_15m)}<br>
-              <strong>信号数:</strong> ${c.signal_15m?.signals.length || 0} 个<br>
-              <strong>方向:</strong> ${getTrendEmoji(c.signal_15m?.direction)} ${c.signal_15m?.direction || '待定'}
+              <strong>信号数:</strong> ${c.signal_15m?.signals.length || 0}
             </div>
           </div>
           <div class="tf-analysis">
@@ -1892,7 +1869,7 @@ function renderDetail(symbol) {
               <strong>相位:</strong> ${c.phase_1h}<br>
               <strong>RSI:</strong> ${Math.round(c.rsi_1h)}<br>
               <strong>MACD:</strong> ${c.macd_1h ? (c.macd_1h.macd > 0 ? '⬆️ 正' : '⬇️ 负') : '--'}<br>
-              <strong>量能:</strong> ${c.cvd_1h.trend} (${fmt(c.cvd_1h.value)})
+              <strong>量能:</strong> ${c.cvd_1h.trend}
             </div>
           </div>
           <div class="tf-analysis">
@@ -1911,7 +1888,7 @@ function renderDetail(symbol) {
       <div class="quick-channel-section">
         <div class="quick-channel-title">🚀 快捷通道（一键跳转）</div>
 
-        <!-- 第一行：交易 & DEX -->
+        <!-- 第一行：交易 & 图表 -->
         <div class="channel-grid">
           <span class="quick-link" onclick="copyToClipboard('${c.symbol}'); event.stopPropagation();" title="复制币种代码" style="padding: 10px 12px; text-align: center; background: rgba(59,130,246,.2); border-color: rgba(59,130,246,.4); font-size: 11px;">
             📋 复制
@@ -1945,9 +1922,6 @@ function renderDetail(symbol) {
 
         <!-- 第三行：衍生品和风险 -->
         <div class="channel-grid">
-          <span class="quick-link" onclick="openLink('https://solscan.io/token/${c.symbol}'); event.stopPropagation();" title="Solscan - Solana链上数据" style="padding: 10px 12px; text-align: center; background: rgba(20,241,149,.2); border-color: rgba(20,241,149,.4); font-size: 11px;">
-            ◎ Solscan
-          </span>
           <span class="quick-link" onclick="openLink(getLiquidationMapLink('${c.symbol}')); event.stopPropagation();" title="LiquidationMap - 实时清算热力图" style="padding: 10px 12px; text-align: center; background: rgba(239,68,68,.2); border-color: rgba(239,68,68,.4); font-size: 11px;">
             🔥 清算
           </span>
@@ -1957,6 +1931,9 @@ function renderDetail(symbol) {
           <span class="quick-link" onclick="openLink(getOpenInterestLink()); event.stopPropagation();" title="CoinGlass - 未平仓头寸追踪" style="padding: 10px 12px; text-align: center; background: rgba(59,130,246,.2); border-color: rgba(59,130,246,.4); font-size: 11px;">
             📈 OI
           </span>
+          <span class="quick-link" onclick="openLink(getCoinGlassLink('${c.symbol}')); event.stopPropagation();" title="CoinGlass - 合约数据" style="padding: 10px 12px; text-align: center; background: rgba(251,146,60,.2); border-color: rgba(251,146,60,.4); font-size: 11px;">
+            💎 CoinGlass
+          </span>
         </div>
 
         <!-- 第四行：币种信息 -->
@@ -1964,8 +1941,8 @@ function renderDetail(symbol) {
           <span class="quick-link" onclick="openLink(getCoinGeckoLink('${c.symbol}')); event.stopPropagation();" title="CoinGecko - 币种信息和链上数据" style="padding: 10px 12px; text-align: center; background: rgba(168,85,247,.2); border-color: rgba(168,85,247,.4); font-size: 11px;">
             🪙 Gecko
           </span>
-          <span class="quick-link" onclick="openLink(getCoinGlassLink('${c.symbol}')); event.stopPropagation();" title="CoinGlass - 合约数据" style="padding: 10px 12px; text-align: center; background: rgba(251,146,60,.2); border-color: rgba(251,146,60,.4); font-size: 11px;">
-            💎 CoinGlass
+          <span class="quick-link" onclick="openLink(getSolscanLink('${c.symbol}')); event.stopPropagation();" title="Solscan - Solana链上数据" style="padding: 10px 12px; text-align: center; background: rgba(20,241,149,.2); border-color: rgba(20,241,149,.4); font-size: 11px;">
+            ◎ Solscan
           </span>
         </div>
 
@@ -2158,19 +2135,6 @@ async function init() {
 
   setInterval(() => {
     updateTime();
-    Object.keys(watchingCoins).forEach(symbol => {
-      const watching = watchingCoins[symbol];
-      const elapsed = Date.now() - watching.startTime;
-      if (elapsed >= CONFIG.watchDurationMs) {
-        const coin = allCoins[symbol];
-        if (coin && isQualifiedForRecommend(symbol)) {
-          startTrendProtection(symbol);
-          if (currentPage === 'monitor') {
-            renderMonitor();
-          }
-        }
-      }
-    });
   }, 1000);
 }
 
