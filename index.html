@@ -1,856 +1,2584 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>加密货币智能监控系统</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>币安启动点捕捉系统 v5.0 - OI优先版</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
+    :root {
+      --bg: #0a0e27;
+      --sub-bg: #111827;
+      --border: #1f2937;
+      --text: #e5e7eb;
+      --sub: #9ca3af;
+      --cyan: #22d3ee;
+      --green: #22c55e;
+      --red: #ef4444;
+      --yellow: #eab308;
+      --purple: #a855f7;
+      --orange: #f97316;
+      --splus: #ff1493;
+      --s: #ff6b6b;
+      --a: #ffa500;
+      --b: #4169e1;
+      --c: #808080;
+    }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-        }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
 
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
+    .container {
+      max-width: 1800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
 
-        .header h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
-        }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding: 16px 20px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      flex-wrap: wrap;
+      gap: 16px;
+    }
 
-        .header p {
-            font-size: 14px;
-            opacity: 0.9;
-        }
+    .header-left {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
 
-        .nav-tabs {
-            display: flex;
-            border-bottom: 2px solid #f0f0f0;
-            background: #fafafa;
-        }
+    .logo {
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--cyan);
+    }
 
-        .nav-tabs button {
-            flex: 1;
-            padding: 15px;
-            border: none;
-            background: none;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            color: #666;
-            transition: all 0.3s;
-            border-bottom: 3px solid transparent;
-        }
+    .nav-tabs {
+      display: flex;
+      gap: 12px;
+    }
 
-        .nav-tabs button.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
-            background: white;
-        }
+    .nav-tab {
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--sub);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 500;
+    }
 
-        .nav-tabs button:hover {
-            background: white;
-        }
+    .nav-tab.active {
+      background: var(--cyan);
+      color: var(--bg);
+      border-color: var(--cyan);
+    }
 
-        .content {
-            padding: 30px;
-        }
+    .nav-tab:hover {
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
 
-        .tab-content {
-            display: none;
-        }
+    .header-right {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
 
-        .tab-content.active {
-            display: block;
-        }
+    .update-time {
+      font-size: 12px;
+      color: var(--sub);
+    }
 
-        .control-panel {
-            background: #f9f9f9;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
+    .update-time-val {
+      color: var(--cyan);
+      font-weight: 700;
+      font-size: 14px;
+    }
 
-        .control-panel h3 {
-            margin-bottom: 15px;
-            color: #333;
-            font-size: 16px;
-        }
+    .scan-status {
+      font-size: 12px;
+      color: var(--yellow);
+      font-weight: 700;
+      padding: 4px 12px;
+      background: rgba(234, 179, 8, 0.1);
+      border-radius: 4px;
+      border: 1px solid rgba(234, 179, 8, 0.3);
+    }
 
-        .button-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
+    .btn {
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 500;
+      font-size: 12px;
+    }
 
-        button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s;
-        }
+    .btn:hover:not(.loading) {
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
+    .btn.primary {
+      background: var(--cyan);
+      color: var(--bg);
+      border-color: var(--cyan);
+    }
 
-        .btn-primary:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
+    .btn.primary:hover:not(.loading) {
+      background: #06b6d4;
+    }
 
-        .btn-primary:disabled,
-        .btn-primary.loading {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
+    .btn.loading {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
 
-        .btn-primary.loading::after {
-            content: ' ⏳';
-            animation: spin 1s linear infinite;
-        }
+    .search-box {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      position: relative;
+    }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+    .search-input {
+      flex: 1;
+      padding: 10px 12px;
+      background: var(--sub-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      font-size: 12px;
+    }
 
-        .btn-secondary {
-            background: #e0e0e0;
-            color: #333;
-        }
+    .search-input:focus {
+      outline: none;
+      border-color: var(--cyan);
+    }
 
-        .btn-secondary:hover:not(:disabled) {
-            background: #d0d0d0;
-        }
+    .search-suggestions {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 80px;
+      max-height: 300px;
+      overflow-y: auto;
+      background: var(--sub-bg);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 6px 6px;
+      z-index: 100;
+      display: none;
+    }
 
-        .status-box {
-            background: #f0f7ff;
-            border-left: 4px solid #667eea;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-        }
+    .search-suggestions.active {
+      display: block;
+    }
 
-        .status-box p {
-            color: #333;
-            font-size: 14px;
-            margin: 5px 0;
-        }
+    .suggestion-item {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
 
-        .status-box strong {
-            color: #667eea;
-        }
+    .suggestion-item:hover {
+      background: rgba(34, 211, 238, 0.1);
+    }
 
-        .progress-container {
-            margin: 15px 0;
-        }
+    .suggestion-asset {
+      font-weight: 700;
+      color: var(--cyan);
+      margin-bottom: 4px;
+    }
 
-        .progress-bar {
-            height: 6px;
-            background: #e0e0e0;
-            border-radius: 3px;
-            overflow: hidden;
-            margin-bottom: 8px;
-        }
+    .suggestion-pairs {
+      font-size: 11px;
+      color: var(--sub);
+      line-height: 1.4;
+    }
 
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            width: 0%;
-            transition: width 0.3s;
-        }
+    .pair-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      background: rgba(34, 211, 238, 0.2);
+      border-radius: 3px;
+      margin-right: 4px;
+      margin-bottom: 2px;
+      cursor: pointer;
+    }
 
-        .progress-text {
-            font-size: 12px;
-            color: #999;
-            text-align: right;
-        }
+    .pair-badge:hover {
+      background: rgba(34, 211, 238, 0.4);
+    }
 
-        .coins-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
+    .page {
+      display: none;
+    }
 
-        .coins-table thead {
-            background: #f5f5f5;
-        }
+    .page.active {
+      display: block;
+    }
 
-        .coins-table th {
-            padding: 12px;
-            text-align: left;
-            font-weight: 600;
-            color: #333;
-            border-bottom: 2px solid #e0e0e0;
-        }
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
 
-        .coins-table td {
-            padding: 12px;
-            border-bottom: 1px solid #f0f0f0;
-        }
+    .stat-card {
+      padding: 12px;
+      background: rgba(34, 211, 238, 0.1);
+      border: 1px solid rgba(34, 211, 238, 0.3);
+      border-radius: 8px;
+      text-align: center;
+    }
 
-        .coins-table tr:hover {
-            background: #fafafa;
-        }
+    .stat-label {
+      font-size: 11px;
+      color: var(--sub);
+      margin-bottom: 4px;
+    }
 
-        .coin-symbol {
-            font-weight: 600;
-            color: #667eea;
-        }
+    .stat-value {
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--cyan);
+    }
 
-        .positive {
-            color: #00cc00;
-        }
+    .grade-section {
+      margin-bottom: 24px;
+    }
 
-        .negative {
-            color: #ff0000;
-        }
+    .grade-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      border-left: 4px solid;
+    }
 
-        .neutral {
-            color: #999;
-        }
+    .grade-header.splus { border-left-color: var(--splus); }
+    .grade-header.s { border-left-color: var(--s); }
+    .grade-header.a { border-left-color: var(--a); }
+    .grade-header.b { border-left-color: var(--b); }
+    .grade-header.c { border-left-color: var(--c); }
 
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
+    .grade-label {
+      font-weight: 700;
+      font-size: 14px;
+      min-width: 60px;
+    }
 
-        .empty-state p {
-            font-size: 14px;
-        }
+    .grade-label.splus { color: var(--splus); }
+    .grade-label.s { color: var(--s); }
+    .grade-label.a { color: var(--a); }
+    .grade-label.b { color: var(--b); }
+    .grade-label.c { color: var(--c); }
 
-        input[type="number"],
-        input[type="text"],
-        select {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            margin-right: 10px;
-        }
+    .grade-count {
+      color: var(--sub);
+      font-size: 12px;
+      margin-left: auto;
+    }
 
-        input[type="number"]:focus,
-        input[type="text"]:focus,
-        select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
 
-        .scan-status {
-            padding: 10px;
-            background: #fffbf0;
-            border-left: 4px solid #ff9800;
-            border-radius: 4px;
-            margin: 10px 0;
-            color: #ff6f00;
-            font-size: 14px;
-        }
+    .coin-card {
+      background: var(--sub-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
 
-        .scan-status.success {
-            background: #f0fff0;
-            border-left-color: #4caf50;
-            color: #2e7d32;
-        }
+    .coin-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(34, 211, 238, 0.15);
+    }
 
-        .coin-details {
-            background: #f9f9f9;
-            padding: 15px;
-            border-radius: 6px;
-            margin-top: 10px;
-            font-size: 13px;
-        }
+    .coin-card.splus { border-color: rgba(255, 20, 147, 0.3); }
+    .coin-card.splus:hover { border-color: var(--splus); box-shadow: 0 8px 24px rgba(255, 20, 147, 0.2); }
 
-        .coin-details p {
-            margin: 5px 0;
-        }
+    .coin-card.s { border-color: rgba(255, 107, 107, 0.3); }
+    .coin-card.s:hover { border-color: var(--s); box-shadow: 0 8px 24px rgba(255, 107, 107, 0.2); }
 
-        .footer {
-            background: #f5f5f5;
-            padding: 20px;
-            text-align: center;
-            color: #999;
-            font-size: 12px;
-            border-top: 1px solid #e0e0e0;
-        }
+    .coin-card.a { border-color: rgba(255, 165, 0, 0.3); }
+    .coin-card.a:hover { border-color: var(--a); box-shadow: 0 8px 24px rgba(255, 165, 0, 0.2); }
 
-        .alert {
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-        }
+    .coin-card.b { border-color: rgba(65, 105, 225, 0.3); }
+    .coin-card.b:hover { border-color: var(--b); box-shadow: 0 8px 24px rgba(65, 105, 225, 0.2); }
 
-        .alert-error {
-            background: #ffebee;
-            border-left: 4px solid #f44336;
-            color: #c62828;
-        }
+    .coin-card.c { border-color: rgba(128, 128, 128, 0.3); }
+    .coin-card.c:hover { border-color: var(--c); box-shadow: 0 8px 24px rgba(128, 128, 128, 0.2); }
 
-        .alert-success {
-            background: #e8f5e9;
-            border-left: 4px solid #4caf50;
-            color: #2e7d32;
-        }
-    </style>
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+    }
+
+    .coin-info {
+      flex: 1;
+    }
+
+    .coin-name {
+      font-weight: 700;
+      color: var(--cyan);
+      font-size: 16px;
+    }
+
+    .coin-price {
+      font-size: 12px;
+      color: var(--sub);
+      margin-top: 2px;
+    }
+
+    .price-change {
+      font-size: 14px;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .price-change.up { color: var(--green); }
+    .price-change.down { color: var(--red); }
+
+    .grade-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-right: 6px;
+    }
+
+    .grade-badge.splus { background: rgba(255, 20, 147, 0.2); color: var(--splus); }
+    .grade-badge.s { background: rgba(255, 107, 107, 0.2); color: var(--s); }
+    .grade-badge.a { background: rgba(255, 165, 0, 0.2); color: var(--a); }
+    .grade-badge.b { background: rgba(65, 105, 225, 0.2); color: var(--b); }
+    .grade-badge.c { background: rgba(128, 128, 128, 0.2); color: var(--c); }
+
+    .resonance-tag {
+      font-size: 10px;
+      padding: 4px 8px;
+      background: rgba(168, 85, 247, 0.2);
+      border: 1px solid rgba(168, 85, 247, 0.4);
+      border-radius: 4px;
+      color: #d8b4fe;
+      white-space: nowrap;
+      margin-right: 6px;
+    }
+
+    .tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .tag {
+      font-size: 10px;
+      padding: 4px 8px;
+      background: rgba(34, 211, 238, 0.2);
+      border: 1px solid rgba(34, 211, 238, 0.4);
+      border-radius: 4px;
+      color: var(--cyan);
+      white-space: nowrap;
+    }
+
+    .tag.risk-high { background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); color: #fca5a5; }
+    .tag.risk-mid { background: rgba(245, 158, 11, 0.2); border-color: rgba(245, 158, 11, 0.4); color: #fcd34d; }
+    .tag.risk-low { background: rgba(34, 197, 94, 0.2); border-color: rgba(34, 197, 94, 0.4); color: #86efac; }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .metric {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 6px;
+      border-radius: 4px;
+      text-align: center;
+    }
+
+    .metric-label {
+      font-size: 9px;
+      color: var(--sub);
+      margin-bottom: 2px;
+    }
+
+    .metric-value {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .metric-value.up { color: var(--green); }
+    .metric-value.down { color: var(--red); }
+
+    .derivatives-info {
+      background: rgba(34, 211, 238, 0.1);
+      padding: 8px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      font-size: 11px;
+      line-height: 1.6;
+      border: 1px solid rgba(34, 211, 238, 0.3);
+    }
+
+    .derivatives-label {
+      color: var(--sub);
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .derivatives-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 3px;
+      color: var(--text);
+    }
+
+    .quick-links {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .quick-link {
+      flex: 1;
+      min-width: 60px;
+      padding: 6px;
+      background: rgba(34, 211, 238, 0.15);
+      border: 1px solid rgba(34, 211, 238, 0.3);
+      border-radius: 4px;
+      font-size: 9px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .quick-link:hover {
+      background: rgba(34, 211, 238, 0.3);
+      border-color: var(--cyan);
+    }
+
+    .detail-page {
+      animation: fadeIn 0.3s;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .back-btn {
+      padding: 8px 16px;
+      background: var(--sub-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      cursor: pointer;
+      margin-bottom: 20px;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+
+    .back-btn:hover {
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    .detail-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .detail-metric {
+      background: var(--sub-bg);
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .detail-metric-label {
+      font-size: 11px;
+      color: var(--sub);
+      margin-bottom: 6px;
+    }
+
+    .detail-metric-value {
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .detail-metric-value.up { color: var(--green); }
+    .detail-metric-value.down { color: var(--red); }
+
+    .timeframe-analysis {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .tf-analysis {
+      background: var(--sub-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .tf-title {
+      font-weight: 700;
+      color: var(--cyan);
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+
+    .tf-content {
+      font-size: 11px;
+      line-height: 1.8;
+      color: var(--sub);
+    }
+
+    .tf-content strong {
+      color: var(--text);
+    }
+
+    .quick-channel-section {
+      background: var(--sub-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .quick-channel-title {
+      font-weight: 700;
+      color: var(--cyan);
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
+
+    .channel-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    @media (max-width: 768px) {
+      .channel-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .channel-hint {
+      margin-top: 12px;
+      padding: 8px;
+      background: rgba(34, 211, 238, 0.1);
+      border-radius: 6px;
+      font-size: 11px;
+      color: var(--sub);
+      line-height: 1.5;
+    }
+
+    .error-box {
+      padding: 30px;
+      text-align: center;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 10px;
+      color: #fca5a5;
+      margin: 20px 0;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 16px;
+      background: var(--sub-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 12px;
+      z-index: 1000;
+      animation: slideIn 0.3s;
+      max-width: 300px;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+      }
+      to {
+        transform: translateX(0);
+      }
+    }
+
+    .notification.success {
+      border-color: rgba(34, 197, 94, 0.5);
+      background: rgba(34, 197, 94, 0.1);
+      color: #86efac;
+    }
+
+    .notification.error {
+      border-color: rgba(239, 68, 68, 0.5);
+      background: rgba(239, 68, 68, 0.1);
+      color: #fca5a5;
+    }
+
+    .notification.info {
+      border-color: rgba(34, 211, 238, 0.5);
+      background: rgba(34, 211, 238, 0.1);
+      color: #22d3ee;
+    }
+
+    .derivatives-panel {
+      background: var(--sub-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .panel-title {
+      font-weight: 700;
+      color: var(--cyan);
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
+
+    .crowding-risk-high {
+      background: rgba(239, 68, 68, 0.12);
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .crowding-risk-mid {
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .crowding-risk-low {
+      background: rgba(34, 197, 94, 0.12);
+      border-color: rgba(34, 197, 94, 0.3);
+    }
+
+    @media (max-width: 768px) {
+      .container { padding: 12px; }
+      .header { flex-direction: column; align-items: stretch; }
+      .header-left, .header-right { flex-direction: column; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .detail-metrics { grid-template-columns: repeat(2, 1fr); }
+      .timeframe-analysis { grid-template-columns: 1fr; }
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .scanning-info {
+      padding: 12px;
+      background: rgba(234, 179, 8, 0.1);
+      border: 1px solid rgba(234, 179, 8, 0.3);
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 12px;
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .scanning-progress {
+      height: 4px;
+      background: rgba(34, 211, 238, 0.2);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .scanning-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--green));
+      width: 0%;
+      transition: width 0.3s;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🚀 加密货币智能监控系统</h1>
-            <p>实时监控市值、合约持仓、资金费率、K线走势</p>
-        </div>
-
+  <div class="container">
+    <div class="header">
+      <div class="header-left">
+        <div class="logo">🚀 启动点捕捉 v5.0</div>
         <div class="nav-tabs">
-            <button class="nav-btn active" data-tab="monitor">📊 监控面板</button>
-            <button class="nav-btn" data-tab="analysis">🔍 深度分析</button>
-            <button class="nav-btn" data-tab="settings">⚙️ 设置</button>
+          <button class="nav-tab active" onclick="switchPage('monitor', this)">📊 监控</button>
+          <button class="nav-tab" onclick="switchPage('search', this)">🔍 搜索</button>
         </div>
-
-        <div class="content">
-            <!-- 监控面板 Tab -->
-            <div id="monitor" class="tab-content active">
-                <div class="control-panel">
-                    <h3>快速扫描</h3>
-                    <div class="button-group">
-                        <button id="quick-scan-btn" class="btn-primary">🔄 快速扫描（TOP 50）</button>
-                        <button id="full-scan-btn" class="btn-primary">🔍 完整扫描（TOP 200）</button>
-                        <button id="manual-refresh-btn" class="btn-primary">♻️ 手动刷新</button>
-                    </div>
-                </div>
-
-                <div id="scanning-status" style="display: none;">
-                    <div class="scan-status">
-                        <p id="scan-status">准备扫描...</p>
-                        <div class="progress-container">
-                            <div class="progress-bar">
-                                <div id="scanning-progress-bar" class="progress-fill" style="width: 0%;"></div>
-                            </div>
-                            <div class="progress-text">
-                                <span id="scanning-progress-text">0/0</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="monitor-status" class="status-box"></div>
-                <div id="coins-container" class="empty-state">
-                    <p>👈 点击上方按钮开始扫描</p>
-                </div>
-            </div>
-
-            <!-- 深度分析 Tab -->
-            <div id="analysis" class="tab-content">
-                <div class="control-panel">
-                    <h3>两阶段深度分析</h3>
-                    <div class="button-group">
-                        <button id="two-phase-btn" class="btn-primary">🚀 启动深度分析</button>
-                    </div>
-                </div>
-
-                <div id="analysis-status" class="status-box" style="display: none;"></div>
-                <div id="analysis-results" class="empty-state">
-                    <p>点击上方按钮进行深度分析</p>
-                </div>
-            </div>
-
-            <!-- 设置 Tab -->
-            <div id="settings" class="tab-content">
-                <div class="control-panel">
-                    <h3>参数配置</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
-                        <div>
-                            <label style="display: block; margin-bottom: 5px; color: #333; font-size: 13px;">快速扫描数量</label>
-                            <input type="number" id="quick-scan-limit" min="10" max="500" value="50">
-                        </div>
-                        <div>
-                            <label style="display: block; margin-bottom: 5px; color: #333; font-size: 13px;">完整扫描数量</label>
-                            <input type="number" id="full-scan-limit" min="50" max="500" value="200">
-                        </div>
-                        <div>
-                            <label style="display: block; margin-bottom: 5px; color: #333; font-size: 13px;">市值增长阈值 (%)</label>
-                            <input type="number" id="mcap-threshold" min="0" max="100" value="10" step="0.1">
-                        </div>
-                        <div>
-                            <label style="display: block; margin-bottom: 5px; color: #333; font-size: 13px;">资金费率阈值 (%)</label>
-                            <input type="number" id="funding-threshold" min="0" max="1" value="0.05" step="0.001">
-                        </div>
-                    </div>
-                    <div style="margin-top: 15px;">
-                        <button id="save-config-btn" class="btn-primary">💾 保存配置</button>
-                    </div>
-                </div>
-
-                <div id="config-status" style="display: none; margin-top: 15px;"></div>
-            </div>
-        </div>
-
-        <div class="footer">
-            <p>更新时间: <span id="last-update">未更新</span> | 数据来源: Binance API</p>
-        </div>
+      </div>
+      <div class="header-right">
+        <div class="update-time">最后更新: <span class="update-time-val" id="update-time">--:--</span></div>
+        <div id="scan-status" class="scan-status" style="display: none;"></div>
+        <button class="btn primary" id="manual-refresh-btn" onclick="manualRefresh()"><span id="refresh-icon">🔄</span> 手动扫描</button>
+      </div>
     </div>
 
-    <script>
-        // ===== 全局配置和缓存 =====
-        const BACKEND_URL = 'https://index-html-pi-seven-55.vercel.app';
+    <div id="monitor" class="page active">
+      <div id="scanning-status" class="scanning-info" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span id="scanning-text">正在扫描币种...</span>
+          <span id="scanning-progress-text">0/500</span>
+        </div>
+        <div class="scanning-progress">
+          <div class="scanning-progress-bar" id="scanning-progress-bar"></div>
+        </div>
+      </div>
 
-        const CONFIG = {
-            quickScanLimit: 50,
-            fullScanLimit: 200,
-            mcapThreshold: 10,
-            fundingThreshold: 0.05
-        };
+      <div class="stats-bar">
+        <div class="stat-card">
+          <div class="stat-label">S+ 级</div>
+          <div class="stat-value" id="grade-splus-count">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">S 级</div>
+          <div class="stat-value" id="grade-s-count">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">A 级</div>
+          <div class="stat-value" id="grade-a-count">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">B 级</div>
+          <div class="stat-value" id="grade-b-count">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">C 级</div>
+          <div class="stat-value" id="grade-c-count">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">已分析币种</div>
+          <div class="stat-value" id="analyzed-count">0</div>
+        </div>
+      </div>
 
-        let allCoins = {};
-        let allSymbols = [];
-        let currentPage = 'monitor';
-        let isRefreshing = false;
-        let binanceAssets = {};
-        let klineCache = {};
-        let marketCapCache = {};
-        let oiHistoryCache = {};
+      <div id="monitor-content">
+        <div class="error-box">⏳ 正在加载数据...</div>
+      </div>
+    </div>
 
-        // ===== 初始化 =====
-        document.addEventListener('DOMContentLoaded', () => {
-            initTabs();
-            loadConfig();
-            loadBinanceAssets();
-            addEventListeners();
-            updateLastUpdateTime();
+    <div id="search" class="page">
+      <div class="search-box">
+        <input type="text" id="search-input" class="search-input" placeholder="输入币种代码或名称（如 PEPE、BTC、SOL）" onkeyup="showSearchSuggestions()" />
+        <button class="btn primary" id="search-btn" onclick="searchCoin()">🔍 搜索</button>
+        <div id="search-suggestions" class="search-suggestions"></div>
+      </div>
+      <div id="search-content">
+        <div class="error-box">输入币种名称开始搜索</div>
+      </div>
+    </div>
+
+    <div id="detail" class="page">
+      <div id="detail-content">
+        <div class="error-box">⏳ 加载中...</div>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+    // ============ 全局配置 ============
+    const CONFIG = {
+      refreshMs: 300000,
+      binanceUrl: 'https://api.binance.com/api/v3',
+      futuresUrl: 'https://fapi.binance.com/fapi/v1',
+      futuresDataUrl: 'https://fapi.binance.com/futures/data',
+      coingeckoApi: 'https://api.coingecko.com/api/v3',
+      concurrentLimit: 4,
+      requestTimeout: 12000,
+      maxCoinsToMonitor: 300,
+      quickScanLimit: 50,
+      fullScanLimit: 150
+    };
+
+    // ============ 全局变量 ============
+    let allCoins = {};
+    let allSymbols = [];
+    let currentPage = 'monitor';
+    let isRefreshing = false;
+    let binanceAssets = {};
+    let klineCache = {};
+    let marketCapCache = {};
+    let oiHistoryCache = {};
+
+    // ============ 工具函数 ============
+    function fmt(num, decimals = 2) {
+      if (!isFinite(num)) return '--';
+      const absNum = Math.abs(num);
+      if (absNum >= 1e9) return (num / 1e9).toFixed(decimals) + 'B';
+      if (absNum >= 1e6) return (num / 1e6).toFixed(decimals) + 'M';
+      if (absNum >= 1e3) return (num / 1e3).toFixed(decimals) + 'K';
+      return num.toFixed(decimals);
+    }
+
+    function fmtPct(num, decimals = 2) {
+      if (!isFinite(num)) return '--';
+      const sign = num > 0 ? '+' : '';
+      return sign + num.toFixed(decimals) + '%';
+    }
+
+    function showNotification(msg, type = 'info') {
+      const div = document.createElement('div');
+      div.className = `notification ${type}`;
+      div.textContent = msg;
+      document.body.appendChild(div);
+      setTimeout(() => div.remove(), 3000);
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text);
+      showNotification(`✅ 已复制 ${text}`, 'success');
+    }
+
+    function openLink(url) {
+      window.open(url, '_blank');
+    }
+
+    function switchPage(pageName, btn) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(pageName).classList.add('active');
+      currentPage = pageName;
+
+      if (btn) {
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+      }
+    }
+
+    // ============ 链接生成 ============
+    function getChartLink(symbol) {
+      return `https://www.tradingview.com/chart/?symbol=BINANCE:${symbol}USDT`;
+    }
+
+    function getDexScreenerLink(symbol) {
+      return `https://dexscreener.com/search/?q=${symbol}`;
+    }
+
+    function getLiquidationMapLink(symbol) {
+      return `https://www.liquidationmap.com/?symbol=${symbol}USDT`;
+    }
+
+    function getCoinGlassLink(symbol) {
+      return `https://coinglass.com/search?q=${symbol}`;
+    }
+
+    function getCoinGeckoLink(symbol) {
+      return `https://www.coingecko.com/search?query=${symbol}`;
+    }
+
+    function getWhaleAlertLink(symbol) {
+      return `https://whale-alert.io/?search=${symbol}`;
+    }
+
+    // ============ HTTP 请求函数 ============
+    async function fetchJSON(url, options = {}) {
+      const timeout = options.timeout || CONFIG.requestTimeout;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      try {
+        const response = await fetch(url, {
+          ...options,
+          signal: controller.signal
         });
 
-        // ===== Tab 导航 =====
-        function initTabs() {
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const tabName = btn.getAttribute('data-tab');
-                    switchTab(tabName);
-                });
-            });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
         }
 
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
+        return await response.json();
+      } catch (error) {
+        clearTimeout(timeoutId);
+        throw error;
+      }
+    }
 
-            document.getElementById(tabName).classList.add('active');
-            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-            currentPage = tabName;
+    // ============ 并发控制 ============
+    async function runWithConcurrencyLimit(tasks, limit) {
+      const results = new Array(tasks.length);
+      const executing = [];
+
+      for (let i = 0; i < tasks.length; i++) {
+        const task = tasks[i];
+
+        const promise = Promise.resolve()
+          .then(() => task())
+          .then(result => {
+            results[i] = result;
+          })
+          .catch(err => {
+            console.warn(`Task ${i} failed:`, err.message);
+            results[i] = null;
+          })
+          .finally(() => {
+            const index = executing.indexOf(promise);
+            if (index > -1) executing.splice(index, 1);
+          });
+
+        executing.push(promise);
+
+        if (executing.length >= limit) {
+          await Promise.race(executing);
         }
+      }
 
-        // ===== 事件监听 =====
-        function addEventListeners() {
-            document.getElementById('quick-scan-btn').addEventListener('click', () => quickScan(CONFIG.quickScanLimit));
-            document.getElementById('full-scan-btn').addEventListener('click', () => quickScan(CONFIG.fullScanLimit));
-            document.getElementById('manual-refresh-btn').addEventListener('click', twoPhaseFullRefresh);
-            document.getElementById('two-phase-btn').addEventListener('click', twoPhaseFullRefresh);
-            document.getElementById('save-config-btn').addEventListener('click', saveConfig);
-        }
+      await Promise.all(executing);
+      return results;
+    }
 
-        // ===== 加载币安资产 =====
-        async function loadBinanceAssets() {
-            try {
-                const res = await fetch('https://api.binance.com/api/v3/exchangeInfo');
-                const data = await res.json();
-                allSymbols = data.symbols
-                    .filter(s => s.quoteAsset === 'USDT' && s.status === 'TRADING')
-                    .map(s => s.baseAsset)
-                    .slice(0, 500);
-                console.log(`✅ 加载了 ${allSymbols.length} 个币种`);
-            } catch (e) {
-                console.error('加载币安资产失败:', e);
+    // ============ 加载币种信息 ============
+    async function loadExchangeInfo() {
+      try {
+        const res = await fetchJSON(`${CONFIG.binanceUrl}/exchangeInfo`);
+
+        const spotSymbols = res.symbols || [];
+        spotSymbols.forEach(sym => {
+          const baseAsset = sym.baseAsset;
+          const quoteAsset = sym.quoteAsset;
+          const symbolStr = sym.symbol;
+                      if (!binanceAssets[baseAsset]) {
+            binanceAssets[baseAsset] = { asset: baseAsset, spot: [], futures: [] };
+          }
+
+          if (quoteAsset === 'USDT' && sym.status === 'TRADING') {
+            binanceAssets[baseAsset].spot.push({ symbol: symbolStr });
+            if (!allSymbols.includes(baseAsset)) {
+              allSymbols.push(baseAsset);
             }
-        }
+          }
+        });
 
-        // ===== 快速扫描 =====
-        async function quickScan(limit) {
-            if (isRefreshing) return;
-            isRefreshing = true;
-
-            const statusDiv = document.getElementById('monitor-status');
-            const scanStatusDiv = document.getElementById('scanning-status');
-            const progressBar = document.getElementById('scanning-progress-bar');
-            const progressText = document.getElementById('scanning-progress-text');
-            const coinsContainer = document.getElementById('coins-container');
-
-            try {
-                scanStatusDiv.style.display = 'block';
-                statusDiv.innerHTML = '⏳ 快速扫描进行中...';
-
-                const scanList = allSymbols.slice(0, limit);
-                const results = [];
-
-                for (let i = 0; i < scanList.length; i++) {
-                    const symbol = scanList[i];
-                    const result = await quickScanCoin(symbol);
-
-                    if (result && result.marketCap) {
-                        results.push(result);
-                    }
-
-                    const progress = ((i + 1) / scanList.length) * 100;
-                    progressBar.style.width = progress + '%';
-                    progressText.textContent = `${i + 1}/${scanList.length}`;
-                }
-
-                results.sort((a, b) => (b.marketCap || 0) - (a.marketCap || 0));
-                allCoins = Object.fromEntries(results.map(c => [c.symbol, c]));
-
-                statusDiv.innerHTML = `✅ 快速扫描完成：${results.length} 个有效币种`;
-                displayCoins(results, 'coins-container');
-                scanStatusDiv.style.display = 'none';
-
-            } catch (e) {
-                statusDiv.innerHTML = `❌ 扫描失败: ${e.message}`;
-            } finally {
-                isRefreshing = false;
-                updateLastUpdateTime();
+        try {
+          const futuresRes = await fetchJSON(`${CONFIG.futuresUrl}/exchangeInfo`);
+          const futuresSymbols = futuresRes.symbols || [];
+          futuresSymbols.forEach(sym => {
+            const baseAsset = sym.baseAsset;
+            if (sym.quoteAsset === 'USDT' && sym.status === 'TRADING') {
+              if (!binanceAssets[baseAsset]) {
+                binanceAssets[baseAsset] = { asset: baseAsset, spot: [], futures: [] };
+              }
+              binanceAssets[baseAsset].futures.push({ symbol: sym.symbol });
             }
+          });
+        } catch (e) {
+          console.warn('加载合约信息失败:', e.message);
         }
 
-        // ===== 快速扫描单个币 =====
-        async function quickScanCoin(symbol) {
-            try {
-                const marketCap = await getMarketCapData(symbol);
-                const futuresData = await getFuturesData(symbol);
+        allSymbols = allSymbols.slice(0, CONFIG.maxCoinsToMonitor);
+        console.log(`加载了 ${allSymbols.length} 个币种`);
+      } catch (e) {
+        console.error('加载交所信息失败:', e);
+        throw e;
+      }
+    }
 
-                return {
-                    symbol,
-                    marketCap,
-                    openInterest: futuresData.openInterest || 0,
-                    oiValue: futuresData.oiValue || 0,
-                    fundingRate: futuresData.fundingRate || 0,
-                    globalLongShortRatio: futuresData.globalLongShortRatio || 1
-                };
-            } catch (e) {
-                console.warn(`快速扫描 ${symbol} 失败:`, e.message);
-                return null;
+    // ============ 技术指标计算 ============
+    function calcRSI(prices, period = 14) {
+      if (prices.length < period + 1) return 50;
+      const gains = [];
+      const losses = [];
+
+      for (let i = 1; i < prices.length; i++) {
+        const diff = prices[i] - prices[i - 1];
+        if (diff > 0) {
+          gains.push(diff);
+          losses.push(0);
+        } else {
+          gains.push(0);
+          losses.push(Math.abs(diff));
+        }
+      }
+
+      const avgGain = gains.slice(-period).reduce((a, b) => a + b, 0) / period;
+      const avgLoss = losses.slice(-period).reduce((a, b) => a + b, 0) / period;
+
+      if (avgLoss === 0) return avgGain === 0 ? 50 : 100;
+      const rs = avgGain / avgLoss;
+      const rsi = 100 - (100 / (1 + rs));
+      return Math.max(0, Math.min(100, rsi));
+    }
+
+    function calcMACD(prices, fastPeriod = 12, slowPeriod = 26, signalPeriod = 9) {
+      if (prices.length < slowPeriod) return { macd: 0, signal: 0, histogram: 0 };
+
+      const emaFast = calcEMA(prices, fastPeriod);
+      const emaSlow = calcEMA(prices, slowPeriod);
+      const macd = emaFast - emaSlow;
+
+      const macdLine = [];
+      for (let i = 0; i < prices.length; i++) {
+        const f = calcEMA(prices.slice(0, i + 1), fastPeriod);
+        const s = calcEMA(prices.slice(0, i + 1), slowPeriod);
+        macdLine.push(f - s);
+      }
+
+      const signal = calcEMA(macdLine, signalPeriod);
+      const histogram = macd - signal;
+
+      return { macd, signal, histogram };
+    }
+
+    function calcEMA(prices, period) {
+      if (prices.length === 0) return 0;
+      if (prices.length < period) return prices[prices.length - 1];
+
+      let sma = prices.slice(0, period).reduce((a, b) => a + b, 0) / period;
+      const multiplier = 2 / (period + 1);
+
+      for (let i = period; i < prices.length; i++) {
+        sma = (prices[i] - sma) * multiplier + sma;
+      }
+
+      return sma;
+    }
+
+    function calcCVD(volumes, buyPressure) {
+      if (volumes.length === 0) return { trend: 'neutral', value: 0 };
+      const cvdValue = volumes.reduce((sum, v) => sum + v * (buyPressure ? 1 : -1), 0);
+      return {
+        trend: cvdValue > 0 ? 'up' : cvdValue < 0 ? 'down' : 'neutral',
+        value: cvdValue
+      };
+    }
+
+    // ============ 获取K线数据 ============
+    async function getKlineData(symbol, interval = '1h', limit = 100, market = 'spot') {
+      const cacheKey = `${market}_${symbol}_${interval}`;
+      if (klineCache[cacheKey] && Date.now() - klineCache[cacheKey].time < 60000) {
+        return klineCache[cacheKey].data;
+      }
+
+      try {
+        const baseUrl = market === 'futures' ? CONFIG.futuresUrl : CONFIG.binanceUrl;
+        const res = await fetchJSON(
+          `${baseUrl}/klines?symbol=${symbol}USDT&interval=${interval}&limit=${limit}`
+        );
+
+        const data = res.map(k => ({
+          time: k[0],
+          open: parseFloat(k[1]),
+          high: parseFloat(k[2]),
+          low: parseFloat(k[3]),
+          close: parseFloat(k[4]),
+          volume: parseFloat(k[7])
+        }));
+
+        klineCache[cacheKey] = { data, time: Date.now() };
+        return data;
+      } catch (e) {
+        console.warn(`获取 ${symbol} ${market} K线失败:`, e.message);
+        return [];
+      }
+    }
+
+    // ============ 获取24小时数据 ============
+    async function get24hStats(symbol, market = 'spot') {
+      try {
+        const baseUrl = market === 'futures' ? CONFIG.futuresUrl : CONFIG.binanceUrl;
+        const res = await fetchJSON(`${baseUrl}/ticker/24hr?symbol=${symbol}USDT`);
+
+        return {
+          price: parseFloat(res.lastPrice),
+          change24h: parseFloat(res.priceChangePercent),
+          volume24h: parseFloat(res.quoteVolume || res.quoteAssetVolume || 0),
+          highPrice: parseFloat(res.highPrice),
+          lowPrice: parseFloat(res.lowPrice)
+        };
+      } catch (e) {
+        console.warn(`获取 ${symbol} ${market} 24h数据失败:`, e.message);
+        return null;
+      }
+    }
+
+    // ============ 获取市值数据 ============
+    async function getMarketCapData(symbol) {
+      try {
+        if (marketCapCache[symbol] && Date.now() - marketCapCache[symbol].time < 300000) {
+          return marketCapCache[symbol].data;
+        }
+
+        const res = await fetchJSON(
+          `${CONFIG.coingeckoApi}/simple/search?query=${symbol}&order=market_cap_desc&per_page=1&page=1`,
+          { timeout: 8000 }
+        );
+
+        if (!res.coins || res.coins.length === 0) {
+          return null;
+        }
+
+        const coinId = res.coins[0].id;
+        const dataRes = await fetchJSON(
+          `${CONFIG.coingeckoApi}/simple/price?ids=${coinId}&vs_currencies=usd&include_market_cap=true`,
+          { timeout: 8000 }
+        );
+
+        const marketCap = dataRes[coinId]?.usd_market_cap;
+        if (marketCap) {
+          marketCapCache[symbol] = { data: marketCap, time: Date.now() };
+          return marketCap;
+        }
+
+        return null;
+      } catch (e) {
+        console.warn(`获取 ${symbol} 市值失败:`, e.message);
+        return null;
+      }
+    }
+
+    // ============ 获取合约数据（修复版） ============
+    async function getFuturesData(symbol) {
+      try {
+        const [oiRes, fundRes] = await Promise.all([
+          fetchJSON(`${CONFIG.futuresUrl}/openInterest?symbol=${symbol}USDT`).catch(() => ({})),
+          fetchJSON(`${CONFIG.futuresUrl}/fundingRate?symbol=${symbol}USDT&limit=5`).catch(() => [])
+        ]);
+
+        const currentOI = parseFloat(oiRes.openInterest || 0);
+        const currentPrice = parseFloat(oiRes.sumOpenInterestValue || 0);
+
+        let fundingRate = 0;
+        if (Array.isArray(fundRes) && fundRes.length > 0) {
+          fundingRate = fundRes.reduce((sum, f) => sum + parseFloat(f.fundingRate || 0), 0) / fundRes.length;
+        }
+
+        let globalLongShortRatio = 1;
+        if (fundingRate > 0.0005) {
+          globalLongShortRatio = 1.3;
+        } else if (fundingRate < -0.0005) {
+          globalLongShortRatio = 0.8;
+        } else {
+          globalLongShortRatio = 1;
+        }
+
+        let oi6hPct = 0;
+        let oi24hPct = 0;
+
+        const now = Date.now();
+        if (!oiHistoryCache[symbol]) {
+          oiHistoryCache[symbol] = [];
+        }
+
+        oiHistoryCache[symbol].push({ time: now, oi: currentOI });
+
+        oiHistoryCache[symbol] = oiHistoryCache[symbol].filter(
+          item => now - item.time <= 86400000
+        );
+
+        if (oiHistoryCache[symbol].length >= 2) {
+          let oi6hRef = null;
+          let oi24hRef = null;
+
+          for (let i = 0; i < oiHistoryCache[symbol].length; i++) {
+            const item = oiHistoryCache[symbol][i];
+            const diffHours = (now - item.time) / 3600000;
+
+            if (!oi6hRef && diffHours >= 6) {
+              oi6hRef = item;
             }
+            if (!oi24hRef && diffHours >= 24) {
+              oi24hRef = item;
+            }
+          }
+
+          if (oi6hRef && oi6hRef.oi > 0) {
+            oi6hPct = ((currentOI - oi6hRef.oi) / oi6hRef.oi) * 100;
+          }
+
+          if (oi24hRef && oi24hRef.oi > 0) {
+            oi24hPct = ((currentOI - oi24hRef.oi) / oi24hRef.oi) * 100;
+          }
         }
 
-        // ===== 获取市值数据 =====
-        async function getMarketCapData(symbol) {
-            const cacheKey = `mcap_${symbol}`;
+        return {
+          openInterest: currentOI,
+          oiValue: currentPrice,
+          fundingRate: fundingRate * 100,
+          globalLongShortRatio,
+          oi6hPct,
+          oi24hPct
+        };
+      } catch (e) {
+        console.warn(`获取 ${symbol} 合约数据失败:`, e.message);
+        return {
+          openInterest: 0,
+          oiValue: 0,
+          fundingRate: 0,
+          globalLongShortRatio: 1,
+          oi6hPct: 0,
+          oi24hPct: 0
+        };
+      }
+    }
 
-            if (marketCapCache[cacheKey] && Date.now() - marketCapCache[cacheKey].time < 3600000) {
-                return marketCapCache[cacheKey].data;
+    // ============ 计算OI与市值比例 ============
+    function calculateOiMcapRatio(oiValue, marketCap) {
+      if (!marketCap || marketCap <= 0) return 0;
+      return (oiValue / marketCap) * 100;
+    }
+
+    // ============ 计算拥挤度风险 ============
+    function calculateCrowdingRisk(longShortRatio, oiMcapRatio, rsi1h, mainDirection, oi6hPct, oi24hPct) {
+      const reasons = [];
+      let score = 0;
+
+      // 多空比极端检查
+      if (longShortRatio > 2.5 && mainDirection === 'up') {
+        score += 35;
+        reasons.push('多头极度拥挤 (多空比 > 2.5)');
+      } else if (longShortRatio > 2.0 && mainDirection === 'up') {
+        score += 25;
+        reasons.push('多头严重拥挤 (多空比 > 2.0)');
+      } else if (longShortRatio > 1.5 && mainDirection === 'up') {
+        score += 15;
+        reasons.push('多头中度拥挤 (多空比 > 1.5)');
+      }
+
+      if (longShortRatio < 0.4 && mainDirection === 'down') {
+        score += 35;
+        reasons.push('空头极度拥挤 (多空比 < 0.4)');
+      } else if (longShortRatio < 0.5 && mainDirection === 'down') {
+        score += 25;
+        reasons.push('空头严重拥挤 (多空比 < 0.5)');
+      } else if (longShortRatio < 0.67 && mainDirection === 'down') {
+        score += 15;
+        reasons.push('空头中度拥挤 (多空比 < 0.67)');
+      }
+
+      // OI/MCAP比例检查
+      if (oiMcapRatio > 50 && mainDirection === 'up') {
+        score += 20;
+        reasons.push('OI占比过高 (> 50%)，风险大');
+      } else if (oiMcapRatio > 30 && mainDirection === 'up') {
+        score += 12;
+        reasons.push('OI占比较高 (> 30%)');
+      } else if (oiMcapRatio > 50 && mainDirection === 'down') {
+        score += 20;
+        reasons.push('OI占比过高 (> 50%)，空头风险大');
+      }
+
+      // RSI极端检查
+      if (rsi1h > 80) {
+        score += 15;
+        reasons.push('RSI 极度超买 (> 80)');
+      } else if (rsi1h > 70) {
+        score += 8;
+        reasons.push('RSI 超买 (> 70)');
+      }
+
+      if (rsi1h < 20) {
+        score += 15;
+        reasons.push('RSI 极度超卖 (< 20)');
+      } else if (rsi1h < 30) {
+        score += 8;
+        reasons.push('RSI 超卖 (< 30)');
+      }
+
+      // OI增长过快检查
+      if (mainDirection === 'up' && oi6hPct > 50) {
+        score += 18;
+        reasons.push('OI 6h增长过快 (> 50%)，可能空头反制');
+      } else if (mainDirection === 'up' && oi24hPct > 100) {
+        score += 15;
+        reasons.push('OI 24h增长过快 (> 100%)');
+      }
+
+      let level = 'low';
+      let side = 'none';
+
+      if (score >= 60) {
+        level = 'high';
+        side = mainDirection === 'up' ? 'long_crowded' : 'short_crowded';
+      } else if (score >= 35) {
+        level = 'mid';
+        side = mainDirection === 'up' ? 'long_crowded' : 'short_crowded';
+      } else {
+        level = 'low';
+        side = 'none';
+      }
+
+      return { level, side, score, reasons };
+    }
+
+    // ============ 检查共振条件 ============
+    function checkResonance(coin) {
+      const resonance = {
+        priceResonance: false,
+        cvdResonance: false,
+        oiResonance: false,
+        count: 0,
+        details: []
+      };
+
+      // 价格共振：5m/1h/4h 都是同方向
+      const priceUp5m = coin.change5m > 0.3;
+      const priceUp1h = coin.change1h > 0.5;
+      const priceUp4h = coin.change4h > 1;
+
+      if ((priceUp5m && priceUp1h && priceUp4h) || (!priceUp5m && !priceUp1h && !priceUp4h)) {
+        resonance.priceResonance = true;
+        resonance.count++;
+        resonance.details.push('价格多周期共振');
+      }
+
+      // CVD共振：5m/1h 都是上升趋势
+      const cvdUp = coin.cvd5m.trend === 'up' && coin.cvd1h.trend === 'up';
+      if (cvdUp) {
+        resonance.cvdResonance = true;
+        resonance.count++;
+        resonance.details.push('CVD共振向上');
+      }
+
+      // OI共振：OI增长 + 资金费率 + 多空不极端
+      const oiGrowth = coin.oi6hPct > 5 || coin.oi24hPct > 10;
+      const fundingOk = coin.fundingRate > 0 && coin.fundingRate < 0.3;
+      const lsRatioOk = coin.globalLongShortRatio > 0.8 && coin.globalLongShortRatio < 2;
+
+      if (oiGrowth && fundingOk && lsRatioOk) {
+        resonance.oiResonance = true;
+        resonance.count++;
+        resonance.details.push('OI共振向上');
+      }
+
+      return resonance;
+    }
+
+    // ============ 核心评分函数（权重：OI > CVD > MACD > 价格） ============
+    function calculateGrade(coin) {
+      let score = 0;
+
+      // 权重1: OI（最高权重）
+      let oiScore = 0;
+
+      // OI绝对值
+      if (coin.openInterest > 0) {
+        oiScore += 10;
+        if (coin.oiMcapRatio > 25) oiScore += 8;
+        else if (coin.oiMcapRatio > 15) oiScore += 5;
+        else if (coin.oiMcapRatio > 5) oiScore += 2;
+      }
+
+      // OI增长趋势
+      if (coin.oi6hPct > 20) oiScore += 8;
+      else if (coin.oi6hPct > 10) oiScore += 5;
+      else if (coin.oi6hPct > 0) oiScore += 2;
+
+      if (coin.oi24hPct > 30) oiScore += 6;
+      else if (coin.oi24hPct > 15) oiScore += 3;
+
+      // 资金费率（正向为好）
+      if (coin.fundingRate > 0.01 && coin.fundingRate < 0.2) oiScore += 4;
+      else if (coin.fundingRate > 0 && coin.fundingRate <= 0.01) oiScore += 2;
+
+      // 多空比（接近1为好）
+      const lsDeviation = Math.abs(coin.globalLongShortRatio - 1);
+      if (lsDeviation < 0.3) oiScore += 3;
+      else if (lsDeviation < 0.6) oiScore += 1;
+
+      score += oiScore * 1.5; // OI权重倍数
+
+      // 权重2: CVD（中等权重）
+      let cvdScore = 0;
+
+      if (coin.cvd5m.trend === 'up') cvdScore += 4;
+      if (coin.cvd1h.trend === 'up') cvdScore += 5;
+      if (coin.cvd5m.trend === 'up' && coin.cvd1h.trend === 'up') cvdScore += 3; // 共振加分
+
+      score += cvdScore * 1.2; // CVD权重倍数
+
+      // 权重3: MACD（低权重，辅助）
+      let macdScore = 0;
+
+      if (coin.macd1h.histogram > 0) macdScore += 2;
+      if (coin.macd4h.histogram > 0) macdScore += 1;
+
+      score += macdScore * 0.8; // MACD权重倍数
+
+      // 权重4: RSI（辅助，极端情况扣分）
+      let rsiScore = 0;
+
+      if (coin.rsi5m < 30) rsiScore += 3;
+      else if (coin.rsi5m > 70) rsiScore -= 2;
+
+      if (coin.rsi1h < 30) rsiScore += 4;
+      else if (coin.rsi1h > 70) rsiScore -= 3;
+
+      score += rsiScore * 0.7; // RSI权重倍数
+
+      // 权重5: 价格（最低权重）
+      let priceScore = 0;
+
+      if (coin.change5m > 0) priceScore += 1;
+      if (coin.change1h > 1) priceScore += 2;
+      else if (coin.change1h > 0) priceScore += 1;
+
+      // 24h权重降低（根据要求）
+      if (coin.change24h > 5) priceScore += 0.5;
+
+      score += priceScore * 0.5; // 价格权重倍数
+
+      // ============ 评级判定 ============
+      let grade = 'c';
+      let gradeScore = 1;
+
+      // S+级：强OI+CVD共振 + 低拥挤 + 6h/24h OI增长
+      if (
+        coin.resonance.count >= 3 &&
+        coin.resonance.oiResonance &&
+        coin.resonance.cvdResonance &&
+        coin.crowdingRisk.level === 'low' &&
+        coin.oi6hPct > 15 &&
+        coin.oi24hPct > 20 &&
+        score > 60
+      ) {
+        grade = 'splus';
+        gradeScore = 5;
+      }
+      // S级：OI+CVD共振 + 可接受拥挤 + OI增长
+      else if (
+        coin.resonance.count >= 3 &&
+        coin.resonance.oiResonance &&
+        coin.resonance.cvdResonance &&
+        coin.crowdingRisk.level !== 'high' &&
+        coin.oi6hPct > 5 &&
+        score > 45
+      ) {
+        grade = 's';
+        gradeScore = 4;
+      }
+      // A级：至少OI共振或CVD共振 + 不过度拥挤
+      else if (
+        (coin.resonance.oiResonance || coin.resonance.cvdResonance) &&
+        coin.crowdingRisk.level !== 'high' &&
+        score > 30
+      ) {
+        grade = 'a';
+        gradeScore = 3;
+      }
+      // B级：有一定信号但指标不够完美
+      else if (score > 15 && coin.crowdingRisk.level !== 'high') {
+        grade = 'b';
+        gradeScore = 2;
+      }
+      // C级：其他
+      else {
+        grade = 'c';
+        gradeScore = 1;
+      }
+
+      return { grade, gradeScore, score };
+    }
+
+    // ============ 快速扫描 ============
+    async function quickScanCoin(symbol) {
+      try {
+        const [kline1h, stats24h, futuresData] = await Promise.all([
+          getKlineData(symbol, '1h', CONFIG.quickScanLimit),
+          get24hStats(symbol),
+          getFuturesData(symbol)
+        ]);
+
+        if (!stats24h || !kline1h || kline1h.length === 0) {
+          return null;
+        }
+
+        const prices1h = kline1h.map(k => k.close);
+        const rsi1h = calcRSI(prices1h, 14);
+        const macd1h = calcMACD(prices1h);
+        const change1h = ((prices1h[prices1h.length - 1] - prices1h[0]) / prices1h[0]) * 100;
+
+        let quickScore = 0;
+        if (rsi1h < 35) quickScore += 3;
+        if (rsi1h > 65) quickScore -= 3;
+        if (macd1h.histogram > 0) quickScore += 1;
+        if (futuresData.openInterest > 0) quickScore += 2;
+        if (futuresData.oi6hPct > 5) quickScore += 2;
+        if (change1h > 0.5) quickScore += 1;
+
+        if (quickScore < -1) {
+          return null;
+        }
+
+        return {
+          symbol,
+          quickScore,
+          rsi1h,
+          stats24h,
+          futuresData,
+          isQuickScanned: true
+        };
+      } catch (e) {
+        console.warn(`快速扫描 ${symbol} 失败:`, e.message);
+        return null;
+      }
+    }
+
+    // ============ 搜索专用分析 ============
+    async function analyzeCoinForSearch(symbol) {
+      try {
+        const assetInfo = binanceAssets[symbol];
+        if (!assetInfo) return null;
+
+        const marketsToTry = [];
+        if (assetInfo.spot && assetInfo.spot.length > 0) marketsToTry.push('spot');
+        if (assetInfo.futures && assetInfo.futures.length > 0) marketsToTry.push('futures');
+
+        for (const market of marketsToTry) {
+          try {
+            const [kline1h, stats24h] = await Promise.all([
+              getKlineData(symbol, '1h', 100, market),
+              get24hStats(symbol, market)
+            ]);
+
+            if (!stats24h || !kline1h || kline1h.length === 0) {
+              continue;
             }
 
-            try {
-                const res = await fetch(`${BACKEND_URL}/api/market-cap?symbol=${symbol}`).then(r => r.json());
-                const marketCap = res && typeof res.marketCap !== 'undefined' ? res.marketCap : null;
+            const [kline5m, kline4h, kline1d, futuresData, marketCap] = await Promise.all([
+              getKlineData(symbol, '5m', 50, market).catch(() => []),
+              getKlineData(symbol, '4h', 100, market).catch(() => []),
+              getKlineData(symbol, '1d', 100, market).catch(() => []),
+              getFuturesData(symbol).catch(() => ({
+                openInterest: 0,
+                oiValue: 0,
+                fundingRate: 0,
+                globalLongShortRatio: 1,
+                oi6hPct: 0,
+                oi24hPct: 0
+              })),
+              getMarketCapData(symbol).catch(() => null)
+            ]);
 
-                marketCapCache[cacheKey] = {
-                    data: marketCap,
-                    time: Date.now()
-                };
+            const safePrices = arr => arr && arr.length ? arr.map(k => k.close) : [stats24h.price];
 
-                return marketCap;
-            } catch (e) {
-                console.warn(`获取 ${symbol} 市值失败:`, e.message);
-                return null;
-            }
-        }
+            const prices5m = safePrices(kline5m);
+            const prices1h = safePrices(kline1h);
+            const prices4h = safePrices(kline4h);
+            const prices1d = safePrices(kline1d);
 
-        // ===== 获取合约数据 =====
-        async function getFuturesData(symbol) {
-            try {
-                const res = await fetch(`${BACKEND_URL}/api/futures-data?symbol=${symbol}`).then(r => r.json());
+            const rsi5m = calcRSI(prices5m, 14);
+            const rsi1h = calcRSI(prices1h, 14);
+            const rsi4h = calcRSI(prices4h, 14);
+            const rsi1d = calcRSI(prices1d, 14);
 
-                if (!res || typeof res.openInterest === 'undefined') {
-                    return {
-                        openInterest: 0,
-                        oiValue: 0,
-                        fundingRate: 0,
-                        globalLongShortRatio: 1,
-                        oi6hPct: 0,
-                        oi24hPct: 0
-                    };
-                }
+            const macd1h = calcMACD(prices1h);
+            const macd4h = calcMACD(prices4h);
 
-                const currentOI = parseFloat(res.openInterest || 0);
-                const currentPrice = parseFloat(res.oiValue || 0);
-                const fundingRate = parseFloat(res.fundingRate || 0);
+            const volumes5m = kline5m.length ? kline5m.map(k => k.volume) : [0];
+            const volumes1h = kline1h.length ? kline1h.map(k => k.volume) : [0];
 
-                let oi6hPct = 0;
-                let oi24hPct = 0;
+            const cvd5m = calcCVD(volumes5m, true);
+            const cvd1h = calcCVD(volumes1h, true);
 
-                const now = Date.now();
-                if (!oiHistoryCache[symbol]) {
-                    oiHistoryCache[symbol] = [];
-                }
+            const calcChange = prices => prices.length > 1
+              ? ((prices[prices.length - 1] - prices[0]) / prices[0]) * 100
+              : 0;
 
-                oiHistoryCache[symbol].push({ time: now, oi: currentOI });
-                oiHistoryCache[symbol] = oiHistoryCache[symbol].filter(item => now - item.time <= 86400000);
+            const change5m = calcChange(prices5m);
+            const change1h = calcChange(prices1h);
+            const change4h = calcChange(prices4h);
+            const change1d = calcChange(prices1d);
 
-                if (oiHistoryCache[symbol].length >= 2) {
-                    let oi6hRef = null;
-                    let oi24hRef = null;
+            const mainDirection = change1h > 0 ? 'up' : 'down';
 
-                    for (let i = 0; i < oiHistoryCache[symbol].length; i++) {
-                        const item = oiHistoryCache[symbol][i];
-                        const diffHours = (now - item.time) / 3600000;
+            const oiMcapRatio = calculateOiMcapRatio(futuresData.oiValue, marketCap);
 
-                        if (!oi6hRef && diffHours >= 6) oi6hRef = item;
-                        if (!oi24hRef && diffHours >= 24) oi24hRef = item;
-                    }
+            const phase5m = rsi5m > 70 ? 'overbought' : rsi5m < 30 ? 'oversold' : 'normal';
+            const phase1h = rsi1h > 70 ? 'overbought' : rsi1h < 30 ? 'oversold' : 'normal';
+            const phase4h = rsi4h > 70 ? 'overbought' : rsi4h < 30 ? 'oversold' : 'normal';
+            const phase1d = rsi1d > 70 ? 'overbought' : rsi1d < 30 ? 'oversold' : 'normal';
 
-                    if (oi6hRef && oi6hRef.oi > 0) {
-                        oi6hPct = ((currentOI - oi6hRef.oi) / oi6hRef.oi) * 100;
-                    }
+            let buySignalCount = 0;
+            let sellSignalCount = 0;
 
-                    if (oi24hRef && oi24hRef.oi > 0) {
-                        oi24hPct = ((currentOI - oi24hRef.oi) / oi24hRef.oi) * 100;
-                    }
-                }
+            // 短周期权重高
+            if (rsi5m < 30) buySignalCount += 4;
+            if (rsi5m > 70) sellSignalCount += 4;
+            if (rsi1h < 30) buySignalCount += 5;
+            if (rsi1h > 70) sellSignalCount += 5;
+            if (rsi4h < 30) buySignalCount += 2;
+            if (rsi4h > 70) sellSignalCount += 2;
 
-                return {
-                    openInterest: currentOI,
-                    oiValue: currentPrice,
-                    fundingRate,
-                    globalLongShortRatio: res.globalLongShortRatio || 1,
-                    oi6hPct,
-                    oi24hPct
-                };
-            } catch (e) {
-                console.warn(`获取 ${symbol} 合约数据失败:`, e.message);
-                return {
-                    openInterest: 0,
-                    oiValue: 0,
-                    fundingRate: 0,
-                    globalLongShortRatio: 1,
-                    oi6hPct: 0,
-                    oi24hPct: 0
-                };
-            }
-        }
+            // MACD权重降低
+            if (macd1h.histogram > 0) buySignalCount += 1;
+            if (macd1h.histogram < 0) sellSignalCount += 1;
+            if (macd4h.histogram > 0) buySignalCount += 1;
+            if (macd4h.histogram < 0) sellSignalCount += 1;
 
-        // ===== 两阶段完整刷新 =====
-        async function twoPhaseFullRefresh() {
-            if (isRefreshing) return;
-            isRefreshing = true;
+            const totalSignal = buySignalCount - sellSignalCount;
 
-            const statusDiv = currentPage === 'monitor' 
-                ? document.getElementById('monitor-status') 
-                : document.getElementById('analysis-status');
-            const resultsDiv = currentPage === 'monitor'
-                ? document.getElementById('coins-container')
-                : document.getElementById('analysis-results');
-            const scanStatusDiv = document.getElementById('scanning-status');
-            const progressBar = document.getElementById('scanning-progress-bar');
-            const progressText = document.getElementById('scanning-progress-text');
-            const scanStatus = document.getElementById('scan-status');
-            const refreshBtn = document.getElementById('manual-refresh-btn');
-
-            try {
-                if (currentPage === 'monitor') {
-                    scanStatusDiv.style.display = 'block';
-                    if (refreshBtn) {
-                        refreshBtn.disabled = true;
-                        refreshBtn.classList.add('loading');
-                    }
-                } else {
-                    document.getElementById('analysis-status').style.display = 'block';
-                }
-
-                const startTime = Date.now();
-                const quickScanList = allSymbols.slice(0, CONFIG.quickScanLimit);
-                const quickResults = [];
-
-                // 第一阶段：快速扫描
-                scanStatus.textContent = '📊 第一阶段：快速扫描...';
-
-                for (let i = 0; i < quickScanList.length; i++) {
-                    const symbol = quickScanList[i];
-                    const result = await quickScanCoin(symbol);
-
-                    if (result && result.marketCap) {
-                        quickResults.push(result);
-                    }
-
-                    const progress = ((i + 1) / quickScanList.length) * 50;
-                    progressBar.style.width = progress + '%';
-                    progressText.textContent = `${i + 1}/${quickScanList.length} (快速扫描)`;
-                }
-
-                // 第二阶段：深度分析
-                scanStatus.textContent = '🔍 第二阶段：深度分析...';
-                const analysisResults = [];
-
-                for (let i = 0; i < quickResults.length; i++) {
-                    const coin = quickResults[i];
-                    const analyzed = await analyzeCoin(coin.symbol, coin);
-
-                    if (analyzed) {
-                        analysisResults.push(analyzed);
-                    }
-
-                    const progress = 50 + ((i + 1) / quickResults.length) * 50;
-                    progressBar.style.width = progress + '%';
-                    progressText.textContent = `${i + 1}/${quickResults.length} (深度分析)`;
-                }
-
-                analysisResults.sort((a, b) => (b.score || 0) - (a.score || 0));
-                allCoins = Object.fromEntries(analysisResults.map(c => [c.symbol, c]));
-
-                const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-                statusDiv.innerHTML = `✅ 两阶段分析完成！找到 ${analysisResults.length} 个目标币种（耗时 ${duration}s）`;
-                displayCoins(analysisResults, resultsDiv.id);
-
-                if (currentPage === 'monitor') {
-                    scanStatusDiv.style.display = 'none';
-                }
-
-            } catch (e) {
-                statusDiv.innerHTML = `❌ 分析失败: ${e.message}`;
-            } finally {
-                isRefreshing = false;
-                if (refreshBtn) {
-                    refreshBtn.disabled = false;
-                    refreshBtn.classList.remove('loading');
-                }
-                updateLastUpdateTime();
-            }
-        }
-
-        // ===== 深度分析单个币 =====
-        async function analyzeCoin(symbol, quickScanData = null) {
-            try {
-                const marketCap = quickScanData?.marketCap || await getMarketCapData(symbol);
-                const futuresData = await getFuturesData(symbol);
-
-                // 简单评分逻辑
-                let score = 0;
-
-                if (marketCap && marketCap > 1e9) score += 20;
-                if (futuresData.fundingRate > CONFIG.fundingThreshold) score += 30;
-                if (futuresData.oi24hPct > 5) score += 25;
-                if (futuresData.globalLongShortRatio > 1.2) score += 25;
-
-                return {
-                    symbol,
-                    marketCap,
-                    openInterest: futuresData.openInterest,
-                    oiValue: futuresData.oiValue,
-                    fundingRate: futuresData.fundingRate,
-                    globalLongShortRatio: futuresData.globalLongShortRatio,
-                    oi6hPct: futuresData.oi6hPct,
-                    oi24hPct: futuresData.oi24hPct,
-                    score
-                };
-            } catch (e) {
-                console.warn(`分析 ${symbol} 失败:`, e.message);
-                return null;
-            }
-        }
-
-        // ===== 显示币种表格 =====
-        function displayCoins(coins, containerId) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-
-            if (!coins || coins.length === 0) {
-                container.innerHTML = '<div class="empty-state"><p>暂无数据</p></div>';
-                return;
+            let grade = 'c';
+            let gradeScore = 1;
+            if (totalSignal >= 12) {
+              grade = 'splus'; gradeScore = 5;
+            } else if (totalSignal >= 8) {
+              grade = 's'; gradeScore = 4;
+            } else if (totalSignal >= 4) {
+              grade = 'a'; gradeScore = 3;
+            } else if (totalSignal >= 0) {
+              grade = 'b'; gradeScore = 2;
             }
 
-            let html = '<table class="coins-table"><thead><tr><th>币种</th><th>市值</th><th>24h涨跌</th><th>合约OI</th><th>OI 24h变化</th><th>资金费率</th><th>评分</th></tr></thead><tbody>';
+            const crowdingRisk = calculateCrowdingRisk(
+              futuresData.globalLongShortRatio,
+              oiMcapRatio,
+              rsi1h,
+              mainDirection,
+              futuresData.oi6hPct,
+              futuresData.oi24hPct
+            );
 
-            coins.forEach(coin => {
-                const marketCapStr = coin.marketCap ? `$${(coin.marketCap / 1e9).toFixed(2)}B` : 'N/A';
-                const change24hStr = coin.change24h ? `${coin.change24h > 0 ? '+' : ''}${coin.change24h.toFixed(2)}%` : 'N/A';
-                const oiStr = coin.openInterest ? coin.openInterest.toFixed(0) : 'N/A';
-                const oi24hStr = coin.oi24hPct ? `${coin.oi24hPct > 0 ? '+' : ''}${coin.oi24hPct.toFixed(2)}%` : 'N/A';
-                const fundingRateStr = coin.fundingRate ? `${(coin.fundingRate * 100).toFixed(4)}%` : 'N/A';
-                const scoreStr = coin.score ? coin.score.toFixed(0) : '0';
+            const coin = {
+              symbol,
+              price: stats24h.price,
+              change24h: stats24h.change24h,
+              marketCap,
+              rsi5m, rsi1h, rsi4h, rsi1d,
+              macd1h, macd4h,
+              cvd5m, cvd1h,
+              change5m, change1h, change4h, change1d,
+              mainDirection,
+              phase5m, phase1h, phase4h, phase1d,
+              buySignalCount,
+              sellSignalCount,
+              totalSignal,
+              grade,
+              gradeScore,
+              openInterest: futuresData.openInterest,
+              oiValue: futuresData.oiValue,
+              fundingRate: futuresData.fundingRate,
+              globalLongShortRatio: futuresData.globalLongShortRatio,
+              oi6hPct: futuresData.oi6hPct,
+              oi24hPct: futuresData.oi24hPct,
+              oiMcapRatio,
+              crowdingRisk,
+              resonance: { count: 0, details: [] },
+              timestamp: Date.now()
+            };
 
-                const changeClass = coin.change24h > 0 ? 'positive' : coin.change24h < 0 ? 'negative' : 'neutral';
-                const oi24hClass = coin.oi24hPct > 0 ? 'positive' : coin.oi24hPct < 0 ? 'negative' : 'neutral';
-
-                html += `<tr>
-                    <td><span class="coin-symbol">${coin.symbol}</span></td>
-                    <td>${marketCapStr}</td>
-                    <td class="${changeClass}">${change24hStr}</td>
-                    <td>${oiStr}</td>
-                    <td class="${oi24hClass}">${oi24hStr}</td>
-                    <td>${fundingRateStr}</td>
-                    <td><strong>${scoreStr}</strong></td>
-                </tr>`;
-            });
-
-            html += '</tbody></table>';
-            container.innerHTML = html;
+            return coin;
+          } catch (err) {
+            console.warn(`搜索分析 ${symbol} 在 ${market} 失败:`, err.message);
+          }
         }
 
-        // ===== 配置管理 =====
-        function loadConfig() {
-            const saved = localStorage.getItem('cryptoMonitorConfig');
-            if (saved) {
-                const config = JSON.parse(saved);
-                Object.assign(CONFIG, config);
+        return null;
+      } catch (e) {
+        console.error(`搜索分析 ${symbol} 失败:`, e.message);
+        return null;
+      }
+    }
+
+    // ============ 完整分析函数 ============
+    async function analyzeCoin(symbol, quickScanData = null) {
+      try {
+        let kline5m, kline1h, kline4h, kline1d, stats24h, futuresData, marketCap;
+
+        if (quickScanData) {
+          stats24h = quickScanData.stats24h;
+          futuresData = quickScanData.futuresData;
+          kline1h = await getKlineData(symbol, '1h', CONFIG.fullScanLimit);
+          [kline5m, kline4h, kline1d, marketCap] = await Promise.all([
+            getKlineData(symbol, '5m', 50),
+            getKlineData(symbol, '4h', CONFIG.fullScanLimit),
+            getKlineData(symbol, '1d', 100),
+            getMarketCapData(symbol)
+          ]);
+        } else {
+          [kline5m, kline1h, kline4h, kline1d, stats24h, futuresData, marketCap] = await Promise.all([
+            getKlineData(symbol, '5m', 50),
+            getKlineData(symbol, '1h', CONFIG.fullScanLimit),
+            getKlineData(symbol, '4h', CONFIG.fullScanLimit),
+            getKlineData(symbol, '1d', 100),
+            get24hStats(symbol),
+            getFuturesData(symbol),
+            getMarketCapData(symbol)
+          ]);
+        }
+
+        if (!stats24h || !kline1h || kline1h.length === 0) {
+          return null;
+        }
+
+                const prices5m = kline5m.map(k => k.close);
+        const prices1h = kline1h.map(k => k.close);
+        const prices4h = kline4h.map(k => k.close);
+        const prices1d = kline1d.map(k => k.close);
+
+        const rsi5m = calcRSI(prices5m, 14);
+        const rsi1h = calcRSI(prices1h, 14);
+        const rsi4h = calcRSI(prices4h, 14);
+        const rsi1d = calcRSI(prices1d, 14);
+
+        const macd1h = calcMACD(prices1h);
+        const macd4h = calcMACD(prices4h);
+
+        const volumes5m = kline5m.map(k => k.volume);
+        const volumes1h = kline1h.map(k => k.volume);
+
+        const cvd5m = calcCVD(volumes5m, true);
+        const cvd1h = calcCVD(volumes1h, true);
+
+        const change5m = ((prices5m[prices5m.length - 1] - prices5m[0]) / prices5m[0]) * 100;
+        const change1h = ((prices1h[prices1h.length - 1] - prices1h[0]) / prices1h[0]) * 100;
+        const change4h = ((prices4h[prices4h.length - 1] - prices4h[0]) / prices4h[0]) * 100;
+        const change1d = ((prices1d[prices1d.length - 1] - prices1d[0]) / prices1d[0]) * 100;
+
+        const mainDirection = change1h > 0 ? 'up' : 'down';
+
+        const oiMcapRatio = calculateOiMcapRatio(futuresData.oiValue, marketCap);
+
+        const phase5m = rsi5m > 70 ? 'overbought' : rsi5m < 30 ? 'oversold' : 'normal';
+        const phase1h = rsi1h > 70 ? 'overbought' : rsi1h < 30 ? 'oversold' : 'normal';
+        const phase4h = rsi4h > 70 ? 'overbought' : rsi4h < 30 ? 'oversold' : 'normal';
+        const phase1d = rsi1d > 70 ? 'overbought' : rsi1d < 30 ? 'oversold' : 'normal';
+
+        let longReasons = [];
+        let shortReasons = [];
+
+        // 短周期做多信号（权重高）
+        if (rsi5m < 30) longReasons.push('5m RSI 超卖');
+        if (rsi5m < 25) longReasons.push('5m RSI 极度超卖');
+        if (rsi1h < 30) longReasons.push('1h RSI 超卖');
+        if (rsi1h < 25) longReasons.push('1h RSI 极度超卖');
+
+        // 做空信号
+        if (rsi5m > 70) shortReasons.push('5m RSI 超买');
+        if (rsi5m > 75) shortReasons.push('5m RSI 极度超买');
+        if (rsi1h > 70) shortReasons.push('1h RSI 超买');
+        if (rsi1h > 75) shortReasons.push('1h RSI 极度超买');
+
+        // OI趋势信号（权重高）
+        if (futuresData.openInterest > 0 && futuresData.oi6hPct > 10) {
+          longReasons.push(`OI 6h增长 ${futuresData.oi6hPct.toFixed(1)}%`);
+        }
+        if (futuresData.openInterest > 0 && futuresData.oi24hPct > 20) {
+          longReasons.push(`OI 24h增长 ${futuresData.oi24hPct.toFixed(1)}%`);
+        }
+
+        // 资金费率信号
+        if (futuresData.fundingRate > 0.1) {
+          longReasons.push(`资金费率上升 ${futuresData.fundingRate.toFixed(3)}%`);
+        } else if (futuresData.fundingRate < -0.1) {
+          shortReasons.push(`资金费率下降 ${futuresData.fundingRate.toFixed(3)}%`);
+        }
+
+        // CVD信号（中等权重）
+        if (cvd1h.trend === 'up') longReasons.push('1h CVD向上');
+        if (cvd1h.trend === 'down') shortReasons.push('1h CVD向下');
+        if (cvd5m.trend === 'up') longReasons.push('5m CVD向上');
+        if (cvd5m.trend === 'down') shortReasons.push('5m CVD向下');
+
+        // MACD信号（权重降低）
+        if (macd1h.histogram > 0) longReasons.push('1h MACD正向');
+        if (macd1h.histogram < 0) shortReasons.push('1h MACD负向');
+        if (macd4h.histogram > 0 && macd4h.histogram > macd1h.histogram) {
+          longReasons.push('4h MACD向上');
+        }
+
+        // 价格动能信号（权重最低）
+        if (change5m > 1) longReasons.push('5m强势上涨');
+        if (change5m < -1) shortReasons.push('5m强势下跌');
+        if (change1h > 2) longReasons.push('1h强势上涨');
+        if (change1h < -2) shortReasons.push('1h强势下跌');
+
+        // 24h信号权重大幅降低
+        if (stats24h && stats24h.change24h > 10 && mainDirection === 'up') {
+          longReasons.push('24h涨幅较大（参考）');
+        }
+
+        const buySignalCount = longReasons.length;
+        const sellSignalCount = shortReasons.length;
+        const totalSignal = buySignalCount - sellSignalCount;
+
+        // ============ 构建推荐 ============
+        let recommendType = 'spot';
+        let recommendLeverage = 1;
+        let recommendPosition = 5;
+
+        if (futuresData.openInterest > 0) {
+          if (totalSignal > 6) {
+            recommendType = 'futures';
+            recommendLeverage = 2;
+            recommendPosition = 3;
+          } else if (totalSignal > 3) {
+            recommendType = 'futures';
+            recommendLeverage = 1;
+            recommendPosition = 5;
+          } else if (totalSignal < -6) {
+            recommendType = 'futures';
+            recommendLeverage = 2;
+            recommendPosition = 3;
+          }
+        } else {
+          recommendPosition = totalSignal > 3 ? 8 : 5;
+        }
+
+        // 拥挤度评估
+        const crowdingRisk = calculateCrowdingRisk(
+          futuresData.globalLongShortRatio,
+          oiMcapRatio,
+          rsi1h,
+          mainDirection,
+          futuresData.oi6hPct,
+          futuresData.oi24hPct
+        );
+
+        // 创建硬币对象
+        const coin = {
+          symbol,
+          price: stats24h.price,
+          change24h: stats24h.change24h,
+          marketCap,
+          rsi5m, rsi1h, rsi4h, rsi1d,
+          macd1h, macd4h,
+          cvd5m, cvd1h,
+          change5m, change1h, change4h, change1d,
+          mainDirection,
+          phase5m, phase1h, phase4h, phase1d,
+          buySignalCount,
+          sellSignalCount,
+          totalSignal,
+          longReasons,
+          shortReasons,
+          recommendType,
+          recommendLeverage,
+          recommendPosition,
+          openInterest: futuresData.openInterest,
+          oiValue: futuresData.oiValue,
+          fundingRate: futuresData.fundingRate,
+          globalLongShortRatio: futuresData.globalLongShortRatio,
+          oi6hPct: futuresData.oi6hPct,
+          oi24hPct: futuresData.oi24hPct,
+          oiMcapRatio,
+          crowdingRisk,
+          resonance: checkResonance({
+            change5m, change1h, change4h,
+            cvd5m, cvd1h,
+            openInterest: futuresData.openInterest,
+            oi6hPct: futuresData.oi6hPct,
+            oi24hPct: futuresData.oi24hPct,
+            fundingRate: futuresData.fundingRate,
+            globalLongShortRatio: futuresData.globalLongShortRatio
+          }),
+          timestamp: Date.now()
+        };
+
+        // 计算评级
+        const gradeInfo = calculateGrade(coin);
+        coin.grade = gradeInfo.grade;
+        coin.gradeScore = gradeInfo.gradeScore;
+        coin.totalScore = gradeInfo.score;
+
+        return coin;
+      } catch (e) {
+        console.warn(`分析 ${symbol} 失败:`, e.message);
+        return null;
+      }
+    }
+
+    // ============ 两阶段全量刷新 ============
+    async function twoPhaseFullRefresh() {
+      if (isRefreshing) return;
+      isRefreshing = true;
+
+      const statusDiv = document.getElementById('scanning-status');
+      const progressBar = document.getElementById('scanning-progress-bar');
+      const progressText = document.getElementById('scanning-progress-text');
+      const scanStatusDiv = document.getElementById('scan-status');
+      const refreshBtn = document.getElementById('manual-refresh-btn');
+
+      try {
+        if (statusDiv) statusDiv.style.display = 'block';
+        if (refreshBtn) {
+          refreshBtn.disabled = true;
+          refreshBtn.classList.add('loading');
+        }
+        if (scanStatusDiv) {
+          scanStatusDiv.textContent = '⏳ 扫描中...';
+          scanStatusDiv.style.display = 'block';
+        }
+        if (progressBar) progressBar.style.width = '0%';
+        if (progressText) progressText.textContent = `0/${allSymbols.length}`;
+
+        const startTime = Date.now();
+        let currentIndex = 0;
+        allCoins = {};
+
+        const quickScanList = allSymbols.slice(0, CONFIG.quickScanLimit);
+        const quickResults = [];
+
+        for (let i = 0; i < quickScanList.length; i++) {
+          const symbol = quickScanList[i];
+          const result = await quickScanCoin(symbol);
+
+          if (result && result.quickScore > 0) {
+            quickResults.push(result);
+          }
+
+          currentIndex++;
+          const progress = (currentIndex / allSymbols.length) * 100;
+          if (progressBar) progressBar.style.width = progress + '%';
+          if (progressText) progressText.textContent = `${currentIndex}/${allSymbols.length}`;
+        }
+
+        console.log(`快速扫描完成：${quickResults.length} 个候选币种`);
+
+        const toAnalyze = quickResults.slice(0, CONFIG.fullScanLimit);
+        const analyzeTasks = toAnalyze.map(qr => () => analyzeCoin(qr.symbol, qr));
+        const fullResults = await runWithConcurrencyLimit(analyzeTasks, CONFIG.concurrentLimit);
+
+        fullResults.forEach((coin) => {
+          if (coin) {
+            allCoins[coin.symbol] = coin;
+          }
+        });
+
+        const remaining = allSymbols.slice(CONFIG.quickScanLimit).slice(0, 50);
+        for (const symbol of remaining) {
+          if (allCoins[symbol]) continue;
+
+          const result = await quickScanCoin(symbol);
+          if (result && result.quickScore > -2) {
+            const coin = await analyzeCoin(symbol, result);
+            if (coin) {
+              allCoins[coin.symbol] = coin;
             }
+          }
 
-            document.getElementById('quick-scan-limit').value = CONFIG.quickScanLimit;
-            document.getElementById('full-scan-limit').value = CONFIG.fullScanLimit;
-            document.getElementById('mcap-threshold').value = CONFIG.mcapThreshold;
-            document.getElementById('funding-threshold').value = CONFIG.fundingThreshold;
+          currentIndex++;
+          const progress = (currentIndex / allSymbols.length) * 100;
+          if (progressBar) progressBar.style.width = Math.min(progress, 100) + '%';
+          if (progressText) progressText.textContent = `${currentIndex}/${allSymbols.length}`;
         }
 
-        function saveConfig() {
-            CONFIG.quickScanLimit = parseInt(document.getElementById('quick-scan-limit').value);
-            CONFIG.fullScanLimit = parseInt(document.getElementById('full-scan-limit').value);
-            CONFIG.mcapThreshold = parseFloat(document.getElementById('mcap-threshold').value);
-            CONFIG.fundingThreshold = parseFloat(document.getElementById('funding-threshold').value);
+        const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+        console.log(`扫描完成！总耗时 ${totalTime}s，共分析 ${Object.keys(allCoins).length} 个币种`);
 
-            localStorage.setItem('cryptoMonitorConfig', JSON.stringify(CONFIG));
-
-            const statusDiv = document.getElementById('config-status');
-            statusDiv.innerHTML = '<div class="alert alert-success">✅ 配置已保存</div>';
-            statusDiv.style.display = 'block';
-
-            setTimeout(() => {
-                statusDiv.style.display = 'none';
-            }, 3000);
+        const updateTimeEl = document.getElementById('update-time');
+        if (updateTimeEl) {
+          updateTimeEl.textContent = new Date().toLocaleTimeString('zh-CN');
         }
 
-        // ===== 更新时间 =====
-        function updateLastUpdateTime() {
-            const now = new Date().toLocaleTimeString('zh-CN');
-            document.getElementById('last-update').textContent = now;
+        renderMonitorContent();
+        showNotification(`✅ 扫描完成！分析了 ${Object.keys(allCoins).length} 个币种`, 'success');
+      } catch (e) {
+        console.error('扫描失败:', e);
+        showNotification(`❌ 扫描失败: ${e.message}`, 'error');
+      } finally {
+        isRefreshing = false;
+        if (statusDiv) statusDiv.style.display = 'none';
+        if (refreshBtn) {
+          refreshBtn.disabled = false;
+          refreshBtn.classList.remove('loading');
+        }
+        if (scanStatusDiv) {
+          scanStatusDiv.style.display = 'none';
+        }
+      }
+    }
+
+    async function manualRefresh() {
+      await twoPhaseFullRefresh();
+    }
+
+    // ============ 渲染首页卡片（显示所有数据） ============
+    function renderCoinCard(coin) {
+      const riskTag = coin.crowdingRisk.level === 'high' ? 'risk-high' :
+        coin.crowdingRisk.level === 'mid' ? 'risk-mid' : 'risk-low';
+
+      let resonanceTag = '';
+      if (coin.resonance && coin.resonance.count >= 3) {
+        resonanceTag = `<span class="resonance-tag">✨ 三共振</span>`;
+      } else if (coin.resonance && coin.resonance.count === 2) {
+        resonanceTag = `<span class="resonance-tag">🔄 双共振</span>`;
+      }
+
+      return `
+        <div class="coin-card ${coin.grade}" onclick="showDetail('${coin.symbol}')">
+          <div class="card-header">
+            <div class="coin-info">
+              <div class="coin-name">${coin.symbol}</div>
+              <div class="coin-price">$${fmt(coin.price, 8)}</div>
+            </div>
+            <div class="price-change ${coin.change24h > 0 ? 'up' : 'down'}">
+              ${fmtPct(coin.change24h)}
+            </div>
+          </div>
+
+          <div style="margin-bottom: 8px;">
+            <span class="grade-badge ${coin.grade}">${coin.grade.toUpperCase()}</span>
+            ${resonanceTag}
+          </div>
+
+          <div style="font-size: 11px; color: var(--sub); margin-bottom: 8px; line-height: 1.4;">
+            <div>💼 ${coin.recommendType === 'spot' ? '现货' : coin.recommendLeverage + 'x合约'} | 仓位 ${coin.recommendPosition}%</div>
+            <div>📊 OI: ${fmt(coin.openInterest, 0)} | OI值: $${fmt(coin.oiValue, 0)}</div>
+            <div>📈 OI 6h: ${fmtPct(coin.oi6hPct)} | 24h: ${fmtPct(coin.oi24hPct)}</div>
+            <div>💰 资金费: ${fmtPct(coin.fundingRate, 3)} | 多空比: ${fmt(coin.globalLongShortRatio, 2)}</div>
+            <div>🎯 OI/MCAP: ${coin.oiMcapRatio > 0 ? fmtPct(coin.oiMcapRatio) : '--'}</div>
+          </div>
+
+          <div class="metrics">
+            <div class="metric">
+              <div class="metric-label">RSI 1h</div>
+              <div class="metric-value ${coin.rsi1h > 70 ? 'up' : coin.rsi1h < 30 ? 'down' : ''}">${coin.rsi1h.toFixed(0)}</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">MACD 1h</div>
+              <div class="metric-value ${coin.macd1h.histogram > 0 ? 'up' : 'down'}">${coin.macd1h.histogram.toFixed(4)}</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">CVD 1h</div>
+              <div class="metric-value ${coin.cvd1h.trend === 'up' ? 'up' : 'down'}">${coin.cvd1h.trend}</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">信号</div>
+              <div class="metric-value">${coin.totalSignal > 0 ? '+' : ''}${coin.totalSignal}</div>
+            </div>
+          </div>
+
+          <div class="tags">
+            <span class="tag ${riskTag}">拥挤: ${coin.crowdingRisk.level === 'high' ? '🔴' : coin.crowdingRisk.level === 'mid' ? '🟡' : '🟢'} ${coin.crowdingRisk.level}</span>
+            <span class="tag">5m: ${fmtPct(coin.change5m, 1)}</span>
+            <span class="tag">1h: ${fmtPct(coin.change1h, 1)}</span>
+          </div>
+
+          <div class="quick-links">
+            <div class="quick-link" onclick="event.stopPropagation(); openLink(getChartLink('${coin.symbol}'))">📈 图表</div>
+            <div class="quick-link" onclick="event.stopPropagation(); openLink('https://www.binance.com/trade/${coin.symbol}_USDT')">💰 现货</div>
+            <div class="quick-link" onclick="event.stopPropagation(); openLink('https://www.binance.com/futures/${coin.symbol}USDT')">⚡ 合约</div>
+            <div class="quick-link" onclick="event.stopPropagation(); copyToClipboard('${coin.symbol}')">📋 复制</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ============ 渲染监控内容 ============
+    function renderMonitorContent() {
+      const container = document.getElementById('monitor-content');
+
+      if (Object.keys(allCoins).length === 0) {
+        container.innerHTML = '<div class="error-box">⏳ 正在扫描中，请稍候...</div>';
+        return;
+      }
+
+      const grades = ['splus', 's', 'a', 'b', 'c'];
+      const gradeCounts = {};
+      grades.forEach(g => {
+        gradeCounts[g] = Object.values(allCoins).filter(c => c.grade === g).length;
+      });
+
+      document.getElementById('grade-splus-count').textContent = gradeCounts.splus;
+      document.getElementById('grade-s-count').textContent = gradeCounts.s;
+      document.getElementById('grade-a-count').textContent = gradeCounts.a;
+      document.getElementById('grade-b-count').textContent = gradeCounts.b;
+      document.getElementById('grade-c-count').textContent = gradeCounts.c;
+      document.getElementById('analyzed-count').textContent = Object.keys(allCoins).length;
+
+      let html = '';
+
+      grades.forEach(grade => {
+        const coins = Object.values(allCoins)
+          .filter(c => c.grade === grade)
+          .sort((a, b) => b.totalSignal - a.totalSignal);
+
+        if (coins.length === 0) return;
+
+        const gradeLabels = { splus: 'S+', s: 'S', a: 'A', b: 'B', c: 'C' };
+
+        html += `
+          <div class="grade-section">
+            <div class="grade-header ${grade}">
+              <div class="grade-label ${grade}">${gradeLabels[grade]} 级</div>
+              <div class="grade-count">${coins.length} 个币种</div>
+            </div>
+            <div class="grid">
+              ${coins.map(coin => renderCoinCard(coin)).join('')}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    // ============ 搜索功能 ============
+    async function showSearchSuggestions() {
+      const input = document.getElementById('search-input');
+      const query = input.value.trim().toUpperCase();
+
+      if (query.length < 1) {
+        document.getElementById('search-suggestions').classList.remove('active');
+        return;
+      }
+
+      const suggestions = document.getElementById('search-suggestions');
+      const matching = Object.values(binanceAssets)
+        .filter(asset => asset.asset.includes(query))
+        .slice(0, 10);
+
+      if (matching.length === 0) {
+        suggestions.innerHTML = '<div class="suggestion-item">未找到匹配的资产</div>';
+      } else {
+        suggestions.innerHTML = matching.map(asset => `
+          <div class="suggestion-item" onclick="searchCoinBySymbol('${asset.asset}')">
+            <div class="suggestion-asset">${asset.asset}</div>
+            <div class="suggestion-pairs">
+              ${asset.spot.length > 0 ? `<span class="pair-badge">现货</span>` : ''}
+              ${asset.futures.length > 0 ? `<span class="pair-badge">合约</span>` : ''}
+            </div>
+          </div>
+        `).join('');
+      }
+
+      suggestions.classList.add('active');
+    }
+
+    async function searchCoin() {
+      const rawQuery = document.getElementById('search-input').value.trim().toUpperCase();
+      if (!rawQuery) return;
+
+      const query = rawQuery.endsWith('USDT') ? rawQuery.replace('USDT', '') : rawQuery;
+
+      switchPage('detail');
+      document.getElementById('detail-content').innerHTML = '<div class="error-box">⏳ 分析中...</div>';
+
+      if (!binanceAssets[query]) {
+        document.getElementById('detail-content').innerHTML = `
+          <div class="error-box">
+            未找到 ${query} 的交易对<br>
+            请检查币种代码是否正确
+          </div>
+        `;
+        return;
+      }
+
+      try {
+        const coinData = await analyzeCoinForSearch(query);
+
+        if (!coinData) {
+          document.getElementById('detail-content').innerHTML = `
+            <div class="error-box">
+              ${query} 数据获取失败<br>
+              可能原因：接口限流 / 无法获取足够数据<br><br>
+              建议：稍后重试
+            </div>
+          `;
+          return;
         }
 
-        // 每 5 分钟自动更新一次时间显示
-        setInterval(updateLastUpdateTime, 300000);
-    </script>
+        allCoins[query] = coinData;
+        showDetail(query);
+      } catch (e) {
+        console.error('搜索失败:', e);
+        document.getElementById('detail-content').innerHTML = `
+          <div class="error-box">
+            搜索 ${query} 失败：${e.message}
+          </div>
+        `;
+      }
+    }
+
+    async function searchCoinBySymbol(symbol) {
+      document.getElementById('search-input').value = symbol;
+      document.getElementById('search-suggestions').classList.remove('active');
+      await searchCoin();
+    }
+
+    // ============ 详情页面 ============
+    function showDetail(symbol) {
+      const coin = allCoins[symbol];
+      if (!coin) {
+        switchPage('detail');
+        document.getElementById('detail-content').innerHTML = '<div class="error-box">数据加载中...</div>';
+        return;
+      }
+
+      switchPage('detail');
+
+      const html = `
+        <button class="back-btn" onclick="switchPage('monitor')">← 返回监控</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <div>
+            <h2 style="color: var(--cyan); font-size: 28px; margin-bottom: 8px;">${coin.symbol}</h2>
+            <div style="color: var(--sub); font-size: 13px;">
+              现价: <strong style="color: var(--text);">$${fmt(coin.price, 8)}</strong> |
+              24h: <strong style="color: var(--text);">${fmtPct(coin.change24h)}</strong>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <div class="price-change ${coin.change24h > 0 ? 'up' : 'down'}" style="font-size: 24px;">
+              ${fmtPct(coin.change24h)}
+            </div>
+            <div style="color: var(--sub); font-size: 12px; margin-top: 8px;">
+              24小时涨跌
+            </div>
+          </div>
+        </div>
+
+        <div class="derivatives-panel">
+          <div class="panel-title">💼 现货/合约推荐</div>
+          <div class="detail-metrics">
+            <div class="detail-metric">
+              <div class="detail-metric-label">推荐类型</div>
+              <div class="detail-metric-value" style="color: var(--yellow); font-size: 18px;">
+                ${coin.recommendType === 'spot' ? '🏪 现货' : '⚡ 合约'}
+              </div>
+            </div>
+            <div class="detail-metric">
+              <div class="detail-metric-label">推荐杠杆</div>
+              <div class="detail-metric-value" style="color: var(--yellow); font-size: 18px;">
+                ${coin.recommendLeverage}x
+              </div>
+            </div>
+            <div class="detail-metric">
+              <div class="detail-metric-label">仓位大小</div>
+              <div class="detail-metric-value" style="color: var(--yellow); font-size: 18px;">
+                ${coin.recommendPosition}%
+              </div>
+            </div>
+            <div class="detail-metric">
+              <div class="detail-metric-label">评级</div>
+              <div class="detail-metric-value" style="color: var(--cyan); font-size: 18px;">
+                ${coin.grade.toUpperCase()}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="derivatives-panel">
+          <div class="panel-title">📊 技术指标</div>
+          <div class="detail-metrics">
+            <div class="detail-metric">
+              <div class="detail-metric-label">5分钟RSI</div>
+              <div class="detail-metric-value ${coin.rsi5m > 70 ? 'up' : coin.rsi5m < 30 ? 'down' : ''}">${coin.rsi5m.toFixed(0)}</div>
+            </div>
+            <div class="detail-metric">
+              <div class="detail-metric-label">1小时RSI</div>
+              <div class="detail-metric-value ${coin.rsi1h > 70 ? 'up' : coin.rsi1h < 30 ? 'down' : ''}">${coin.rsi1h.toFixed(0)}</div>
+            </div>
+            <div class="detail-metric">
+              <div class="detail-metric-label">4小时RSI</div>
+              <div class="detail-metric-value ${coin.rsi4h > 70 ? 'up' : coin.rsi4h < 30 ? 'down' : ''}">${coin.rsi4h.toFixed(0)}</div>
+            </div>
+            <div class="detail-metric">
+              <div class="detail-metric-label">日线RSI</div>
+              <div class="detail-metric-value ${coin.rsi1d > 70 ? 'up' : coin.rsi1d < 30 ? 'down' : ''}">${coin.rsi1d.toFixed(0)}</div>
+            </div>
+            <div class="detail-metric">
+              <div class="detail-metric-label">1小时MACD</div>
+              <div class="detail-metric-value ${coin.macd1h.histogram > 0 ? 'up' : 'down'}">
+                ${coin.macd1h.histogram.toFixed(4)}
+              </div>
+            </div>
+            <div class="detail-metric">
+              <div class="detail-metric-label">4小时MACD</div>
+              <div class="detail-metric-value ${coin.macd4h.histogram > 0 ? 'up' : 'down'}">
+                ${coin.macd4h.histogram.toFixed(4)}
+              </div>
+            </div>
+            <div class="detail-metric">
+              <div class="detail-metric-label">5分钟CVD</div>
+              <div class="detail-metric-value ${coin.cvd5m.trend === 'up' ? 'up' : 'down'}">
+                ${coin.cvd5m.trend}
+              </div>
+            </div>
+            <div class="detail-metric">
+              <div class="detail-metric-label">1小时CVD</div>
+              <div class="detail-metric-value ${coin.cvd1h.trend === 'up' ? 'up' : 'down'}">
+                ${coin.cvd1h.trend}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="derivatives-panel">
+          <div class="panel-title">📈 衍生品数据（合约详情）</div>
+          <div class="detail-metrics">
+            <div class="detail-metric">
+              <div class="detail-metric-label">持仓量</div>
+              <div class="detail-metric-value">${fmt(coin.openInterest, 0)}</div>
+            </div>
+            <div class="detail-metric">
+              <div class="detail-metric-label">OI Value</div>
+              <div class="detail-metric-value">$${fmt(coin.oiValue, 0)}</div>
+            </div>
+            <div class="detail-metric">
+              <div class="detail-metric-label">OI/MCAP</div>
+              <div class="detail-metric-value">${coin.oiMcapRatio > 0 ? fmtPct(coin.oiMcapRatio) : '--'}</div>
+            </div>
+            <div class="detail-metric">
+              <div class="detail-metric-label">OI 6h%</div>
+              <div class="detail-metric-value ${coin.oi6hPct > 0 ? 'up' : 'down'}">${fmtPct(coin.oi6hPct, 1)}</div>
+            </div>
+            <div class="detail-metric">
+              <div class="detail-metric-label">OI 24h%</div>
+              <div class="detail-metric-value ${coin.oi24hPct > 0 ? 'up' : 'down'}">${fmtPct(coin.oi24hPct, 1)}</div>
+            </div>
+            <div class="detail-metric">
+              <div class="detail-metric-label">资金费率</div>
+              <div class="detail-metric-value ${coin.fundingRate > 0 ? 'up' : 'down'}">${fmtPct(coin.fundingRate, 3)}</div>
+            </div>
+            <div class="detail-metric">
+              <div class="detail-metric-label">多空比</div>
+              <div class="detail-metric-value ${coin.globalLongShortRatio > 1.5 ? 'up' : coin.globalLongShortRatio < 0.8 ? 'down' : ''}">
+                ${fmt(coin.globalLongShortRatio, 2)}
+              </div>
+            </div>
+            <div class="detail-metric">
+              <div class="detail-metric-label">市值</div>
+              <div class="detail-metric-value">${coin.marketCap ? '$' + fmt(coin.marketCap, 0) : '--'}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="derivatives-panel crowding-risk-${coin.crowdingRisk.level}">
+          <div class="panel-title">⚠️ 拥挤度风险评估</div>
+          <div style="font-size: 12px; line-height: 1.8; color: var(--sub);">
+            <div style="margin-bottom: 12px;">
+              <strong>风险等级:</strong> <span style="color: var(--text); font-weight: 700;">
+                ${coin.crowdingRisk.level === 'high' ? '🔴 高风险' : coin.crowdingRisk.level === 'mid' ? '🟡 中风险' : '🟢 低风险'}
+              </span><br>
+              <strong>拥挤方向:</strong> <span style="color: var(--text);">
+                ${coin.crowdingRisk.side === 'long_crowded' ? '多头拥挤 ⬆️' : coin.crowdingRisk.side === 'short_crowded' ? '空头拥挤 ⬇️' : '无明显拥挤'}
+              </span><br>
+              <strong>风险分数:</strong> <span style="color: var(--text); font-weight: 700;">${coin.crowdingRisk.score}/100</span>
+            </div>
+            <div style="border-top: 1px solid rgba(255,255,255,.1); padding-top: 8px;">
+              <strong>风险原因:</strong><br>
+                           ${coin.crowdingRisk.reasons.length > 0 ? coin.crowdingRisk.reasons.map(r => `• ${r}`).join('<br>') : '暂无特殊风险提示'}
+            </div>
+          </div>
+        </div>
+
+        <div class="derivatives-panel">
+          <div class="panel-title">🔄 多周期共振分析</div>
+          <div style="font-size: 12px; line-height: 1.8; color: var(--sub);">
+            <div style="margin-bottom: 12px;">
+              <strong>共振等级:</strong> <span style="color: var(--text); font-weight: 700;">
+                ${coin.resonance.count >= 3 ? '✨ 强共振 (3个以上)' : coin.resonance.count === 2 ? '🔄 中共振 (2个)' : coin.resonance.count === 1 ? '📊 弱共振 (1个)' : '❌ 无共振'}
+              </span>
+            </div>
+            <div style="border-top: 1px solid rgba(255,255,255,.1); padding-top: 8px;">
+              <strong>共振信号:</strong><br>
+              ${coin.resonance.details.length > 0 ? coin.resonance.details.map(d => `✓ ${d}`).join('<br>') : '暂无共振信号'}
+            </div>
+          </div>
+        </div>
+
+        <div class="timeframe-analysis">
+          <div class="tf-analysis">
+            <div class="tf-title">5分钟周期</div>
+            <div class="tf-content">
+              <strong>涨跌:</strong> <span class="${coin.change5m > 0 ? 'up' : 'down'}">${fmtPct(coin.change5m, 2)}</span><br>
+              <strong>RSI:</strong> ${coin.rsi5m.toFixed(0)} (${coin.phase5m})<br>
+              <strong>CVD:</strong> ${coin.cvd5m.trend} <br>
+            </div>
+          </div>
+
+          <div class="tf-analysis">
+            <div class="tf-title">1小时周期</div>
+            <div class="tf-content">
+              <strong>涨跌:</strong> <span class="${coin.change1h > 0 ? 'up' : 'down'}">${fmtPct(coin.change1h, 2)}</span><br>
+              <strong>RSI:</strong> ${coin.rsi1h.toFixed(0)} (${coin.phase1h})<br>
+              <strong>CVD:</strong> ${coin.cvd1h.trend}<br>
+              <strong>MACD:</strong> ${coin.macd1h.histogram > 0 ? '📈' : '📉'} ${coin.macd1h.histogram.toFixed(6)}
+            </div>
+          </div>
+
+          <div class="tf-analysis">
+            <div class="tf-title">4小时周期</div>
+            <div class="tf-content">
+              <strong>涨跌:</strong> <span class="${coin.change4h > 0 ? 'up' : 'down'}">${fmtPct(coin.change4h, 2)}</span><br>
+              <strong>RSI:</strong> ${coin.rsi4h.toFixed(0)} (${coin.phase4h})<br>
+              <strong>MACD:</strong> ${coin.macd4h.histogram > 0 ? '📈' : '📉'} ${coin.macd4h.histogram.toFixed(6)}
+            </div>
+          </div>
+
+          <div class="tf-analysis">
+            <div class="tf-title">日线周期</div>
+            <div class="tf-content">
+              <strong>涨跌:</strong> <span class="${coin.change1d > 0 ? 'up' : 'down'}">${fmtPct(coin.change1d, 2)}</span><br>
+              <strong>RSI:</strong> ${coin.rsi1d.toFixed(0)} (${coin.phase1d})<br>
+            </div>
+          </div>
+        </div>
+
+        <div class="quick-channel-section">
+          <div class="quick-channel-title">🔗 快速链接</div>
+          <div class="channel-grid">
+            <button class="btn" onclick="openLink(getChartLink('${coin.symbol}'))">📈 TradingView</button>
+            <button class="btn" onclick="openLink('https://www.binance.com/trade/${coin.symbol}_USDT')">💰 现货交易</button>
+            <button class="btn" onclick="openLink('https://www.binance.com/futures/${coin.symbol}USDT')">⚡ 合约交易</button>
+            <button class="btn" onclick="openLink(getLiquidationMapLink('${coin.symbol}'))">🗺️ 清算热力图</button>
+            <button class="btn" onclick="openLink(getCoinGlassLink('${coin.symbol}'))">🔍 Coinglass</button>
+            <button class="btn" onclick="openLink(getCoinGeckoLink('${coin.symbol}'))">💎 CoinGecko</button>
+            <button class="btn" onclick="openLink(getWhaleAlertLink('${coin.symbol}'))">🐋 鲸鱼警报</button>
+            <button class="btn" onclick="openLink(getDexScreenerLink('${coin.symbol}'))">🪙 DexScreener</button>
+          </div>
+          <div class="channel-hint">
+            💡 点击上方按钮快速跳转到对应平台查看详细数据和实时行情
+          </div>
+        </div>
+
+        <div class="derivatives-panel">
+          <div class="panel-title">📝 做多信号 (${coin.buySignalCount}个)</div>
+          <div style="font-size: 12px; line-height: 1.8; color: var(--text);">
+            ${coin.longReasons.length > 0 ? coin.longReasons.map(r => `✓ ${r}`).join('<br>') : '暂无做多信号'}
+          </div>
+        </div>
+
+        <div class="derivatives-panel">
+          <div class="panel-title">📝 做空信号 (${coin.sellSignalCount}个)</div>
+          <div style="font-size: 12px; line-height: 1.8; color: var(--text);">
+            ${coin.shortReasons.length > 0 ? coin.shortReasons.map(r => `✗ ${r}`).join('<br>') : '暂无做空信号'}
+          </div>
+        </div>
+
+        <div class="derivatives-panel">
+          <div class="panel-title">📊 净信号强度</div>
+          <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
+            <div style="flex: 1;">
+              <div style="font-size: 14px; color: var(--text); margin-bottom: 4px;">做多信号: <strong style="color: var(--green);">${coin.buySignalCount}</strong></div>
+              <div style="font-size: 14px; color: var(--text);">做空信号: <strong style="color: var(--red);">${coin.sellSignalCount}</strong></div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 28px; font-weight: 900; color: ${coin.totalSignal > 0 ? 'var(--green)' : coin.totalSignal < 0 ? 'var(--red)' : 'var(--sub)'};">
+                ${coin.totalSignal > 0 ? '+' : ''}${coin.totalSignal}
+              </div>
+              <div style="font-size: 11px; color: var(--sub); margin-top: 4px;">
+                ${coin.totalSignal > 5 ? '强做多' : coin.totalSignal > 0 ? '弱做多' : coin.totalSignal < -5 ? '强做空' : coin.totalSignal < 0 ? '弱做空' : '中性'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="derivatives-panel" style="background: rgba(34, 211, 238, 0.1); border-color: rgba(34, 211, 238, 0.3);">
+          <div class="panel-title">ℹ️ 系统信息</div>
+          <div style="font-size: 11px; color: var(--sub); line-height: 1.8;">
+            <div>更新时间: ${new Date(coin.timestamp).toLocaleString('zh-CN')}</div>
+            <div>版本: v5.0 (OI优先版)</div>
+            <div>分析周期: 5m, 1h, 4h, 1d</div>
+            <div>评级权重: OI(1.5x) > CVD(1.2x) > MACD(0.8x) > RSI(0.7x) > 价格(0.5x)</div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('detail-content').innerHTML = html;
+    }
+
+    // ============ 初始化 ============
+    async function init() {
+      try {
+        console.log('正在加载交所信息...');
+        await loadExchangeInfo();
+        console.log(`已加载 ${allSymbols.length} 个币种信息`);
+
+        const updateTimeEl = document.getElementById('update-time');
+        if (updateTimeEl) {
+          updateTimeEl.textContent = new Date().toLocaleTimeString('zh-CN');
+        }
+
+        await twoPhaseFullRefresh();
+
+        setInterval(() => {
+          if (!isRefreshing) {
+            twoPhaseFullRefresh();
+          }
+        }, CONFIG.refreshMs);
+      } catch (e) {
+        console.error('初始化失败:', e);
+        document.getElementById('monitor-content').innerHTML = `
+          <div class="error-box">
+            系统初始化失败<br>
+            ${e.message}<br><br>
+            请检查网络连接并刷新页面重试
+          </div>
+        `;
+      }
+    }
+
+    // 页面加载完成后启动
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
 </body>
 </html>
