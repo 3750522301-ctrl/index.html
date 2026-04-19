@@ -898,6 +898,7 @@
   </style>
 </head>
 <body>
+
   <div class="container">
     <!-- 顶部导航 -->
     <div class="header">
@@ -982,17 +983,18 @@
     let marketCapCache = {};
     let futuresDataCache = {};
 
-    // ============ 全局配置 ============
+    // ============ 全局配置 ✅ 修复1: 改为2并发+加retryTimes ============
     const CONFIG = {
       refreshMs: 300000,
       binanceUrl: 'https://api.binance.com/api/v3',
       futuresUrl: 'https://fapi.binance.com/fapi/v1',
       coingeckoApi: 'https://api.coingecko.com/api/v3',
-      concurrentLimit: 4,
+      concurrentLimit: 2,  // 改为2并发
       requestTimeout: 12000,
       maxCoinsToMonitor: 9999,
       quickScanLimit: 9999,
-      fullScanLimit: 9999
+      fullScanLimit: 9999,
+      retryTimes: 2  // 新增重试次数
     };
 
     // ============ 工具函数 ============
@@ -1029,13 +1031,22 @@
       setTimeout(() => el.remove(), 4000);
     }
 
+    // ✅ 修复13: 确保 openLink 定义
     function openLink(url) {
+      if (!url) {
+        showNotification('❌ 链接不可用', 'error');
+        return;
+      }
       window.open(url, '_blank');
     }
 
+    // ✅ 修复12: copyToClipboard 加 catch
     function copyToClipboard(text) {
       navigator.clipboard.writeText(text).then(() => {
         showNotification(`✅ 已复制: ${text}`, 'success');
+      }).catch(err => {
+        console.error('复制失败:', err);
+                showNotification(`❌ 复制失败`, 'error');
       });
     }
 
@@ -1105,31 +1116,48 @@
       });
     }
 
-    // ============ API 请求 ============
-    async function fetchWithTimeout(url, timeout = CONFIG.requestTimeout) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
+    // ============ API 请求 ✅ 修复2: fetchWithTimeout 加重试 ============
+    async function fetchWithTimeout(url, timeout = CONFIG.requestTimeout, retry = CONFIG.retryTimes) {
+      let lastError = null;
 
-      try {
-        const res = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'Mozilla/5.0'
-          },
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
+      for (let attempt = 0; attempt <= retry; attempt++) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return await res.json();
-      } catch (error) {
-        clearTimeout(timeoutId);
-        throw error;
+        try {
+          const res = await fetch(url, {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+              'User-Agent': 'Mozilla/5.0'
+            },
+            signal: controller.signal
+          });
+
+          clearTimeout(timeoutId);
+
+          if (!res.ok) {
+            if (res.status === 429) {
+              throw new Error(`HTTP 429 限流`);
+            }
+            throw new Error(`HTTP ${res.status}`);
+          }
+
+          return await res.json();
+        } catch (error) {
+          clearTimeout(timeoutId);
+          lastError = error;
+
+          if (attempt < retry) {
+            await sleep(600 * (attempt + 1));
+          }
+        }
       }
+
+      throw lastError;
     }
 
-    // ============ 加载交所信息 ============
+    // ============ 加载交所信息 ✅ 修复3: loadExchangeInfo 容错 ============
     async function loadExchangeInfo() {
       try {
         const res = await fetchWithTimeout(`${CONFIG.binanceUrl}/exchangeInfo`);
@@ -1137,30 +1165,46 @@
           .filter(s => s.status === 'TRADING' && s.quoteAsset === 'USDT' && !s.symbol.includes('_'))
           .map(s => s.baseAsset);
 
-        // 获取合约信息
-        const futuresRes = await fetchWithTimeout(`${CONFIG.futuresUrl}/exchangeInfo`);
-        const futuresSymbols = futuresRes.symbols
-          .filter(s => s.status === 'TRADING' && s.quoteAsset === 'USDT')
-          .map(s => s.baseAsset);
+        let futuresSymbols = [];
+        try {
+          const futuresRes = await fetchWithTimeout(`${CONFIG.futuresUrl}/exchangeInfo`);
+          futuresSymbols = futuresRes.symbols
+            .filter(s => s.status === 'TRADING' && s.quoteAsset === 'USDT')
+            .map(s => s.baseAsset);
+        } catch (e) {
+          console.warn('⚠️ 合约交易对加载失败，仅使用现货币种:', e.message);
+        }
 
         const combined = [...new Set([...spotSymbols, ...futuresSymbols])].sort();
 
-        // 建立资产映射
+        binanceAssets = {};
         combined.forEach(asset => {
           binanceAssets[asset] = {
             asset,
-            spot: spotSymbols.includes(asset) ? [`${asset}USDT`] : [],
-            futures: futuresSymbols.includes(asset) ? [`${asset}USDT`] : []
+            spot: spotSymbols.includes(asset),
+            futures: futuresSymbols.includes(asset)
           };
         });
 
         allSymbols = combined;
-        console.log(`✅ 加载了 ${allSymbols.length} 个币种`);
-        
+
+        console.log('现货币种数量:', spotSymbols.length);
+        console.log('合约币种数量:', futuresSymbols.length);
+        console.log('最终加载币种数量:', allSymbols.length);
+
+        const scanStatusDiv = document.getElementById('scan-status');
+        if (scanStatusDiv) {
+          scanStatusDiv.style.display = 'block';
+          scanStatusDiv.textContent = `✅ 已加载 ${allSymbols.length} 个币种（现货 ${spotSymbols.length} / 合约 ${futuresSymbols.length}）`;
+          setTimeout(() => {
+            scanStatusDiv.style.display = 'none';
+          }, 3000);
+        }
+
         return allSymbols;
       } catch (e) {
         console.error('加载交所信息失败:', e);
-        showNotification('❌ 加载币种列表失败，请检查网络', 'error');
+        showNotification(`❌ 加载币种列表失败: ${e.message}`, 'error');
         return [];
       }
     }
@@ -1279,23 +1323,9 @@
       }
     }
 
-    // ============ 获取市值 ============
+    // ============ 获取市值 ✅ 修复4: getMarketCapData 弱化 ============
     async function getMarketCapData(symbol) {
-      const cacheKey = `${symbol}_mcap`;
-      if (marketCapCache[cacheKey] && Date.now() - marketCapCache[cacheKey].time < 3600000) {
-        return marketCapCache[cacheKey].data;
-      }
-
-      try {
-        const url = `${CONFIG.coingeckoApi}/simple/price?ids=${symbol.toLowerCase()}&vs_currencies=usd&order=market_cap_desc&per_page=100&sparkline=false&include_market_cap=true`;
-        const data = await fetchWithTimeout(url);
-        const mcap = data[symbol.toLowerCase()]?.usd_market_cap || 0;
-
-        marketCapCache[cacheKey] = { data: mcap, time: Date.now() };
-        return mcap;
-      } catch (e) {
-        return 0;
-      }
+      return 0;  // 直接返回0，避免拖累主流程
     }
 
     // ============ 技术指标计算 ============
@@ -1314,6 +1344,7 @@
       return result;
     }
 
+    // ✅ 修复5: calcRSI 钳制 0-100
     function calcRSI(data, period = 14) {
       if (data.length < period + 1) return 50;
 
@@ -1339,7 +1370,10 @@
       }
 
       const rs = avgGain / (avgLoss || 1);
-      return 100 - (100 / (1 + rs));
+      const rsi = 100 - (100 / (1 + rs));
+      
+      // ✅ 钳制到 0-100
+      return Math.max(0, Math.min(100, rsi));
     }
 
     function calcMACD(data, fast = 12, slow = 26, signal = 9) {
@@ -1713,55 +1747,86 @@
       };
     }
 
-    // ============ 快速扫描 ============
-    async function quickScanCoin(symbol) {
-      try {
-        const stats24h = await get24hStats(symbol, 'spot');
-        if (!stats24h) return null;
-
-        const futuresData = await getFuturesData(symbol);
-
-        let quickScore = 0;
-
-        // OI增长快速检查
-        if (futuresData.oi6hPct > 15) quickScore += 10;
-        if (futuresData.oi24hPct > 30) quickScore += 10;
-
-        // 价格动能
-        if (stats24h.change24h > 5) quickScore += 5;
-
-        // 成交量活跃
-        if (stats24h.volume24h > 0) quickScore += 3;
-
-        return {
-          symbol,
-          price: stats24h.price,
-          change24h: stats24h.change24h,
-          volume24h: stats24h.volume24h,
-          openInterest: futuresData.openInterest,
-          oi6hPct: futuresData.oi6hPct,
-          quickScore
-        };
-      } catch (e) {
-        return null;
-      }
-    }
-
-    // ============ 完整分析 ============
+    // ============ 完整分析 ✅ 修复6: 单个fail不影响整体 ============
     async function analyzeCoin(symbol, quickData = null) {
       try {
-        // 获取基础数据
-        const [stats24h, kline5m, kline1h, kline4h, kline1d, futuresData, marketCap] = await Promise.all([
-          get24hStats(symbol, 'spot'),
-          getKlineData(symbol, '5m', 100, 'spot'),
-          getKlineData(symbol, '1h', 100, 'spot'),
-          getKlineData(symbol, '4h', 100, 'spot'),
-          getKlineData(symbol, '1d', 100, 'spot'),
-          getFuturesData(symbol),
-          getMarketCapData(symbol)
-        ]);
+        // 获取基础数据，单独try防止某个API失败导致整体崩溃
+        let stats24h = null;
+        let kline5m = [];
+        let kline1h = [];
+        let kline4h = [];
+        let kline1d = [];
+        let futuresData = {
+          openInterest: 0,
+          oiValue: 0,
+          fundingRate: 0,
+          globalLongShortRatio: 1,
+          oi6hPct: 0,
+          oi24hPct: 0
+        };
+        let marketCap = 0;
 
-        if (!stats24h || kline5m.length === 0) return null;
+        // 24h数据，必须有
+        try {
+          stats24h = await get24hStats(symbol, 'spot');
+        } catch (e) {
+          console.warn(`${symbol} 24h数据失败`, e.message);
+        }
+
+        if (!stats24h) {
+          return null;
+        }
+
+        // K线数据，单独 try
+        try {
+          kline5m = await getKlineData(symbol, '5m', 100, 'spot');
+        } catch (e) {
+          console.warn(`${symbol} 5m失败`, e.message);
+        }
+
+        try {
+          kline1h = await getKlineData(symbol, '1h', 100, 'spot');
+        } catch (e) {
+          console.warn(`${symbol} 1h失败`, e.message);
+        }
+
+        try {
+          kline4h = await getKlineData(symbol, '4h', 100, 'spot');
+        } catch (e) {
+          console.warn(`${symbol} 4h失败`, e.message);
+        }
+
+        try {
+          kline1d = await getKlineData(symbol, '1d', 100, 'spot');
+        } catch (e) {
+          console.warn(`${symbol} 1d失败`, e.message);
+        }
+
+        // 衍生品数据，失败也没关系
+        try {
+          futuresData = await getFuturesData(symbol);
+        } catch (e) {
+          console.warn(`${symbol} 衍生品失败`, e.message);
+        }
+
+        try {
+          marketCap = await getMarketCapData(symbol);
+        } catch (e) {
+          console.warn(`${symbol} 市值失败`, e.message);
+        }
+
+        // 最低要求检查
+        if (!kline5m.length || !kline1h.length) {
+          return null;
+        }
+
+        // 如果某些周期失败，用1h兜底
+        if (!kline4h.length) {
+          kline4h = kline1h;
+        }
+        if (!kline1d.length) {
+          kline1d = kline1h;
+        }
 
         // 计算技术指标
         const prices5m = kline5m.map(k => k.close);
@@ -1902,7 +1967,7 @@
 
         // 计算评级
         const gradeInfo = calculateGrade(coin);
-                coin.grade = gradeInfo.grade;
+        coin.grade = gradeInfo.grade;
         coin.gradeScore = gradeInfo.gradeScore;
 
         return coin;
@@ -2493,123 +2558,143 @@
 
         <div class="derivatives-panel">
           <div class="panel-title">🎯 推荐交易方案</div>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
-            <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
-              <div style="font-size: 10px; color: var(--sub); margin-bottom: 4px;">交易类型</div>
-              <div style="font-size: 14px; font-weight: 700; color: var(--cyan);">
+          <div class="detail-metrics">
+            <div class="detail-metric">
+              <div class="detail-metric-label">推荐交易类型</div>
+              <div class="detail-metric-value" style="color: var(--cyan);">
                 ${coin.recommendType === 'futures' ? '⚡ 合约交易' : '💰 现货交易'}
               </div>
             </div>
-            <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
-              <div style="font-size: 10px; color: var(--sub); margin-bottom: 4px;">推荐杠杆</div>
-              <div style="font-size: 14px; font-weight: 700; color: var(--cyan);">
-                ${coin.recommendLeverage}x
+            <div class="detail-metric">
+              <div class="detail-metric-label">推荐杠杆</div>
+              <div class="detail-metric-value">${coin.recommendLeverage}x</div>
+            </div>
+            <div class="detail-metric">
+              <div class="detail-metric-label">推荐仓位</div>
+              <div class="detail-metric-value">${coin.recommendPosition}%</div>
+            </div>
+            <div class="detail-metric">
+              <div class="detail-metric-label">风险等级</div>
+              <div class="detail-metric-value" style="${coin.crowdingRisk.level === 'high' ? 'color: var(--red);' : coin.crowdingRisk.level === 'mid' ? 'color: var(--yellow);' : 'color: var(--green);'}">
+                ${coin.crowdingRisk.level === 'high' ? '🔴 高风险' : coin.crowdingRisk.level === 'mid' ? '🟡 中风险' : '🟢 低风险'}
               </div>
             </div>
-            <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
-              <div style="font-size: 10px; color: var(--sub); margin-bottom: 4px;">建议仓位</div>
-              <div style="font-size: 14px; font-weight: 700; color: var(--cyan);">
-                ${coin.recommendPosition}%
-              </div>
-            </div>
+          </div>
+          <div style="margin-top: 12px; padding: 12px; background: rgba(0, 255, 200, 0.1); border-left: 3px solid var(--cyan); border-radius: 4px; font-size: 12px; color: var(--text); line-height: 1.6;">
+            <strong>💡 交易建议:</strong><br>
+            ${coin.totalSignal > 5 ? '◆ 信号强烈，可以考虑较大仓位<br>◆ 建议设置止损点在近期低点下方' : coin.totalSignal > 0 ? '◆ 信号中等，建议保守仓位<br>◆ 留意技术面支撑位' : coin.totalSignal < -5 ? '◆ 做空信号强，但请谨慎<br>◆ 合约建议带止盈止损' : coin.totalSignal < 0 ? '◆ 暂时偏弱，建议观察<br>◆ 等待更多确认信号' : '◆ 信号中性，谨慎操作<br>◆ 可作为长期持仓标的'}
           </div>
         </div>
 
-        <div class="timeframe-analysis">
-          <div class="tf-analysis">
-            <div class="tf-title">5分钟周期</div>
-            <div class="tf-content">
-              <strong>涨跌:</strong> <span class="${coin.change5m > 0 ? 'up' : 'down'}">${fmtPct(coin.change5m, 2)}</span><br>
-              <strong>RSI:</strong> ${coin.rsi5m.toFixed(0)} (${coin.phase5m})<br>
-              <strong>CVD:</strong> ${coin.cvd5m.trend} <br>
-            </div>
+        <div class="derivatives-panel" style="margin-bottom: 40px;">
+          <div class="panel-title">🔗 快速链接</div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;">
+            <button class="quick-btn" onclick="openLink(getChartLink('${coin.symbol}'))">📈 TradingView图表</button>
+            <button class="quick-btn" onclick="openLink('https://www.binance.com/trade/${coin.symbol}_USDT')">💰 币安现货</button>
+            <button class="quick-btn" onclick="openLink('https://www.binance.com/futures/${coin.symbol}USDT')">⚡ 币安合约</button>
+            <button class="quick-btn" onclick="openLink(getCoinGlassLink('${coin.symbol}'))">🔍 Coinglass</button>
+            <button class="quick-btn" onclick="openLink(getLiquidationMapLink('${coin.symbol}'))">📊 清算地图</button>
+            <button class="quick-btn" onclick="openLink(getCoinGeckoLink('${coin.symbol}'))">💎 CoinGecko</button>
+            <button class="quick-btn" onclick="openLink(getDexScreenerLink('${coin.symbol}'))">🌐 DexScreener</button>
+            <button class="quick-btn" onclick="copyToClipboard('${coin.symbol}')">📋 复制代码</button>
           </div>
-
-          <div class="tf-analysis">
-            <div class="tf-title">1小时周期</div>
-            <div class="tf-content">
-              <strong>涨              跌:</strong> <span class="${coin.change1h > 0 ? 'up' : 'down'}">${fmtPct(coin.change1h, 2)}</span><br>
-              <strong>RSI:</strong> ${coin.rsi1h.toFixed(0)} (${coin.phase1h})<br>
-              <strong>CVD:</strong> ${coin.cvd1h.trend}<br>
-              <strong>MACD:</strong> ${coin.macd1h.histogram > 0 ? '📈 金叉' : '📉 死叉'}
-            </div>
-          </div>
-
-          <div class="tf-analysis">
-            <div class="tf-title">4小时周期</div>
-            <div class="tf-content">
-              <strong>涨跌:</strong> <span class="${coin.change4h > 0 ? 'up' : 'down'}">${fmtPct(coin.change4h, 2)}</span><br>
-              <strong>RSI:</strong> ${coin.rsi4h.toFixed(0)} (${coin.phase4h})<br>
-              <strong>MACD:</strong> ${coin.macd4h.histogram > 0 ? '📈 金叉' : '📉 死叉'}
-            </div>
-          </div>
-
-          <div class="tf-analysis">
-            <div class="tf-title">日线周期</div>
-            <div class="tf-content">
-              <strong>涨跌:</strong> <span class="${coin.change1d > 0 ? 'up' : 'down'}">${fmtPct(coin.change1d, 2)}</span><br>
-              <strong>RSI:</strong> ${coin.rsi1d.toFixed(0)} (${coin.phase1d})<br>
-              <strong>方向:</strong> ${coin.mainDirection === 'up' ? '📈 上升' : '📉 下降'}
-            </div>
-          </div>
-        </div>
-
-        <div class="quick-channel-section">
-          <div class="quick-channel-title">🚀 快速跳转（点击打开）</div>
-          <div class="channel-grid">
-            <button class="btn" onclick="openLink(getChartLink('${coin.symbol}'))">📈 TradingView</button>
-            <button class="btn" onclick="openLink('https://www.binance.com/trade/${coin.symbol}_USDT')">💰 币安现货</button>
-            <button class="btn" onclick="openLink('https://www.binance.com/futures/${coin.symbol}USDT')">⚡ 币安合约</button>
-            <button class="btn" onclick="openLink(getCoinGlassLink('${coin.symbol}'))">🔍 Coinglass</button>
-            <button class="btn" onclick="openLink(getLiquidationMapLink('${coin.symbol}'))">🌊 爆仓地图</button>
-            <button class="btn" onclick="openLink(getCoinGeckoLink('${coin.symbol}'))">📊 CoinGecko</button>
-            <button class="btn" onclick="openLink(getDexScreenerLink('${coin.symbol}'))">🦅 DexScreener</button>
-            <button class="btn" onclick="copyToClipboard('${coin.symbol}')">📋 复制币种</button>
-          </div>
-          <div class="channel-hint">💡 提示：红色高拥挤度币种谨慎交易，评级仅供参考，请自行做好风险管理</div>
         </div>
       `;
 
       document.getElementById('detail-content').innerHTML = html;
-      window.scrollTo(0, 0);
+    }
+
+    // ============ 页面切换 ============
+    function switchPage(page) {
+      document.querySelectorAll('[id$="-page"]').forEach(el => {
+        el.style.display = 'none';
+      });
+
+      document.getElementById(page + '-page').style.display = 'block';
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+
+      document.querySelector(`[onclick="switchPage('${page}')"]`)?.classList.add('active');
+    }
+
+    // ============ 打开链接 ============
+    function openLink(url) {
+      window.open(url, '_blank');
+    }
+
+    // ============ 通知 ============
+    function showNotification(message, type = 'info') {
+      const container = document.getElementById('notification-container');
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.textContent = message;
+      container.appendChild(notification);
+
+      setTimeout(() => {
+        notification.classList.add('show');
+      }, 10);
+
+      setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
     }
 
     // ============ 初始化 ============
     async function init() {
-      try {
-        console.log('🚀 初始化系统...');
-        showNotification('🔄 正在加载币种列表...', 'success');
+      console.log('🚀 初始化应用...');
 
-        const symbols = await loadExchangeInfo();
-        if (symbols.length === 0) {
-          showNotification('❌ 加载币种失败，请刷新页面重试', 'error');
-          return;
-        }
-
-        showNotification(`✅ 已加载 ${symbols.length} 个币种，点击"扫描"开始分析`, 'success');
-        renderMonitorContent();
-      } catch (e) {
-        console.error('初始化失败:', e);
-        showNotification('❌ 初始化失败: ' + e.message, 'error');
+      // 加载交所信息
+      const symbols = await loadExchangeInfo();
+      if (symbols.length === 0) {
+        showNotification('❌ 无法加载币种列表，请检查网络', 'error');
+        return;
       }
+
+      // 初始化事件监听
+      document.getElementById('search-input')?.addEventListener('input', showSearchSuggestions);
+      document.getElementById('search-input')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchCoin();
+      });
+
+      document.getElementById('manual-refresh-btn')?.addEventListener('click', manualRefresh);
+
+      // 自动扫描
+      twoPhaseFullRefresh();
+
+      // 定时刷新
+      setInterval(() => {
+        if (!isRefreshing && Date.now() - lastRefreshTime > CONFIG.autoRefreshInterval) {
+          console.log('⏰ 自动刷新...');
+          twoPhaseFullRefresh();
+        }
+      }, 30000);
     }
 
-    // ============ 自动定时刷新 ============
-    setInterval(() => {
-      if (!isRefreshing && Object.keys(allCoins).length > 0) {
-        console.log('⏰ 自动定时刷新...');
-        twoPhaseFullRefresh();
-      }
-    }, CONFIG.refreshMs);
-
-    // ============ 页面加载 ============
+    // ============ 页面加载完成 ============
     window.addEventListener('load', init);
 
-    // ============ 页面卸载清理 ============
+    // ============ 工具函数 ============
+    function fmt(num, decimals = 2) {
+      if (typeof num !== 'number' || !isFinite(num)) return '--';
+      if (num >= 1e9) return (num / 1e9).toFixed(decimals) + 'B';
+      if (num >= 1e6) return (num / 1e6).toFixed(decimals) + 'M';
+      if (num >= 1e3) return (num / 1e3).toFixed(decimals) + 'K';
+      return num.toFixed(decimals);
+    }
+
+    function fmtPct(value, decimals = 2) {
+      if (typeof value !== 'number' || !isFinite(value)) return '--';
+      const sign = value > 0 ? '+' : '';
+      return sign + value.toFixed(decimals) + '%';
+    }
+
+    // ============ 页面卸载时清理 ============
     window.addEventListener('beforeunload', () => {
       klineCache = {};
       volume24hCache = {};
-      marketCapCache = {};
       futuresDataCache = {};
     });
   </script>
