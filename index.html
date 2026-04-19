@@ -1250,117 +1250,78 @@ async function getFuturesData(symbol) {
 }
 
     // ============ 获取市值数据 ============
-    async function getMarketCapData(symbol) {
-      const cacheKey = `mcap_${symbol}`;
-      if (marketCapCache[cacheKey] && Date.now() - marketCapCache[cacheKey].time < 3600000) {
-        return marketCapCache[cacheKey].data;
-      }
+async function getFuturesData(symbol) {
+  try {
+    const BACKEND_URL = 'https://index-html-pi-seven-55.vercel.app';
+    const res = await fetch(`${BACKEND_URL}/api/futures-data?symbol=${symbol}`).then(r => r.json());
 
-      try {
-        const res = await fetchJSON(
-          `${CONFIG.coingeckoApi}/simple/price?ids=${symbol.toLowerCase()}&vs_currencies=usd&include_market_cap=true`
-        );
-
-        const data = res[symbol.toLowerCase()];
-        if (data && data.usd_market_cap) {
-          const marketCap = data.usd_market_cap;
-          marketCapCache[cacheKey] = { data: marketCap, time: Date.now() };
-          return marketCap;
-        }
-      } catch (e) {
-        console.warn(`获取 ${symbol} 市值失败:`, e.message);
-      }
-
-      return null;
-    }
-
-    // ============ 计算OI/MCAP比率 ============
-    function calculateOiMcapRatio(oiValue, marketCap) {
-      if (!marketCap || marketCap === 0) return 0;
-      return (oiValue / marketCap) * 100;
-    }
-
-    // ============ 拥挤度风险计算 ============
-    function calculateCrowdingRisk(longShortRatio, oiMcapRatio, rsi, direction, oi6hPct, oi24hPct) {
-      let score = 50;
-      let reasons = [];
-      let level = 'low';
-      let side = null;
-
-      // 多空比极端
-      if (longShortRatio > 2) {
-        score += 25;
-        reasons.push('多头极度拥挤 (>2.0)');
-        side = 'long_crowded';
-      } else if (longShortRatio > 1.5) {
-        score += 15;
-        reasons.push('多头拥挤 (>1.5)');
-        side = 'long_crowded';
-      }
-
-      if (longShortRatio < 0.5) {
-        score += 25;
-        reasons.push('空头极度拥挤 (<0.5)');
-        side = 'short_crowded';
-      } else if (longShortRatio < 0.8) {
-        score += 15;
-        reasons.push('空头拥挤 (<0.8)');
-        side = 'short_crowded';
-      }
-
-      // OI/MCAP极端
-      if (oiMcapRatio > 50) {
-        score += 20;
-        reasons.push('OI/MCAP极高 (>50%)');
-      } else if (oiMcapRatio > 30) {
-        score += 10;
-        reasons.push('OI/MCAP较高 (>30%)');
-      } else if (oiMcapRatio > 15) {
-        score += 5;
-        reasons.push('OI/MCAP活跃 (>15%)');
-      }
-
-      // OI快速增长（可能预示反转）
-      if (oi6hPct > 30) {
-        score += 15;
-        reasons.push('OI 6h快速增长 (>30%)');
-      } else if (oi6hPct > 15) {
-        score += 8;
-        reasons.push('OI 6h温和增长 (>15%)');
-      }
-
-      // RSI极端
-      if (rsi > 85 || rsi < 15) {
-        score += 12;
-        reasons.push('RSI极端水平');
-      }
-
-      // 方向性拥挤
-      if (direction === 'up' && longShortRatio > 1.8) {
-        score += 10;
-        reasons.push('上升中多头过度拥挤');
-      }
-      if (direction === 'down' && longShortRatio < 0.6) {
-        score += 10;
-        reasons.push('下跌中空头过度拥挤');
-      }
-
-      if (score >= 80) {
-        level = 'high';
-      } else if (score >= 60) {
-        level = 'mid';
-      } else {
-        level = 'low';
-      }
-
+    if (!res || typeof res.openInterest === 'undefined') {
       return {
-        score: Math.min(100, score),
-        level,
-        side,
-        reasons
+        openInterest: 0,
+        oiValue: 0,
+        fundingRate: 0,
+        globalLongShortRatio: 1,
+        oi6hPct: 0,
+        oi24hPct: 0
       };
     }
 
+    const currentOI = parseFloat(res.openInterest || 0);
+    const currentPrice = parseFloat(res.oiValue || 0);
+    const fundingRate = parseFloat(res.fundingRate || 0);
+
+    let oi6hPct = 0;
+    let oi24hPct = 0;
+
+    const now = Date.now();
+    if (!oiHistoryCache[symbol]) {
+      oiHistoryCache[symbol] = [];
+    }
+
+    oiHistoryCache[symbol].push({ time: now, oi: currentOI });
+    oiHistoryCache[symbol] = oiHistoryCache[symbol].filter(item => now - item.time <= 86400000);
+
+    if (oiHistoryCache[symbol].length >= 2) {
+      let oi6hRef = null;
+      let oi24hRef = null;
+
+      for (let i = 0; i < oiHistoryCache[symbol].length; i++) {
+        const item = oiHistoryCache[symbol][i];
+        const diffHours = (now - item.time) / 3600000;
+
+        if (!oi6hRef && diffHours >= 6) oi6hRef = item;
+        if (!oi24hRef && diffHours >= 24) oi24hRef = item;
+      }
+
+      if (oi6hRef && oi6hRef.oi > 0) {
+        oi6hPct = ((currentOI - oi6hRef.oi) / oi6hRef.oi) * 100;
+      }
+
+      if (oi24hRef && oi24hRef.oi > 0) {
+        oi24hPct = ((currentOI - oi24hRef.oi) / oi24hRef.oi) * 100;
+      }
+    }
+
+    return {
+      openInterest: currentOI,
+      oiValue: currentPrice,
+      fundingRate,
+      globalLongShortRatio: res.globalLongShortRatio || 1,
+      oi6hPct,
+      oi24hPct
+    };
+  } catch (e) {
+    console.warn(`获取 ${symbol} 合约数据失败:`, e.message);
+    return {
+      openInterest: 0,
+      oiValue: 0,
+      fundingRate: 0,
+      globalLongShortRatio: 1,
+      oi6hPct: 0,
+      oi24hPct: 0
+    };
+  }
+}
     // ============ 检查共振条件 ============
     function checkResonance(coin) {
       const resonance = {
@@ -1844,7 +1805,7 @@ async function getFuturesData(symbol) {
         if (change1h < -2) shortReasons.push('1h强势下跌');
 
         // 24h信号权重大幅降低
-        if (change24h > 10 && mainDirection === 'up') {
+        if (stats24h && stats24h.change24h > 10 && mainDirection === 'up') {
           longReasons.push('24h涨幅较大（参考）');
         }
 
