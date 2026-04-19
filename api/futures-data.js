@@ -15,14 +15,19 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: '缺少 symbol 参数' });
     }
 
-    const [oiRes, fundRes] = await Promise.all([
-      fetch(`https://fapi.binance.com/fapi/v1/openInterest?symbol=${symbol}USDT`)
-        .then(r => r.json())
-        .catch(() => ({})),
-      fetch(`https://fapi.binance.com/fapi/v1/fundingRate?symbol=${symbol}USDT&limit=5`)
-        .then(r => r.json())
-        .catch(() => [])
-    ]);
+    const oiResp = await fetch(`https://fapi.binance.com/fapi/v1/openInterest?symbol=${symbol}USDT`);
+    let oiRes = {};
+
+    if (oiResp.ok) {
+      oiRes = await oiResp.json();
+    }
+
+    const fundResp = await fetch(`https://fapi.binance.com/fapi/v1/fundingRate?symbol=${symbol}USDT&limit=5`);
+    let fundRes = [];
+
+    if (fundResp.ok) {
+      fundRes = await fundResp.json();
+    }
 
     const currentOI = parseFloat(oiRes.openInterest || 0);
     const currentPrice = parseFloat(oiRes.sumOpenInterestValue || 0);
@@ -49,6 +54,13 @@ export default async function handler(req, res) {
     });
   } catch (e) {
     console.error('获取合约数据失败:', e.message);
-    return res.status(500).json({ error: e.message });
+    return res.status(200).json({
+      symbol: req.query.symbol || '',
+      openInterest: 0,
+      oiValue: 0,
+      fundingRate: 0,
+      globalLongShortRatio: 1,
+      timestamp: Date.now()
+    });
   }
 }
