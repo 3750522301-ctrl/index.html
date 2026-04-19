@@ -1164,79 +1164,90 @@
       }
     }
 
-    // ============ 获取合约数据（增强版） ============
-    async function getFuturesData(symbol) {
-      try {
-        const [oiRes, fundRes, lsRes] = await Promise.all([
-          fetchJSON(`${CONFIG.futuresUrl}/openInterest?symbol=${symbol}USDT`).catch(() => ({})),
-          fetchJSON(`${CONFIG.futuresUrl}/fundingRate?symbol=${symbol}USDT&limit=5`).catch(() => []),
-          fetchJSON(`${CONFIG.futuresDataUrl}/longShortRatio?pair=${symbol}USDT&period=5m&limit=2`).catch(() => ({ data: [] }))
-        ]);
+// ============ 获取合约数据（修复版） ============
+async function getFuturesData(symbol) {
+  try {
+    const [oiRes, fundRes] = await Promise.all([
+      fetchJSON(`${CONFIG.futuresUrl}/openInterest?symbol=${symbol}USDT`).catch(() => ({})),
+      fetchJSON(`${CONFIG.futuresUrl}/fundingRate?symbol=${symbol}USDT&limit=5`).catch(() => [])
+    ]);
 
-        const currentOI = parseFloat(oiRes.openInterest || 0);
-        const currentPrice = parseFloat(oiRes.sumOpenInterestValue || 0);
+    const currentOI = parseFloat(oiRes.openInterest || 0);
+    const currentPrice = parseFloat(oiRes.sumOpenInterestValue || 0);
 
-        // 计算资金费率（平均值）
-        let fundingRate = 0;
-        if (Array.isArray(fundRes) && fundRes.length > 0) {
-          fundingRate = fundRes.reduce((sum, f) => sum + parseFloat(f.fundingRate || 0), 0) / fundRes.length;
+    let fundingRate = 0;
+    if (Array.isArray(fundRes) && fundRes.length > 0) {
+      fundingRate = fundRes.reduce((sum, f) => sum + parseFloat(f.fundingRate || 0), 0) / fundRes.length;
+    }
+
+    let globalLongShortRatio = 1;
+    if (fundingRate > 0.0005) {
+      globalLongShortRatio = 1.3;
+    } else if (fundingRate < -0.0005) {
+      globalLongShortRatio = 0.8;
+    } else {
+      globalLongShortRatio = 1;
+    }
+
+    let oi6hPct = 0;
+    let oi24hPct = 0;
+
+    const now = Date.now();
+    if (!oiHistoryCache[symbol]) {
+      oiHistoryCache[symbol] = [];
+    }
+
+    oiHistoryCache[symbol].push({ time: now, oi: currentOI });
+
+    oiHistoryCache[symbol] = oiHistoryCache[symbol].filter(
+      item => now - item.time <= 86400000
+    );
+
+    if (oiHistoryCache[symbol].length >= 2) {
+      let oi6hRef = null;
+      let oi24hRef = null;
+
+      for (let i = 0; i < oiHistoryCache[symbol].length; i++) {
+        const item = oiHistoryCache[symbol][i];
+        const diffHours = (now - item.time) / 3600000;
+
+        if (!oi6hRef && diffHours >= 6) {
+          oi6hRef = item;
         }
-
-        // 获取多空比
-        let globalLongShortRatio = 1;
-        if (lsRes && lsRes.data && Array.isArray(lsRes.data) && lsRes.data.length > 0) {
-          globalLongShortRatio = parseFloat(lsRes.data[0].longShortRatio || 1);
+        if (!oi24hRef && diffHours >= 24) {
+          oi24hRef = item;
         }
+      }
 
-        // OI变化率计算（简化：需要6h和24h的历史数据）
-        let oi6hPct = 0;
-        let oi24hPct = 0;
+      if (oi6hRef && oi6hRef.oi > 0) {
+        oi6hPct = ((currentOI - oi6hRef.oi) / oi6hRef.oi) * 100;
+      }
 
-        // 缓存当前OI用于后续比较
-        const now = Date.now();
-        if (!oiHistoryCache[symbol]) {
-          oiHistoryCache[symbol] = [];
-        }
-        oiHistoryCache[symbol].push({ time: now, oi: currentOI });
-
-        // 清理6小时前的数据
-        oiHistoryCache[symbol] = oiHistoryCache[symbol].filter(
-          item => now - item.time <= 86400000
-        );
-
-        if (oiHistoryCache[symbol].length >= 2) {
-          const oldest = oiHistoryCache[symbol][0];
-          const oldestOI = oldest.oi;
-          const timeDiffHours = (now - oldest.time) / 3600000;
-
-          if (timeDiffHours >= 6 && oldestOI > 0) {
-            oi6hPct = ((currentOI - oldestOI) / oldestOI) * 100;
-          }
-          if (timeDiffHours >= 24 && oldestOI > 0) {
-            oi24hPct = ((currentOI - oldestOI) / oldestOI) * 100;
-          }
-        }
-
-        return {
-          openInterest: currentOI,
-          oiValue: currentPrice,
-          fundingRate: fundingRate * 100,
-          globalLongShortRatio,
-          oi6hPct,
-          oi24hPct
-        };
-      } catch (e) {
-        console.warn(`获取 ${symbol} 合约数据失败:`, e.message);
-        return {
-          openInterest: 0,
-          oiValue: 0,
-          fundingRate: 0,
-          globalLongShortRatio: 1,
-          oi6hPct: 0,
-          oi24hPct: 0
-        };
+      if (oi24hRef && oi24hRef.oi > 0) {
+        oi24hPct = ((currentOI - oi24hRef.oi) / oi24hRef.oi) * 100;
       }
     }
+
+    return {
+      openInterest: currentOI,
+      oiValue: currentPrice,
+      fundingRate: fundingRate * 100,
+      globalLongShortRatio,
+      oi6hPct,
+      oi24hPct
+    };
+  } catch (e) {
+    console.warn(`获取 ${symbol} 合约数据失败:`, e.message);
+    return {
+      openInterest: 0,
+      oiValue: 0,
+      fundingRate: 0,
+      globalLongShortRatio: 1,
+      oi6hPct: 0,
+      oi24hPct: 0
+    };
+  }
+}
 
     // ============ 获取市值数据 ============
     async function getMarketCapData(symbol) {
@@ -1927,101 +1938,105 @@
       }
     }
 
-    // ============ 两阶段扫描 ============
-    async function twoPhaseFullRefresh() {
-      if (isRefreshing) return;
-      isRefreshing = true;
+async function twoPhaseFullRefresh() {
+  if (isRefreshing) return;
+  isRefreshing = true;
 
-      const statusDiv = document.getElementById('scanning-status');
-      const progressBar = document.getElementById('scanning-progress-bar');
-      const progressText = document.getElementById('scanning-progress-text');
-      const scanStatusDiv = document.getElementById('scan-status');
-      const refreshBtn = document.getElementById('manual-refresh-btn');
+  const statusDiv = document.getElementById('scanning-status');
+  const progressBar = document.getElementById('scanning-progress-bar');
+  const progressText = document.getElementById('scanning-progress-text');
+  const scanStatusDiv = document.getElementById('scan-status');
+  const refreshBtn = document.getElementById('manual-refresh-btn');
 
-      statusDiv.style.display = 'block';
+  try {
+    if (statusDiv) statusDiv.style.display = 'block';
+    if (refreshBtn) {
       refreshBtn.disabled = true;
       refreshBtn.classList.add('loading');
+    }
+    if (scanStatusDiv) {
       scanStatusDiv.textContent = '⏳ 扫描中...';
       scanStatusDiv.style.display = 'block';
+    }
+    if (progressBar) progressBar.style.width = '0%';
+    if (progressText) progressText.textContent = `0/${allSymbols.length}`;
 
-      const startTime = Date.now();
-      let currentIndex = 0;
+    const startTime = Date.now();
+    let currentIndex = 0;
+    allCoins = {};
 
-      try {
-        // ============ 第一阶段：快速筛选 ============
-        const quickScanList = allSymbols.slice(0, CONFIG.quickScanLimit);
-        const quickResults = [];
+    const quickScanList = allSymbols.slice(0, CONFIG.quickScanLimit);
+    const quickResults = [];
 
-        for (let i = 0; i < quickScanList.length; i++) {
-          const symbol = quickScanList[i];
-          const result = await quickScanCoin(symbol);
+    for (let i = 0; i < quickScanList.length; i++) {
+      const symbol = quickScanList[i];
+      const result = await quickScanCoin(symbol);
 
-          if (result && result.quickScore > 0) {
-            quickResults.push(result);
-          }
-
-          currentIndex++;
-          const progress = (currentIndex / allSymbols.length) * 100;
-          progressBar.style.width = progress + '%';
-          progressText.textContent = `${currentIndex}/${allSymbols.length}`;
-        }
-
-        console.log(`快速扫描完成：${quickResults.length} 个候选币种`);
-
-        // ============ 第二阶段：完整分析 ============
-        const toAnalyze = quickResults.slice(0, CONFIG.fullScanLimit);
-
-        const analyzeTasks = toAnalyze.map(qr => () => analyzeCoin(qr.symbol, qr));
-        const fullResults = await runWithConcurrencyLimit(analyzeTasks, CONFIG.concurrentLimit);
-
-        fullResults.forEach((coin, idx) => {
-          if (coin) {
-            allCoins[coin.symbol] = coin;
-            currentIndex++;
-            const progress = (currentIndex / allResults.length + CONFIG.quickScanLimit) * 100;
-            progressBar.style.width = Math.min(progress, 100) + '%';
-            progressText.textContent = `${currentIndex}/${allSymbols.length}`;
-          }
-        });
-
-        // ============ 持续补充扫描其他币种 ============
-        const remaining = allSymbols.slice(CONFIG.quickScanLimit).slice(0, 50);
-        for (const symbol of remaining) {
-          if (allCoins[symbol]) continue;
-
-          const result = await quickScanCoin(symbol);
-          if (result && result.quickScore > -2) {
-            const coin = await analyzeCoin(symbol, result);
-            if (coin) {
-              allCoins[coin.symbol] = coin;
-            }
-          }
-
-          currentIndex++;
-          const progress = (currentIndex / allSymbols.length) * 100;
-          progressBar.style.width = Math.min(progress, 100) + '%';
-          progressText.textContent = `${currentIndex}/${allSymbols.length}`;
-        }
-
-        const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
-        console.log(`扫描完成！总耗时 ${totalTime}s，共分析 ${Object.keys(allCoins).length} 个币种`);
-
-        document.getElementById('update-time').textContent = new Date().toLocaleTimeString('zh-CN');
-
-        renderMonitorContent();
-        showNotification(`✅ 扫描完成！分析了 ${Object.keys(allCoins).length} 个币种`, 'success');
-      } catch (e) {
-        console.error('扫描失败:', e);
-        showNotification(`❌ 扫描失败: ${e.message}`, 'error');
-      } finally {
-        isRefreshing = false;
-        statusDiv.style.display = 'none';
-        refreshBtn.disabled = false;
-        refreshBtn.classList.remove('loading');
-        scanStatusDiv.style.display = 'none';
+      if (result && result.quickScore > 0) {
+        quickResults.push(result);
       }
+
+      currentIndex++;
+      const progress = (currentIndex / allSymbols.length) * 100;
+      if (progressBar) progressBar.style.width = progress + '%';
+      if (progressText) progressText.textContent = `${currentIndex}/${allSymbols.length}`;
     }
 
+    console.log(`快速扫描完成：${quickResults.length} 个候选币种`);
+
+    const toAnalyze = quickResults.slice(0, CONFIG.fullScanLimit);
+    const analyzeTasks = toAnalyze.map(qr => () => analyzeCoin(qr.symbol, qr));
+    const fullResults = await runWithConcurrencyLimit(analyzeTasks, CONFIG.concurrentLimit);
+
+    fullResults.forEach((coin) => {
+      if (coin) {
+        allCoins[coin.symbol] = coin;
+      }
+    });
+
+    const remaining = allSymbols.slice(CONFIG.quickScanLimit).slice(0, 50);
+    for (const symbol of remaining) {
+      if (allCoins[symbol]) continue;
+
+      const result = await quickScanCoin(symbol);
+      if (result && result.quickScore > -2) {
+        const coin = await analyzeCoin(symbol, result);
+        if (coin) {
+          allCoins[coin.symbol] = coin;
+        }
+      }
+
+      currentIndex++;
+      const progress = (currentIndex / allSymbols.length) * 100;
+      if (progressBar) progressBar.style.width = Math.min(progress, 100) + '%';
+      if (progressText) progressText.textContent = `${currentIndex}/${allSymbols.length}`;
+    }
+
+    const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+    console.log(`扫描完成！总耗时 ${totalTime}s，共分析 ${Object.keys(allCoins).length} 个币种`);
+
+    const updateTimeEl = document.getElementById('update-time');
+    if (updateTimeEl) {
+      updateTimeEl.textContent = new Date().toLocaleTimeString('zh-CN');
+    }
+
+    renderMonitorContent();
+    showNotification(`✅ 扫描完成！分析了 ${Object.keys(allCoins).length} 个币种`, 'success');
+  } catch (e) {
+    console.error('扫描失败:', e);
+    showNotification(`❌ 扫描失败: ${e.message}`, 'error');
+  } finally {
+    isRefreshing = false;
+    if (statusDiv) statusDiv.style.display = 'none';
+    if (refreshBtn) {
+      refreshBtn.disabled = false;
+      refreshBtn.classList.remove('loading');
+    }
+    if (scanStatusDiv) {
+      scanStatusDiv.style.display = 'none';
+    }
+  }
+}
     async function manualRefresh() {
       await twoPhaseFullRefresh();
     }
