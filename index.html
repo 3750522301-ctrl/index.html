@@ -887,9 +887,9 @@
       coingeckoApi: 'https://api.coingecko.com/api/v3',
       concurrentLimit: 4,
       requestTimeout: 12000,
-      maxCoinsToMonitor: 300,
-      quickScanLimit: 50,
-      fullScanLimit: 150
+      maxCoinsToMonitor: 9999,
+      quickScanLimit: 9999,
+      fullScanLimit: 9999
     };
 
     // ============ 全局变量 ============
@@ -2099,68 +2099,86 @@
           refreshIcon.textContent = '⏳';
         }
         if (scanStatusDiv) {
-          scanStatusDiv.textContent = '⏳ 扫描中...';
+          scanStatusDiv.textContent = '⏳ 全量扫描中...';
           scanStatusDiv.style.display = 'block';
         }
         if (progressBar) progressBar.style.width = '0%';
         if (progressText) progressText.textContent = `0/${allSymbols.length}`;
 
         const startTime = Date.now();
-        let currentIndex = 0;
         allCoins = {};
+        const totalSymbols = allSymbols.length;
 
-        // 第一阶段：快速筛选
-        const quickScanList = allSymbols.slice(0, CONFIG.quickScanLimit);
-        const quickResults = [];
+        console.log(`🚀 开始扫描全部 ${totalSymbols} 个币种`);
 
-        for (let i = 0; i < quickScanList.length; i++) {
-          const symbol = quickScanList[i];
-          const result = await quickScanCoin(symbol);
-
-          if (result && result.quickScore > 0) {
-            quickResults.push(result);
-          }
-
-          currentIndex++;
-          const progress = (currentIndex / allSymbols.length) * 100;
-          if (progressBar) progressBar.style.width = progress + '%';
-          if (progressText) progressText.textContent = `${currentIndex}/${allSymbols.length}`;
-        }
-
-        console.log(`✅ 快速扫描完成：${quickResults.length} 个候选币种`);
-
-        // 第二阶段：完整分析
-        const toAnalyze = quickResults.slice(0, CONFIG.fullScanLimit);
-        const analyzeTasks = toAnalyze.map(qr => () => analyzeCoin(qr.symbol, qr));
-        const fullResults = await runWithConcurrencyLimit(analyzeTasks, CONFIG.concurrentLimit);
-
-        fullResults.forEach((coin) => {
-          if (coin) {
-            allCoins[coin.symbol] = coin;
+        // 直接全部扫描，不分阶段
+        const analyzeTasks = allSymbols.map(symbol => async () => {
+          try {
+            const coin = await analyzeCoin(symbol);
+            if (coin) {
+              allCoins[symbol] = coin;
+            }
+            return symbol;
+          } catch (e) {
+            console.warn(`分析 ${symbol} 失败:`, e.message);
+            return null;
           }
         });
 
-        // 补充扫描其他币种
-        const remaining = allSymbols.slice(CONFIG.quickScanLimit).slice(0, 50);
-        for (const symbol of remaining) {
-          if (allCoins[symbol]) continue;
+        let completed = 0;
 
-          const result = await quickScanCoin(symbol);
-          if (result && result.quickScore > -2) {
-            const coin = await analyzeCoin(symbol, result);
-            if (coin) {
-              allCoins[coin.symbol] = coin;
+        // 自定义并发控制，实时显示进度
+        await new Promise((resolve) => {
+          const results = new Array(analyzeTasks.length);
+          const executing = [];
+          let taskIndex = 0;
+
+          async function enqueueNext() {
+            if (taskIndex >= analyzeTasks.length && executing.length === 0) {
+              resolve(results);
+              return;
+            }
+
+            if (taskIndex < analyzeTasks.length && executing.length < CONFIG.concurrentLimit) {
+              const currentIndex = taskIndex;
+              taskIndex++;
+
+              const promise = analyzeTasks[currentIndex]().then(
+                result => {
+                  results[currentIndex] = result;
+                  completed++;
+                  
+                  // 每完成1个就更新进度
+                  const progress = (completed / totalSymbols) * 100;
+                  if (progressBar) progressBar.style.width = progress + '%';
+                  if (progressText) progressText.textContent = `${completed}/${totalSymbols}`;
+
+                  executing.splice(executing.indexOf(promise), 1);
+                  enqueueNext();
+                },
+                error => {
+                  results[currentIndex] = null;
+                  completed++;
+                  
+                  const progress = (completed / totalSymbols) * 100;
+                  if (progressBar) progressBar.style.width = progress + '%';
+                  if (progressText) progressText.textContent = `${completed}/${totalSymbols}`;
+
+                  executing.splice(executing.indexOf(promise), 1);
+                  enqueueNext();
+                }
+              );
+
+              executing.push(promise);
+              enqueueNext();
             }
           }
 
-          currentIndex++;
-          const progress = (currentIndex / allSymbols.length) * 100;
-          if (progressBar) progressBar.style.width = Math.min(progress, 100) + '%';
-          if (progressText) progressText.textContent = `${currentIndex}/${allSymbols.length}`;
-        }
+          enqueueNext();
+        });
 
         const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
-        console.log(`✅ 扫描完成！总耗时 ${totalTime}s，共分析 ${Object.keys(allCoins).length} 个币种`);
+        console.log(`✅ 全量扫描完成！总耗时 ${totalTime}s，共分析 ${Object.keys(allCoins).length} 个币种`);
 
         const updateTimeEl = document.getElementById('update-time');
         if (updateTimeEl) {
@@ -2168,7 +2186,7 @@
         }
 
         renderMonitorContent();
-        showNotification(`✅ 扫描完成！分析了 ${Object.keys(allCoins).length} 个币种`, 'success');
+        showNotification(`✅ 全量扫描完成！${Object.keys(allCoins).length} 个币种 (${totalTime}s)`, 'success');
       } catch (e) {
         console.error('扫描失败:', e);
         showNotification(`❌ 扫描失败: ${e.message}`, 'error');
